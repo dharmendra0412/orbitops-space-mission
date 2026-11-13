@@ -26,6 +26,29 @@ The current feature branch includes:
 
 The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline; no external datasets are currently downloaded, processed, cached, or synchronized.
 
+## Read-only NASA PDS API
+
+A FastAPI backend now exposes a read-only proxy for the official NASA PDS Search API. It preserves the upstream JSON response and records the exact request URL and retrieval timestamp; it does not synthesize fallback records.
+
+Start the backend in one terminal:
+
+```bash
+cd backend
+python -m venv .venv
+# Activate the environment, then:
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Start the frontend in a second terminal from the repository root:
+
+```bash
+npm install
+npm run dev
+```
+
+The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index.
+
 ## Data resources and provenance
 
 See [docs/data-provenance.md](docs/data-provenance.md) for the source list, archive descriptions, and required provenance fields. The initial science-data candidates are LRO products such as LOLA topography, LROC imagery, and Diviner thermal observations, discovered through NASA's Planetary Data System.
