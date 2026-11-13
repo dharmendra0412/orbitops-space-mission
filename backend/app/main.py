@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 import os
 from typing import Any, Annotated
 
 from fastapi import FastAPI, HTTPException, Path, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.services.pds_client import PdsApiError, PdsClient, extract_next_search_after
 from app.services.pds3_label import PdsLabelError, parse_pds3_label
@@ -304,3 +306,11 @@ async def get_kaguya_lalt_gt_sp_label() -> dict[str, Any]:
             "independent geodetic ground truth."
         ),
     }
+
+
+# On Vercel, the Vite build is generated before the Python app is deployed.
+# Mount it after API routes so /api/* and /health continue to resolve to FastAPI.
+# The self-hosted Docker deployment serves the same dist/ directory through Nginx.
+frontend_dist = Path(__file__).resolve().parents[2] / "dist"
+if frontend_dist.is_dir():
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
