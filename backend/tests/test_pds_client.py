@@ -397,7 +397,10 @@ async def test_lola_pixel_fetch_rejects_wrong_content_range_and_incomplete_body(
         lambda request: httpx.Response(
             206,
             content=b"\\x01",
-            headers={"Content-Range": f"bytes 0-1/{PDS_LOLA_GDR_IMAGE_BYTES}"},
+            headers={
+                "Content-Range": f"bytes 0-1/{PDS_LOLA_GDR_IMAGE_BYTES}",
+                "Content-Length": "2",
+            },
         )
     ))
     with pytest.raises(PdsApiError, match="incomplete two-byte"):
