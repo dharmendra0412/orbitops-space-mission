@@ -100,3 +100,30 @@ def test_members_endpoint_rejects_depth_above_two():
         "/api/v1/pds/products/urn:nasa:pds:example::1.0/members?depth=3"
     )
     assert response.status_code == 422
+
+
+
+def test_members_endpoint_forwards_search_after_and_exposes_only_source_cursor(monkeypatch):
+    class PaginatedPdsClient:
+        async def list_members(self, *, identifier: str, depth: int = 1, limit: int = 100, search_after: str | None = None):
+            assert search_after == "2026-10-16T10:00:00Z"
+            return (
+                "https://pds.nasa.gov/api/search/1/products/example/members?search-after=2026-10-16T10%3A00%3A00Z",
+                [{
+                    "id": "urn:nasa:pds:example:item::1.0",
+                    "ops:Harvest_Info.ops:harvest_date_time": ["2026-10-17T10:00:00Z"],
+                }],
+            )
+
+    monkeypatch.setattr(api, "pds_client", PaginatedPdsClient())
+    client = TestClient(api.app)
+
+    response = client.get(
+        "/api/v1/pds/products/urn:nasa:pds:example::1.0/members",
+        params={"search_after": "2026-10-16T10:00:00Z", "limit": 1},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["page"]["search_after"] == "2026-10-16T10:00:00Z"
+    assert payload["next_search_after"] == "2026-10-17T10:00:00Z"
