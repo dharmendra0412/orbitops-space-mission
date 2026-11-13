@@ -38,13 +38,14 @@ python scripts/fetch_lola_gdr_sample.py --output data/raw/lola/ldem_85s_40m.img
 
 The downloader tries two fixed HTTPS sources in order: the PDS Geosciences archive, then the LOLA Data Node at MIT if the first source has a transport failure or a server-side 5xx response. The NASA PDS LOLA page directs users to that Data Node for the latest holdings, and its polar IMG directory lists the same `LDEM_85S_40M.IMG` filename and 115,034,112-byte size. The downloader refuses redirects, rejects unexpected response lengths, streams to a temporary file, and atomically writes the raster plus a JSON provenance manifest. The manifest records the endpoint that actually supplied the file and the fixed source attempts. It computes a local SHA-256 fingerprint but explicitly records that no upstream checksum was published in the inspected directory listings; byte-count verification must not be described as cryptographic source verification. Downloaded rasters under `data/raw/` are git-ignored. The downloader is not automatically run by the web application or CI.
 
-After retrieval, validate the complete IMG locally:
+Fetch the companion label from the same archive host that supplied the IMG, then validate the complete raster:
 
 ```bash
-python -m scripts.validate_lola_gdr_sample --image data/raw/lola/ldem_85s_40m.img --label tests/fixtures/lola_ldem_85s_40m.lbl
+python -m scripts.fetch_lola_gdr_label
+python -m scripts.validate_lola_gdr_sample
 ```
 
-The validator memory-maps the raster and checks the full byte count, decoded sample count, signed little-endian DN extrema, and agreement with the PDS label's `DERIVED_MINIMUM`/`DERIVED_MAXIMUM`. The default label is a source-derived repository fixture; pass the detached source `.LBL` path when available. This validation does not substitute for an upstream checksum or independent geodetic comparison.
+The label-fetch command reads the IMG provenance manifest, permits only the two fixed LOLA archive hosts, rechecks the IMG's on-disk byte count and SHA-256, retrieves the matching `.LBL` from that same host, parses its PDS3 product/layout fields, and verifies that its dimensions agree with the IMG download manifest. It then records the label URL, local SHA-256, data-set/version identifiers, dimensions, and declared DN extrema in the manifest. The validator defaults to this downloaded companion label, memory-maps the raster, and checks the full byte count, decoded sample count, signed little-endian DN extrema, and agreement with the source label's declared extrema. This does not substitute for an upstream checksum or independent geodetic comparison.
 
 ## Tests
 
@@ -53,4 +54,4 @@ pip install -r requirements.txt
 pytest
 ```
 
-The PDS3 label parser is validated against `tests/fixtures/lola_ldem_85s_40m.lbl`, a source-derived fixture for the public `LDEM_85S_40M.IMG` sample. The `lola_gdr` module adds a strict fixed-length signed-16-bit little-endian row iterator, the GDR SIS height/radius conversion helpers, and the DSMAP_POLAR.CAT pixel-to-latitude/longitude transform. These functions validate the selected product's label fields and are unit-tested against small synthetic byte buffers and the published equations. A local validation command can inspect a complete downloaded IMG without loading a second full-size copy into memory and compares observed DN extrema with the label's declared extrema. They are not exposed as a public raster endpoint and are not connected to a terrain UI: the 115 MB IMG has not been retrieved, checksum-verified, decoded, or independently compared. The decoder returns raw DN rows and does not silently apply scaling.
+The PDS3 label parser is validated against `tests/fixtures/lola_ldem_85s_40m.lbl`, a source-derived fixture for the public `LDEM_85S_40M.IMG` sample. The `lola_gdr` module adds a strict fixed-length signed-16-bit little-endian row iterator, the GDR SIS height/radius conversion helpers, and the DSMAP_POLAR.CAT pixel-to-latitude/longitude transform. These functions validate the selected product's label fields and are unit-tested against small synthetic byte buffers and the published equations. A companion-label fetch command verifies the IMG manifest and retrieves the matching PDS3 label from the same archive host; a local validation command then inspects the complete IMG without loading a second full-size copy into memory and compares observed DN extrema with that downloaded label. They are not exposed as a public raster endpoint and are not connected to a terrain UI: the 115 MB IMG has not been retrieved, checksum-verified, decoded, or independently compared. The decoder returns raw DN rows and does not silently apply scaling.
