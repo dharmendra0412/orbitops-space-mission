@@ -8,6 +8,7 @@ import {
   parseMissionBriefDraft,
   serializeMissionBriefDraft,
   type MissionBriefDraft,
+  type MissionBriefTextKey,
   type MissionRequirement,
 } from '../data/missionBrief'
 
@@ -42,7 +43,7 @@ export function MissionBrief() {
     }
   }, [draft, loaded])
 
-  const updateField = (key: keyof MissionBriefDraft, value: string) => {
+  const updateField = (key: MissionBriefTextKey, value: string) => {
     setDraft((current) => ({ ...current, [key]: value }))
   }
 
