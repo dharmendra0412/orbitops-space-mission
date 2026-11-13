@@ -17,6 +17,22 @@ export const missionResources: MissionResource[] = [
     url: 'https://pds-geosciences.wustl.edu/missions/lro/',
   },
   {
+    id: 'lola-rdr-bundle',
+    title: 'LRO LOLA Processed (RDR) Data Bundle',
+    owner: 'NASA PDS Geosciences Node',
+    kind: 'DATA ARCHIVE',
+    description: 'Published PDS bundle for calibrated and derived LOLA data, with gridded, radiometric, and spherical-harmonic collections. Bundle DOI: 10.17189/tnyt-7007.',
+    url: 'https://doi.org/10.17189/tnyt-7007',
+  },
+  {
+    id: 'lola-gridded-collection',
+    title: 'LOLA RDR Gridded Data Collection',
+    owner: 'NASA PDS',
+    kind: 'DATA ARCHIVE',
+    description: 'Specific PDS4 collection for LOLA gridded products. Collection LIDVID: urn:nasa:pds:lro_lola_rdr:data_gridded::1.0.',
+    url: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Alro_lola_rdr%3Adata_gridded&version=1.0',
+  },
+  {
     id: 'lola',
     title: 'Lunar Orbiter Laser Altimeter (LOLA)',
     owner: 'NASA PDS Geosciences Node',
