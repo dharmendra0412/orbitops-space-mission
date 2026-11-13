@@ -92,7 +92,9 @@ def _validate_reference(dataset: rasterio.DatasetReader) -> str:
         float(crs_parameters.get("lat_0", math.nan)), -90.0, abs_tol=1e-8
     )
     lunar_radius = math.isclose(
-        float(crs_parameters.get("a", math.nan)), 1_737_400.0, abs_tol=1e-3
+        float(crs_parameters.get("R", crs_parameters.get("a", math.nan))),
+        1_737_400.0,
+        abs_tol=1e-3
     )
     if not (projection_declared and south_polar and lunar_radius):
         raise RuntimeError(
