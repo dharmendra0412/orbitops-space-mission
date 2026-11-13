@@ -69,7 +69,7 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya SELENE LALT calibrated range archive',
     owner: 'NASA PDS Geosciences Node / JAXA',
     kind: 'DATA ARCHIVE',
-    description: 'Separate-mission laser-altimeter range and time-series products. PDS3 dataset IDs include SLN-L-LALT-3-RANGE-V1.0 and SLN-L-LALT-4-TOPO-LGT-TS-V2.0. The LALT_LGT_TS format includes geolocated longitude, latitude, elevation, ancillary spacecraft state, and a DE421/Mean Earth-Polar Axis reference sphere of 1737.4 km; the format example names an SGM100g / NAOJ_RISE orbit file. Verify the exact selected product label and orbit provenance before comparison.',
+    description: 'Separate-mission laser-altimeter range and time-series products. PDS3 dataset IDs include SLN-L-LALT-3-RANGE-V1.0 and SLN-L-LALT-4-TOPO-LGT-TS-V2.0. Daily LALT_RD tables contain internal spacecraft-clock TI tags, calibrated range in metres, return-pulse peak, laser output power, APD voltage, and instrument temperatures; they do not contain latitude/longitude. The derived LALT_LGT_TS products add geolocation using spacecraft position/attitude and DE421, but the exact per-day orbit provenance must be verified before comparison.',
     url: 'https://ode.rsl.wustl.edu/moon2/pagehelp/Content/Missions_Instruments/KAGUYA%20%28SELENE%29/LALT/Calibrated_Data.htm',
   },
   {
