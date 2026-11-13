@@ -85,41 +85,15 @@ class PdsClient:
 
     async def search_products(self, *, keywords: str, limit: int = 10) -> tuple[str, Any]:
         url = f"{PDS_SEARCH_BASE_URL}/products"
-        try:
-            async with httpx.AsyncClient(
-                timeout=self._timeout_seconds,
-                transport=self._transport,
-                follow_redirects=False,
-            ) as client:
-                response = await client.get(
-                    url,
-                    params={
-                        "keywords": keywords,
-                        "limit": limit,
-                        "fields": ["lidvid", "title"],
-                    },
-                    headers={"Accept": "application/kvp+json"},
-                )
-                response.raise_for_status()
-                payload = response.json()
-        except httpx.TimeoutException as exc:
-            raise PdsApiError("NASA PDS Search API request timed out", status_code=504) from exc
-        except httpx.HTTPStatusError as exc:
-            raise PdsApiError(
-                f"NASA PDS Search API returned HTTP {exc.response.status_code}",
-                status_code=404 if exc.response.status_code == 404 else 502,
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise PdsApiError("Could not connect to NASA PDS Search API") from exc
-        except ValueError as exc:
-            raise PdsApiError("NASA PDS Search API returned invalid JSON") from exc
-
-        return str(response.url), payload
+        return await self._get_json(
+            url=url,
+            params={"keywords": keywords, "limit": limit, "fields": ["lidvid", "title"]},
+            accept="application/kvp+json",
+        )
 
     async def list_members(self, *, identifier: str, depth: int = 1, limit: int = 100, search_after: str | None = None) -> tuple[str, Any]:
         if depth not in (1, 2):
             raise ValueError("PDS hierarchy depth must be 1 or 2")
-
         if not 1 <= limit <= 100:
             raise ValueError("PDS hierarchy page size must be between 1 and 100")
 
@@ -132,29 +106,7 @@ class PdsClient:
         }
         if search_after:
             params["search-after"] = search_after
-        try:
-            async with httpx.AsyncClient(
-                timeout=self._timeout_seconds,
-                transport=self._transport,
-                follow_redirects=False,
-            ) as client:
-                response = await client.get(url, params=params, headers={"Accept": "application/json"})
-                response.raise_for_status()
-                payload = response.json()
-        except httpx.TimeoutException as exc:
-            raise PdsApiError("NASA PDS Search API request timed out", status_code=504) from exc
-        except httpx.HTTPStatusError as exc:
-            raise PdsApiError(
-                f"NASA PDS Search API returned HTTP {exc.response.status_code}",
-                status_code=404 if exc.response.status_code == 404 else 502,
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise PdsApiError("Could not connect to NASA PDS Search API") from exc
-        except ValueError as exc:
-            raise PdsApiError("NASA PDS Search API returned invalid JSON") from exc
-
-        return str(response.url), payload
-
+        return await self._get_json(url=url, params=params, accept="application/json")
 
     async def fetch_lola_gdr_sample_label(self) -> tuple[str, str]:
         """Fetch one fixed, public LOLA PDS3 label; never accepts a caller URL."""
@@ -196,28 +148,12 @@ class PdsClient:
     async def resolve_product(self, *, identifier: str) -> tuple[str, Any]:
         encoded_identifier = quote(identifier, safe="")
         url = f"{PDS_SEARCH_BASE_URL}/products/{encoded_identifier}"
-        try:
-            async with httpx.AsyncClient(
-                timeout=self._timeout_seconds,
-                transport=self._transport,
-                follow_redirects=False,
-            ) as client:
-                response = await client.get(url, headers={"Accept": "application/vnd.nasa.pds.pds4+json"})
-                response.raise_for_status()
-                payload = response.json()
-        except httpx.TimeoutException as exc:
-            raise PdsApiError("NASA PDS Search API request timed out", status_code=504) from exc
-        except httpx.HTTPStatusError as exc:
-            raise PdsApiError(
-                f"NASA PDS Search API returned HTTP {exc.response.status_code}",
-                status_code=404 if exc.response.status_code == 404 else 502,
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise PdsApiError("Could not connect to NASA PDS Search API") from exc
-        except ValueError as exc:
-            raise PdsApiError("NASA PDS Search API returned invalid JSON") from exc
+        return await self._get_json(
+            url=url,
+            params=None,
+            accept="application/vnd.nasa.pds.pds4+json",
+        )
 
-        return str(response.url), payload
 
 def extract_next_search_after(payload: Any, *, page_limit: int | None = None) -> str | None:
     """Read the final record's harvest-time cursor when another page may exist.
