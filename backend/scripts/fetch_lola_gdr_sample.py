@@ -61,6 +61,7 @@ async def download_lola_gdr_img(
     downloaded_source: str | None = None
     attempted_sources: list[str] = []
     last_transport_error: httpx.HTTPError | None = None
+    source_failures: list[str] = []
     try:
         for source_url in SOURCE_URLS:
             attempted_sources.append(source_url)
@@ -100,16 +101,22 @@ async def download_lola_gdr_img(
             except httpx.RequestError as exc:
                 temporary_path.unlink(missing_ok=True)
                 last_transport_error = exc
+                source_failures.append(f"{source_url}: {type(exc).__name__}: {exc}")
                 continue
             except httpx.HTTPStatusError as exc:
                 temporary_path.unlink(missing_ok=True)
                 if exc.response.status_code < 500:
                     raise
                 last_transport_error = exc
+                source_failures.append(f"{source_url}: HTTP {exc.response.status_code}")
                 continue
 
         if downloaded_source is None:
-            raise RuntimeError("All fixed LOLA raster sources failed to provide a usable response") from last_transport_error
+            details = "; ".join(source_failures) or "no source returned a usable response"
+            raise RuntimeError(
+                "All fixed LOLA raster sources failed to provide a usable response. "
+                f"Attempt details: {details}"
+            ) from last_transport_error
 
         if received != expected_bytes:
             raise RuntimeError(
