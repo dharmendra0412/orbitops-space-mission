@@ -38,6 +38,20 @@ The NASA PDS catalogue currently exposes two useful but different LOLA RDR colle
 
 These counts and versions are catalogue snapshots, not live counters embedded in ORBITOPS. The gridded collection is the bounded starting point for understanding map-oriented products; the much larger calibrated collection should be sampled by a documented query rather than bulk-downloaded. Always resolve the current product label and collection membership from PDS before ingesting.
 
+## Verified LOLA south-polar GDR sample
+
+The PDS Geosciences Node's public LOLA GDR archive directory exposes an individual south-polar grid and its detached source label:
+
+- Archive directory: [LOLA GDR polar IMG products](https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/).
+- Product file: [LDEM_85S_40M.IMG](https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.img).
+- Source label: [LDEM_85S_40M.LBL](https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.lbl).
+- Directory listing reports the IMG at 115,034,112 bytes and the detached LBL at 4,986 bytes. The XML label translation is also listed alongside the pair.
+
+The detached label identifies this particular product as **PDS3**, product version **V2.0**, data set **LRO-L-LOLA-4-GDR-V1.0**. It describes a 40 m/pixel polar stereographic grid covering 85°S to 90°S, with 7,584 lines by 7,584 samples, 16-bit little-endian signed integer samples, and a source-reported scaling factor of 0.5 and offset of 1,737,400 m. It names the coordinate system as **MEAN EARTH/POLAR AXIS OF DE421**. These are label metadata values, not measurements calculated by ORBITOPS. The label's own comments distinguish height conversion from planetary-radius conversion; downstream code must preserve that distinction and must not treat the offset as a height offset.
+
+**Format distinction:** the registry collection `urn:nasa:pds:lro_lola_rdr:data_gridded::1.0` is a PDS4 collection record, but this selected archive-volume sample's detached `.LBL` declares `PDS_VERSION_ID = "PDS3"`. The repository fixture `backend/tests/fixtures/lola_ldem_85s_40m.lbl` is a transcription of the retrieved source label used to validate the conservative PDS3 metadata parser. The parser preserves source strings and units; it does not decode the 115 MB image, convert pixel values, or claim that the IMG has been downloaded. Do not infer that the PDS4 collection API returns this PDS3 volume file as a PDS4 product.
+
+This sample is suitable for parser/metadata contract testing only at this stage. Before any pixel is displayed as terrain height, ingestion must retrieve the original IMG and label from the archive, verify byte count and a source checksum (if published), validate the exact PDS label and projection conventions, and test decoding against an independent reference implementation. The 115 MB file has not been downloaded or processed by ORBITOPS.
 ## Live discovery endpoint
 
 The FastAPI service exposes:
