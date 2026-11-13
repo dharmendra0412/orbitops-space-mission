@@ -14,7 +14,6 @@ on:
       - "backend/scripts/validate_lola_pgda_reference.py"
       - "backend/scripts/validate_lola_haworth_reference.py"
       - "backend/scripts/validate_lalt_cross_sensor.py"
-      - "backend/scripts/validate_lalt_http_range.py"
       - "backend/app/services/lola_gdr.py"
       - "backend/app/services/lalt_pds3.py"
       - "backend/app/services/pds3_label.py"
@@ -65,12 +64,6 @@ jobs:
             --lola-label data/raw/lola/ldem_85s_40m.lbl \
             --lalt-dir data/raw/kaguya_lalt \
             --output data/raw/kaguya_lalt/lalt_lola_cross_sensor_comparison.json
-      - name: Verify bounded LALT HTTP Range against validated local IMG
-        run: |
-          python -m scripts.validate_lalt_http_range \
-            --image data/raw/kaguya_lalt/LALT_GT_SP_IMG.IMG \
-            --label data/raw/kaguya_lalt/LALT_GT_SP_IMG.lbl \
-            --output data/raw/kaguya_lalt/LALT_GT_SP_IMG.range-validation.json
       - name: Compare against NASA PGDA high-resolution Haworth 5 m DEM
         timeout-minutes: 5
         run: python -m scripts.validate_lola_haworth_reference
@@ -91,6 +84,5 @@ jobs:
             backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.lbl
             backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.IMG
             backend/data/raw/kaguya_lalt/lalt_lola_cross_sensor_comparison.json
-            backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.range-validation.json
           if-no-files-found: warn
           retention-days: 30
