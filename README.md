@@ -118,6 +118,10 @@ pytest -q
 
 A Docker Compose deployment is provided in [deploy/README.md](deploy/README.md). It serves the website and private FastAPI service on one origin, with Nginx routing `/api/` requests internally. Review the TLS and network exposure notes before public hosting.
 
+## Vercel deployment
+
+The primary hosting target is Vercel. The root `pyproject.toml` points Vercel's Python runtime at the existing FastAPI app, and its build script builds the Vite frontend first. When `dist/` exists, FastAPI serves the website at `/` while preserving the read-only API routes under `/api/`. This keeps the browser and API on one origin; leave `VITE_API_BASE_URL` empty and do not enable cross-origin access for the standard deployment. Follow [deploy/README.md](deploy/README.md) for the Vercel import and Preview verification steps.
+
 ## Separate-host deployment configuration
 
 The web client can call a separately hosted FastAPI service without changing source code:
