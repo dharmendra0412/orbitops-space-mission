@@ -37,6 +37,7 @@ describe('mission resource catalogue', () => {
   it('includes separate Kaguya altimetry and documents LOLA control limitations', () => {
     const lalt = missionResources.find((resource) => resource.id === 'kaguya-lalt-calibrated')
     const laltDarts = missionResources.find((resource) => resource.id === 'kaguya-lalt-range-darts')
+    const lgtTimeseries = missionResources.find((resource) => resource.id === 'kaguya-lalt-lgt-timeseries')
     const southPole = missionResources.find((resource) => resource.id === 'kaguya-lalt-south-pole')
     const usgs = missionResources.find((resource) => resource.id === 'usgs-lroc-south-pole-vv')
     const laltFormat = missionResources.find((resource) => resource.id === 'kaguya-lalt-pds3-format')
@@ -45,6 +46,9 @@ describe('mission resource catalogue', () => {
     expect(lalt?.description).toMatch(/orbit provenance/i)
     expect(lalt?.description).toContain('SLN-L-LALT-3-RANGE-V1.0')
     expect(laltDarts?.url).toContain('sln-l-lalt-3-range-v1.0')
+    expect(lgtTimeseries?.url).toContain('sln-l-lalt-4-topo-lgt-ts-v2.0')
+    expect(lgtTimeseries?.description).toMatch(/NAOJ_RISE_MAIN_ORBIT_SGM100g/)
+    expect(lgtTimeseries?.description).toMatch(/only after the orbit kernel and frame provenance are verified/i)
     expect(southPole?.description).toMatch(/LALT_SP/)
     expect(southPole?.description).toMatch(/void cells are encoded as -99/i)
     expect(laltFormat?.description).toMatch(/1\/128° latitude and 1\/32° longitude/)
