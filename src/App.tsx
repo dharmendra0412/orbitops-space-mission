@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 
 import { calculateMissionDesign, instruments, orbitOptions } from './domain/mission'
+import type { LaunchClass } from './domain/mission'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -23,7 +24,7 @@ function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
   const [selected, setSelected] = useState<string[]>(['camera', 'spectrometer', 'thermal'])
   const [orbit, setOrbit] = useState('low')
-  const [launch, setLaunch] = useState('medium')
+  const [launch, setLaunch] = useState<LaunchClass>('medium')
   const [budget, setBudget] = useState(180)
   const [showAll, setShowAll] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
