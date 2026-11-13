@@ -228,6 +228,83 @@ class PdsClient:
 
         return source_url, struct.unpack("<h", body)[0], (byte_start, byte_end)
 
+    async def fetch_lola_gdr_row_segment(
+        self,
+        *,
+        line_index: int,
+        start_sample_index: int,
+        sample_count: int,
+    ) -> tuple[str, tuple[int, ...], tuple[int, int]]:
+        """Read a bounded contiguous run of real LOLA samples from one image row."""
+        indices = (line_index, start_sample_index, sample_count)
+        if any(not isinstance(value, int) or isinstance(value, bool) for value in indices):
+            raise PdsApiError("LOLA row segment indices and count must be integers", status_code=422)
+        if not 0 <= line_index < PDS_LOLA_GDR_LINES:
+            raise PdsApiError("LOLA line index is outside the image bounds", status_code=422)
+        if not 0 <= start_sample_index < PDS_LOLA_GDR_SAMPLES:
+            raise PdsApiError("LOLA start sample index is outside the image bounds", status_code=422)
+        if not 1 <= sample_count <= 512:
+            raise PdsApiError("LOLA row segment must contain between 1 and 512 samples", status_code=422)
+        if start_sample_index + sample_count > PDS_LOLA_GDR_SAMPLES:
+            raise PdsApiError("LOLA row segment extends beyond the image bounds", status_code=422)
+
+        byte_start = line_index * PDS_LOLA_GDR_RECORD_BYTES + start_sample_index * 2
+        byte_end = byte_start + sample_count * 2 - 1
+        expected_length = sample_count * 2
+        expected_range = f"bytes {byte_start}-{byte_end}/{PDS_LOLA_GDR_IMAGE_BYTES}"
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout_seconds,
+                transport=self._transport,
+                follow_redirects=False,
+            ) as client:
+                async with client.stream(
+                    "GET",
+                    PDS_LOLA_GDR_SAMPLE_IMG_URL,
+                    headers={
+                        "Accept": "application/octet-stream",
+                        "Accept-Encoding": "identity",
+                        "Range": f"bytes={byte_start}-{byte_end}",
+                    },
+                ) as response:
+                    if response.is_redirect:
+                        raise PdsApiError("LOLA raster source redirected; refusing an unverified destination")
+                    if response.status_code != 206:
+                        if response.status_code >= 400:
+                            response.raise_for_status()
+                        raise PdsApiError(
+                            "LOLA archive did not honor the bounded row-segment Range request; full-raster download refused"
+                        )
+                    if response.headers.get("content-range", "") != expected_range:
+                        raise PdsApiError("LOLA archive returned an unexpected Content-Range for the row segment")
+                    content_length = response.headers.get("content-length")
+                    if content_length is not None and content_length != str(expected_length):
+                        raise PdsApiError("LOLA archive returned an unexpected row-segment Content-Length")
+                    body = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        body.extend(chunk)
+                        if len(body) > expected_length:
+                            raise PdsApiError("LOLA archive returned more bytes than the requested row segment")
+                    if len(body) != expected_length:
+                        raise PdsApiError("LOLA archive returned an incomplete row segment")
+                    source_url = str(response.url)
+        except PdsApiError:
+            raise
+        except httpx.TimeoutException as exc:
+            raise PdsApiError("LOLA row-segment request timed out", status_code=504) from exc
+        except httpx.HTTPStatusError as exc:
+            raise PdsApiError(
+                f"LOLA raster archive returned HTTP {exc.response.status_code}",
+                status_code=404 if exc.response.status_code == 404 else 502,
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise PdsApiError("Could not connect to the fixed NASA PDS LOLA raster source") from exc
+
+        samples = tuple(value[0] for value in struct.iter_unpack("<h", body))
+        if len(samples) != sample_count:
+            raise PdsApiError("LOLA row segment sample count does not match the requested count")
+        return source_url, samples, (byte_start, byte_end)
+
     async def resolve_product(self, *, identifier: str) -> tuple[str, Any]:
         encoded_identifier = quote(identifier, safe="")
         url = f"{PDS_SEARCH_BASE_URL}/products/{encoded_identifier}"
