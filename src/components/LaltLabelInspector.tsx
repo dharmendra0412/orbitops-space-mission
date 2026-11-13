@@ -93,6 +93,8 @@ export function LaltLabelInspector() {
           <div className="lola-pixel-provenance">
             <a href={result.source_url} target="_blank" rel="noopener noreferrer">Original detached PDS3 label <ExternalLink size={11}/></a>
             <a href="https://darts.isas.jaxa.jp/en/datasets/darts:sln-l-lalt-5-topo-gt-sp-img-v2.0" target="_blank" rel="noopener noreferrer">Official DARTS dataset record <ExternalLink size={11}/></a>
+            <a href="https://data.darts.isas.jaxa.jp/pub/pds3/sln-l-lalt-5-topo-gt-sp-img-v2.0/data/LALT_GT_SP_IMG.IMG" target="_blank" rel="noopener noreferrer">Open original 64.9 MB image (manual download) <ExternalLink size={11}/></a>
+            <a href="https://www.isas.jaxa.jp/en/researchers/data-policy/" target="_blank" rel="noopener noreferrer">JAXA data-use policy <ExternalLink size={11}/></a>
             <small>{result.validation_scope}</small>
           </div>
         </div>
