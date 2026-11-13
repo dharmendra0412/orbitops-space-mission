@@ -41,6 +41,14 @@ export const missionResources: MissionResource[] = [
     url: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Alro_lola_rdr%3Adata_gridded&version=1.0',
   },
   {
+    id: 'lola-calibrated-collection',
+    title: 'LOLA RDR Calibrated Data Collection — version 17.0',
+    owner: 'NASA Planetary Data System',
+    kind: 'DATA ARCHIVE',
+    description: 'PDS catalogue snapshot indexed 16 October 2026 lists version 17.0, updated for LRO Release 67, with 75,626 collection members. This is a large archive; inspect metadata and select a bounded product subset before retrieval.',
+    url: 'https://pds.nasa.gov/ds-view/pds/viewCollection.jsp?identifier=urn%3Anasa%3Apds%3Alro_lola_rdr%3Adata_calibrated&version=17.0',
+  },
+  {
     id: 'lola',
     title: 'Lunar Orbiter Laser Altimeter (LOLA)',
     owner: 'NASA PDS Geosciences Node',
