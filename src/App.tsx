@@ -173,15 +173,16 @@ function App() {
 
   const pdsProducts = pdsSearchResponse ? extractPdsProducts(pdsSearchResponse.response) : null
   const pdsFiles = pdsLookupResponse ? extractPdsFileManifest(pdsLookupResponse.response) : []
-  const profileHeights = lolaProfileResponse?.points.map((point) => point.height_m) ?? []
+  const profilePoints = lolaProfileResponse?.points ?? []
+  const profileHeights = profilePoints.map((point) => point.height_m)
   const profileMinHeight = profileHeights.length ? Math.min(...profileHeights) : 0
   const profileMaxHeight = profileHeights.length ? Math.max(...profileHeights) : 0
   const profileHeightRange = Math.max(profileMaxHeight - profileMinHeight, 1e-9)
-  const profilePolyline = lolaProfileResponse?.points.map((point, index) => {
-    const x = 12 + (index / Math.max(lolaProfileResponse.points.length - 1, 1)) * 776
+  const profilePolyline = profilePoints.map((point, index) => {
+    const x = 12 + (index / Math.max(profilePoints.length - 1, 1)) * 776
     const y = 190 - ((point.height_m - profileMinHeight) / profileHeightRange) * 160
     return x.toFixed(2) + ',' + y.toFixed(2)
-  }).join(' ') ?? ''
+  }).join(' ')
   let lolaPixelLocation: ReturnType<typeof lolaPixelToLatLon> | null = null
   let lolaPixelLocationError = ''
   if (pdsLabelResponse) {
@@ -581,7 +582,7 @@ function App() {
           </div>
           <div className="panel pds-search-panel">
             <div className="pds-search-heading"><div><strong>Verified LOLA south-polar label</strong><span>Fetch source metadata for one documented PDS3 GDR product</span></div><span className="resource-kind">LIVE LABEL LOOKUP</span></div>
-            <p className="pds-search-note">The original 115 MB image has been downloaded and validated in the separate source-validation workflow. This live endpoint returns the detached label only; raster pixels and terrain values are not yet served or visualized here. The LOLA GDR SIS defines HEIGHT = DN × SCALING_FACTOR and PLANETARY_RADIUS = DN × SCALING_FACTOR + OFFSET.</p>
+            <p className="pds-search-note">The original 115 MB image has been downloaded and validated in the source-validation workflow. The live app retrieves individual pixels and bounded one-row profiles from the original archive using HTTP Range requests; it does not download the full raster on each interaction. The LOLA GDR SIS defines HEIGHT = DN × SCALING_FACTOR and PLANETARY_RADIUS = DN × SCALING_FACTOR + OFFSET.</p>
             <button className="run-button" type="button" onClick={() => void fetchLolaSampleLabel()} disabled={pdsLabelLoading}>
               <Database size={15}/>{pdsLabelLoading ? 'Fetching source label…' : 'Fetch original LOLA label metadata'}
             </button>
@@ -623,10 +624,10 @@ function App() {
                 <div className="pds-results-count">PDS polar-grid coordinate lookup · zero-based pixel indices</div>
                 <div className="lola-coordinate-fields">
                   <label>Line index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" disabled={lolaPixelLoading} value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" disabled={lolaPixelLoading || lolaProfileLoading} value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
                   </label>
                   <label>Sample index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" disabled={lolaPixelLoading} value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" disabled={lolaPixelLoading} value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
                   </label>
                 </div>
                 {lolaPixelLocation ? <div className="lola-coordinate-result" aria-live="polite">
@@ -634,7 +635,7 @@ function App() {
                   <div><span>East longitude</span><strong>{lolaPixelLocation.eastLongitudeDegrees.toFixed(8)}°</strong></div>
                   <div><span>Projected X / Y</span><strong>{lolaPixelLocation.xMapMeters.toFixed(2)} m / {lolaPixelLocation.yMapMeters.toFixed(2)} m</strong></div>
                 </div> : <p className="pds-search-error" role="alert">{lolaPixelLocationError}</p>}
-                <button className="run-button lola-pixel-button" type="button" onClick={() => void fetchLolaPixel()} disabled={!lolaPixelLocation || lolaPixelLoading}>
+                <button className="run-button lola-pixel-button" type="button" onClick={() => void fetchLolaPixel()} disabled={!lolaPixelLocation || lolaPixelLoading || lolaProfileLoading}>
                   <Database size={15}/>{lolaPixelLoading ? 'Reading two source bytes…' : 'Fetch actual NASA LOLA pixel'}
                 </button>
                 {lolaPixelError && <p className="pds-search-error" role="alert">{lolaPixelError}</p>}
@@ -665,9 +666,9 @@ function App() {
                   <div className="lola-profile-heading"><span>Samples {lolaProfileResponse.start_sample_index}–{lolaProfileResponse.start_sample_index + lolaProfileResponse.sample_count - 1}</span><a href={lolaProfileResponse.source_url} target="_blank" rel="noopener noreferrer">Original PDS raster <ExternalLink size={11}/></a></div>
                   <p className="pds-search-note">{lolaProfileResponse.validation_scope} No smoothing or interpolation is applied to this plotted series.</p>
                 </div>}
-                <p className="pds-search-note">Coordinates are calculated from the retrieved PDS label and DSMAP_POLAR equations. The pixel action requests exactly two bytes from the fixed PDS archive URL using HTTP Range; it refuses servers that return the full raster instead.</p>
+                <p className="pds-search-note">Coordinates are calculated from the retrieved PDS label and DSMAP_POLAR equations. The pixel action requests exactly two bytes and the profile action requests one bounded contiguous row segment from the fixed PDS archive URL using HTTP Range; both refuse servers that return the full raster instead.</p>
               </div>
-              <p className="pds-search-note">{pdsLabelResponse.note} Values and units are source metadata; no unit conversion has been applied.</p>
+              <p className="pds-search-note">{pdsLabelResponse.note} Label fields retain their original source units; derived pixel and profile values are shown separately using the documented GDR conversions.</p>
             </div>}
           </div>
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
