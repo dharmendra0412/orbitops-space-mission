@@ -127,17 +127,33 @@ class PdsClient:
         return str(response.url), payload
 
 def extract_next_search_after(payload: Any) -> str | None:
-    """Read the documented harvest-time cursor from the final PDS result, if present."""
+    """Read the final record's documented harvest-time sort value, if supplied.
+
+    PDS responses may expose the registry field as a flattened dotted key or
+    as a nested Harvest_Info object. Only a source-provided string is returned;
+    a missing or malformed value deliberately disables further-page navigation.
+    """
     rows = payload if isinstance(payload, list) else (
         payload.get("data") if isinstance(payload, dict) and isinstance(payload.get("data"), list) else None
     )
     if not rows:
         return None
+
     last = rows[-1]
     if not isinstance(last, dict):
         return None
+
     value = last.get("ops:Harvest_Info.ops:harvest_date_time")
+    if value is None:
+        harvest_info = last.get("ops:Harvest_Info")
+        if isinstance(harvest_info, dict):
+            value = harvest_info.get("ops:harvest_date_time")
+
     if isinstance(value, list):
         value = value[-1] if value else None
-    return value if isinstance(value, str) and value else None
+    if not isinstance(value, str):
+        return None
+
+    cursor = value.strip()
+    return cursor or None
 
