@@ -36,6 +36,7 @@ type PdsMembersResponse = {
   retrieved_at: string
   identifier: string
   depth: number
+  next_search_after?: string | null
   response: unknown
 }
 
@@ -66,6 +67,8 @@ function App() {
   const [pdsMembersResponse, setPdsMembersResponse] = useState<PdsMembersResponse | null>(null)
   const [pdsMembersError, setPdsMembersError] = useState('')
   const [pdsMembersLoading, setPdsMembersLoading] = useState(false)
+  const [pdsMembersRecords, setPdsMembersRecords] = useState<import('./data/pds').PdsMemberRecord[]>([])
+  const [pdsMembersStructured, setPdsMembersStructured] = useState(true)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -130,9 +133,9 @@ function App() {
   }
 
 
-  const pdsMembers = pdsMembersResponse ? extractPdsMembers(pdsMembersResponse.response) : null
+  const pdsMembers = pdsMembersResponse ? (pdsMembersStructured ? pdsMembersRecords : null) : null
 
-  const browsePdsMembers = async (identifierValue?: string, depth = 1) => {
+  const browsePdsMembers = async (identifierValue?: string, depth = 1, searchAfter?: string) => {
     const identifier = (identifierValue ?? pdsIdentifier).trim()
     if (identifier.length < 5) {
       setPdsMembersError('Resolve or enter a PDS collection/bundle identifier first.')
@@ -142,13 +145,30 @@ function App() {
 
     setPdsMembersLoading(true)
     setPdsMembersError('')
-    setPdsMembersResponse(null)
+    if (!searchAfter) {
+      setPdsMembersResponse(null)
+      setPdsMembersRecords([])
+      setPdsMembersStructured(true)
+    }
     try {
-      const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier) + '/members?depth=' + depth)
+      const params = new URLSearchParams({ depth: String(depth), limit: '100' })
+      if (searchAfter) params.set('search_after', searchAfter)
+      const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier) + '/members?' + params.toString())
       const payload = await response.json() as PdsMembersResponse | { detail?: string }
       if (!response.ok) {
         const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS hierarchy request failed (HTTP ' + response.status + ')'
         throw new Error(message)
+      }
+      const parsedMembers = extractPdsMembers((payload as PdsMembersResponse).response)
+      setPdsMembersStructured(parsedMembers !== null)
+      if (parsedMembers) {
+        setPdsMembersRecords((current) => {
+          if (!searchAfter) return parsedMembers
+          const known = new Set(current.map((member) => member.id))
+          return [...current, ...parsedMembers.filter((member) => !known.has(member.id))]
+        })
+      } else if (!searchAfter) {
+        setPdsMembersRecords([])
       }
       setPdsIdentifier(identifier)
       setPdsMembersResponse(payload as PdsMembersResponse)
@@ -368,7 +388,7 @@ function App() {
                 : pdsMembers.length === 0
                   ? <p className="pds-empty">NASA PDS returned no child records for this identifier and hierarchy depth. Check the archive node's direct holdings.</p>
                   : <div className="pds-product-results">
-                      <div className="pds-results-count">{pdsMembers.length} child records returned in this response</div>
+                      <div className="pds-results-count">{pdsMembers.length} unique child records loaded across archive pages</div>
                       {pdsMembers.map((member) => <article className="pds-product-card" key={member.id}>
                         <strong>{member.title ?? 'Title not supplied by source'}</strong>
                         <span>{member.type ?? 'Product type not supplied'}</span>
@@ -377,6 +397,9 @@ function App() {
                         <button type="button" onClick={() => void resolvePdsProduct(member.id)}>Resolve product metadata <ArrowUpRight size={12}/></button>
                       </article>)}
                     </div>}
+              {pdsMembersResponse.next_search_after && <button className="pds-load-more" type="button" disabled={pdsMembersLoading} onClick={() => void browsePdsMembers(pdsMembersResponse.identifier, pdsMembersResponse.depth, pdsMembersResponse.next_search_after ?? undefined)}>
+                {pdsMembersLoading ? 'Loading next page…' : 'Load next 100 source records'} <ArrowUpRight size={12}/>
+              </button>}
             </div>}
           </div>
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
