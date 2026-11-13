@@ -10,6 +10,7 @@ import { instruments, orbitOptions } from './domain/catalog'
 import { missionResources } from './data/sources'
 import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts, mergePdsMembers } from './data/pds'
 import { lolaPixelToLatLon } from './data/lolaProjection'
+import { MissionBrief } from './components/MissionBrief'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -365,13 +366,14 @@ function App() {
     }
   }
 
-  const navItems = ['Research overview', 'Research categories', 'Input readiness', 'NASA data sources', 'Engineering guide']
+  const navItems = ['Research overview', 'Research categories', 'Input readiness', 'Mission brief', 'NASA data sources', 'Engineering guide']
   const goTo = (item: string) => {
     setActiveNav(item)
     setMobileMenu(false)
     if (item === 'Research categories') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
     else if (item === 'Research overview') window.scrollTo({ top: 0, behavior: 'smooth' })
     else if (item === 'Engineering guide') setShowAll(true)
+    else if (item === 'Mission brief') document.getElementById('mission-brief')?.scrollIntoView({ behavior: 'smooth' })
     else if (item === 'NASA data sources') document.getElementById('data-sources')?.scrollIntoView({ behavior: 'smooth' })
     else document.getElementById('input-readiness')?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -472,6 +474,8 @@ function App() {
             </div>
           </aside>
         </section>
+
+        <MissionBrief />
 
         <section className="section-block resources-section" id="data-sources">
           <div className="section-heading">
