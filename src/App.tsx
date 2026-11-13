@@ -161,7 +161,7 @@ function App() {
               <div className="instrument-list">{instruments.map(item => {
                 const checked = selected.includes(item.id)
                 return <button key={item.id} className={`instrument-row ${checked ? 'instrument-selected' : ''}`} onClick={() => toggleInstrument(item.id)} aria-pressed={checked}>
-                  <span className={`instrument-check ${checked ? 'checked' : ''}">{checked && <Check size={13}/>}</span>
+                  <span className={`instrument-check ${checked ? 'checked' : ''}` }>{checked && <Check size={13}/>}</span>
                   <span className="instrument-symbol"><InstrumentSymbol id={item.id}/></span>
                   <span className="instrument-info"><strong>{item.name}</strong><small>{item.purpose}</small></span>
                   <span className="instrument-specs"><b>{item.mass} kg</b><small>{item.power} W</small></span>
