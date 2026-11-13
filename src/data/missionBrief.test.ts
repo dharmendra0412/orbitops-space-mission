@@ -11,7 +11,8 @@ import {
 describe('user-authored mission brief', () => {
   it('starts empty and does not invent mission assumptions', () => {
     const draft = createEmptyMissionBrief()
-    expect(Object.values(draft).every((value) => value === '')).toBe(true)
+    expect(Object.values(draft).filter((value) => typeof value === 'string').every((value) => value === '')).toBe(true)
+    expect(draft.requirements).toEqual([])
     expect(countCompletedMissionBriefFields(draft)).toBe(0)
     expect(getMissingRequiredMissionBriefFields(draft)).toEqual([
       'Mission name',
@@ -45,7 +46,8 @@ describe('user-authored mission brief', () => {
     }))
     expect(loaded.missionName).toBe('Saved draft')
     expect(loaded.objective).toBe('')
-    expect(Object.keys(loaded)).toHaveLength(9)
+    expect(Object.keys(loaded)).toHaveLength(10)
+    expect(loaded.requirements).toEqual([])
     expect(parseMissionBriefDraft('{invalid json')).toEqual(createEmptyMissionBrief())
   })
 
@@ -56,3 +58,26 @@ describe('user-authored mission brief', () => {
       .toEqual(['missionName', 'objective', 'targetRegion'])
   })
 })
+
+
+  it('preserves user requirement rows and sanitizes unknown row fields', () => {
+    const loaded = parseMissionBriefDraft(JSON.stringify({
+      brief: {
+        requirements: [{
+          id: 'REQ-007',
+          statement: 'Measure local topography',
+          targetValue: 'Resolution TBD',
+          sourceUrl: 'https://example.org/product-label',
+          evidenceNote: 'Source link only; not validated',
+          injected: 'ignored',
+        }],
+      },
+    }))
+    expect(loaded.requirements).toEqual([{
+      id: 'REQ-007',
+      statement: 'Measure local topography',
+      targetValue: 'Resolution TBD',
+      sourceUrl: 'https://example.org/product-label',
+      evidenceNote: 'Source link only; not validated',
+    }])
+  })
