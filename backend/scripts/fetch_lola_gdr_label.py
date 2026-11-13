@@ -86,6 +86,10 @@ async def fetch_lola_gdr_label(
                     raise RuntimeError("LOLA PDS3 label exceeds the configured 1 MB limit")
                 label_buffer.extend(chunk)
         label_bytes = bytes(label_buffer)
+        if content_length is not None and len(label_bytes) != declared_length:
+            raise RuntimeError(
+                f"LOLA label Content-Length mismatch: declared {declared_length}, received {len(label_bytes)}"
+            )
         try:
             label_text = label_bytes.decode("ascii")
         except UnicodeDecodeError as exc:
