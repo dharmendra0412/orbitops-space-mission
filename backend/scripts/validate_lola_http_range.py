@@ -26,13 +26,17 @@ def validate_range_response(
     headers: httpx.Headers,
     body: bytes,
     local_prefix: bytes,
+    byte_start: int = 0,
 ) -> dict[str, Any]:
     """Require exact byte-range semantics and equality with the verified local IMG."""
+    if not isinstance(byte_start, int) or isinstance(byte_start, bool) or byte_start < 0 or byte_start + 1 >= EXPECTED_IMAGE_BYTES:
+        raise RuntimeError("LOLA byte offset is outside the fixed raster")
     if status_code != 206:
         raise RuntimeError(
             f"LOLA archive did not honor HTTP Range (expected 206, received {status_code})"
         )
-    expected_content_range = f"bytes 0-1/{EXPECTED_IMAGE_BYTES}"
+    byte_end = byte_start + 1
+    expected_content_range = f"bytes {byte_start}-{byte_end}/{EXPECTED_IMAGE_BYTES}"
     if headers.get("content-range") != expected_content_range:
         raise RuntimeError("LOLA archive returned an unexpected Content-Range")
     content_length = headers.get("content-length")
@@ -49,15 +53,10 @@ def validate_range_response(
         "source_url": SOURCE_URL,
         "http_status": status_code,
         "content_range": expected_content_range,
+        "byte_range_inclusive": {"start": byte_start, "end": byte_end},
         "bytes_returned": len(body),
-        "first_sample_dn": struct.unpack("<h", body)[0],
+        "sample_dn": struct.unpack("<h", body)[0],
         "matches_validated_local_img": True,
-        "retrieved_at": datetime.now(timezone.utc).isoformat(),
-        "scope": (
-            "Confirms that the fixed PDS archive supports an exact two-byte HTTP Range "
-            "request and that the returned first sample matches the fully downloaded and "
-            "validated local IMG. It does not establish geodetic accuracy."
-        ),
     }
 
 
@@ -69,42 +68,74 @@ async def validate_source_range(
     image_path = Path(image_path)
     if image_path.stat().st_size != EXPECTED_IMAGE_BYTES:
         raise RuntimeError("Local LOLA IMG does not have the expected validated product size")
-    with image_path.open("rb") as image:
-        local_prefix = image.read(2)
 
+    sample_points = (
+        (0, 0),
+        (3791, 3791),
+        (3791, 3792),
+        (3792, 3791),
+        (3792, 3792),
+        (0, 7583),
+        (7583, 0),
+        (7583, 7583),
+    )
     owns_client = client is None
     if client is None:
         client = httpx.AsyncClient(
             timeout=httpx.Timeout(30.0, connect=15.0),
             follow_redirects=False,
         )
+    samples: list[dict[str, Any]] = []
     try:
-        async with client.stream(
-            "GET",
-            SOURCE_URL,
-            headers={
-                "Accept": "application/octet-stream",
-                "Accept-Encoding": "identity",
-                "Range": "bytes=0-1",
-            },
-        ) as response:
-            if response.is_redirect:
-                raise RuntimeError("LOLA range source redirected; refusing an unverified destination")
-            body = bytearray()
-            if response.status_code == 206:
-                async for chunk in response.aiter_bytes():
-                    body.extend(chunk)
-                    if len(body) > 2:
-                        raise RuntimeError("LOLA archive returned more than two bytes for the range request")
-            return validate_range_response(
-                status_code=response.status_code,
-                headers=response.headers,
-                body=bytes(body),
-                local_prefix=local_prefix,
-            )
+        with image_path.open("rb") as image:
+            for line_index, sample_index in sample_points:
+                byte_start = line_index * 15_168 + sample_index * 2
+                image.seek(byte_start)
+                local_sample = image.read(2)
+                if len(local_sample) != 2:
+                    raise RuntimeError("Local validated IMG ended before a requested sample offset")
+                async with client.stream(
+                    "GET",
+                    SOURCE_URL,
+                    headers={
+                        "Accept": "application/octet-stream",
+                        "Accept-Encoding": "identity",
+                        "Range": f"bytes={byte_start}-{byte_start + 1}",
+                    },
+                ) as response:
+                    if response.is_redirect:
+                        raise RuntimeError("LOLA range source redirected; refusing an unverified destination")
+                    body = bytearray()
+                    if response.status_code == 206:
+                        async for chunk in response.aiter_bytes():
+                            body.extend(chunk)
+                            if len(body) > 2:
+                                raise RuntimeError("LOLA archive returned more than two bytes for the range request")
+                    sample = validate_range_response(
+                        status_code=response.status_code,
+                        headers=response.headers,
+                        body=bytes(body),
+                        local_prefix=local_sample,
+                        byte_start=byte_start,
+                    )
+                sample.update({"line_index": line_index, "sample_index": sample_index})
+                samples.append(sample)
     finally:
         if owns_client:
             await client.aclose()
+
+    return {
+        "source_url": SOURCE_URL,
+        "samples_checked": len(samples),
+        "samples": samples,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "scope": (
+            "Confirms that the fixed PDS archive supports exact two-byte HTTP Range "
+            "requests at center-adjacent, quadrant, and image-edge locations, and that "
+            "each returned sample matches the fully downloaded and validated local IMG. "
+            "It does not establish geodetic accuracy."
+        ),
+    }
 
 
 def main() -> None:
