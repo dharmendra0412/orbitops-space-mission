@@ -213,16 +213,17 @@ def lola_polar_pixel_to_latlon(
     if not math.isclose(line_offset, expected_offset) or not math.isclose(sample_offset, expected_offset):
         raise LolaRasterError("Projection offsets do not match the catalog's pixel-center convention")
 
-    # NASA HLS Lunar Thermal Analysis Guidebook (2021), section 9.5.1,
-    # reproduces the DSMAP_POLAR.CAT pixel-registered equations:
-    # X=(I-N/2-0.5)*scale; Y=(J-N/2-0.5)*scale;
-    # LON=90+atan2(Y, X). I is the 1-based row, J the 1-based column.
-    # Convert 0-based Python indices to those 1-based catalog coordinates.
-    x_on_map = (line_index - line_offset) * map_scale
-    y_on_map = (sample_index - sample_offset) * map_scale
+    # PDS DSMAP_POLAR.CAT: I is the 1-based sample coordinate and J
+    # is the 1-based line coordinate. For the southern hemisphere NS=-1:
+    # X=(I-N/2-0.5)*MAP_SCALE
+    # Y=(J-N/2-0.5)*MAP_SCALE*NS
+    # LON=atan2(X,Y), LAT=-90+2*atan(0.5*R/1737400).
+    # Convert the 0-based sample/line indices to the catalog's pixel centers.
+    x_on_map = (sample_index - sample_offset) * map_scale
+    y_on_map = (line_index - line_offset) * map_scale * -1.0
     radial_distance = math.hypot(x_on_map, y_on_map)
     latitude = -90.0 + math.degrees(
         2.0 * math.atan(0.5 * radial_distance / LOLA_MEAN_EARTH_REFERENCE_RADIUS_M)
     )
-    longitude = (90.0 + math.degrees(math.atan2(y_on_map, x_on_map))) % 360.0
+    longitude = math.degrees(math.atan2(x_on_map, y_on_map)) % 360.0
     return latitude, longitude
