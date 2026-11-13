@@ -37,6 +37,33 @@ type PdsLookupResponse = {
   response: unknown
 }
 
+type PdsProductSummary = {
+  lidvid: string
+  title?: string
+  product_class?: string
+  start_date_time?: string
+  stop_date_time?: string
+}
+
+function extractPdsProducts(response: unknown): { hits?: number; products: PdsProductSummary[] } | null {
+  if (!response || typeof response !== 'object' || !('data' in response) || !Array.isArray(response.data)) return null
+  const summary = 'summary' in response && response.summary && typeof response.summary === 'object'
+    ? response.summary as Record<string, unknown>
+    : {}
+  const products = response.data.flatMap((item): PdsProductSummary[] => {
+    if (!item || typeof item !== 'object' || !('lidvid' in item) || typeof item.lidvid !== 'string') return []
+    const row = item as Record<string, unknown>
+    return [{
+      lidvid: row.lidvid,
+      title: typeof row.title === 'string' ? row.title : undefined,
+      product_class: typeof row.product_class === 'string' ? row.product_class : undefined,
+      start_date_time: typeof row.start_date_time === 'string' ? row.start_date_time : undefined,
+      stop_date_time: typeof row.stop_date_time === 'string' ? row.stop_date_time : undefined,
+    }]
+  })
+  return { hits: typeof summary.hits === 'number' ? summary.hits : undefined, products }
+}
+
 function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
   const [selected, setSelected] = useState<string[]>([])
@@ -55,6 +82,8 @@ function App() {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
 
+
+  const pdsProducts = pdsSearchResponse ? extractPdsProducts(pdsSearchResponse.response) : null
 
   const searchPds = async () => {
     const keywords = pdsKeywords.trim()
@@ -84,8 +113,8 @@ function App() {
   }
 
 
-  const resolvePdsProduct = async () => {
-    const identifier = pdsIdentifier.trim()
+  const resolvePdsProduct = async (identifierValue?: string) => {
+    const identifier = (identifierValue ?? pdsIdentifier).trim()
     if (identifier.length < 5) {
       setPdsLookupError('Enter a PDS product LID or LIDVID.')
       setPdsLookupResponse(null)
@@ -102,6 +131,7 @@ function App() {
         const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS product lookup failed (HTTP ' + response.status + ')'
         throw new Error(message)
       }
+      setPdsIdentifier(identifier)
       setPdsLookupResponse(payload as PdsLookupResponse)
     } catch (error) {
       setPdsLookupError(error instanceof Error ? error.message : 'Unable to resolve the PDS product identifier.')
@@ -246,7 +276,18 @@ function App() {
             {pdsSearchResponse && <div className="pds-results">
               <div className="pds-results-meta"><span>{pdsSearchResponse.source}</span><span>Retrieved {new Date(pdsSearchResponse.retrieved_at).toLocaleString()}</span></div>
               <a href={pdsSearchResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream query <ExternalLink size={12}/></a>
-              <pre>{JSON.stringify(pdsSearchResponse.response, null, 2)}</pre>
+              {pdsProducts ? <div className="pds-product-results">
+                <div className="pds-results-count">{pdsProducts.hits === undefined ? 'Returned products' : pdsProducts.hits + ' matching products reported by PDS'}</div>
+                {pdsProducts.products.length === 0
+                  ? <p className="pds-empty">The PDS API returned no product records for this query. Check the mission-specific archive index; the Search API may not contain every holding.</p>
+                  : pdsProducts.products.map((product) => <article className="pds-product-card" key={product.lidvid}>
+                      <strong>{product.title ?? 'Title not supplied by source'}</strong>
+                      <span>{product.product_class ?? 'PDS product class not supplied'}</span>
+                      <code>{product.lidvid}</code>
+                      {(product.start_date_time || product.stop_date_time) && <small>{product.start_date_time ?? 'Start time not supplied'} — {product.stop_date_time ?? 'Stop time not supplied'}</small>}
+                      <button type="button" onClick={() => void resolvePdsProduct(product.lidvid)}>Resolve source metadata <ArrowUpRight size={12}/></button>
+                    </article>)}
+              </div> : <pre>{JSON.stringify(pdsSearchResponse.response, null, 2)}</pre>}
             </div>}
           </div>
           <div className="resource-grid">
