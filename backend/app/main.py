@@ -8,12 +8,7 @@ from fastapi import FastAPI, HTTPException, Path, Query
 from app.services.pds_client import PdsApiError, PdsClient, extract_next_search_after
 from app.services.pds3_label import PdsLabelError, parse_pds3_label
 from app.services.lalt_client import LaltApiError, LaltClient
-from app.services.lalt_pds3 import (
-    LaltPdsError,
-    decode_lalt_pc_real_sample,
-    lalt_grid_node_to_lat_lon,
-    parse_and_validate_lalt_gt_sp_label,
-)
+from app.services.lalt_pds3 import LaltPdsError, parse_and_validate_lalt_gt_sp_label
 from app.services.lola_gdr import (
     LolaRasterError,
     lola_dn_to_height_m,
@@ -288,54 +283,5 @@ async def get_kaguya_lalt_gt_sp_label() -> dict[str, Any]:
             "This is the PDS3 LALT_GT_SP_IMG interpolated south-polar grid, derived from "
             "LALT_LGT_TS by spherical interpolation. It is not raw laser-shot data or "
             "independent geodetic ground truth."
-        ),
-    }
-
-
-@app.get("/api/v1/pds3/kaguya/lalt/gt-sp/pixel")
-async def get_kaguya_lalt_gt_sp_pixel(
-    line_index: Annotated[int, Query(ge=0, le=1_407)],
-    sample_index: Annotated[int, Query(ge=0, le=11_519)],
-) -> dict[str, Any]:
-    """Retrieve one real LALT interpolated-grid sample using an exact four-byte Range."""
-    try:
-        label_url, label_text = await lalt_client.fetch_gt_sp_label()
-        metadata = parse_and_validate_lalt_gt_sp_label(label_text)
-        raster_url, raw_bytes, byte_range = await lalt_client.fetch_gt_sp_sample(
-            line_index=line_index,
-            sample_index=sample_index,
-        )
-        elevation_km = decode_lalt_pc_real_sample(raw_bytes)
-        latitude, longitude = lalt_grid_node_to_lat_lon(line_index, sample_index)
-    except LaltApiError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-    except LaltPdsError as exc:
-        raise HTTPException(status_code=502, detail=f"JAXA LALT source metadata or sample failed validation: {exc}") from exc
-
-    return {
-        "source": "JAXA / DARTS SELENE Data Archive",
-        "source_url": raster_url,
-        "label_source_url": label_url,
-        "retrieved_at": datetime.now(timezone.utc).isoformat(),
-        "dataset_id": metadata["dataset_id"],
-        "product_id": metadata["product_id"],
-        "line_index": line_index,
-        "sample_index": sample_index,
-        "byte_range_inclusive": {"start": byte_range[0], "end": byte_range[1]},
-        "raw_sample_bytes_hex": raw_bytes.hex(),
-        "elevation_km": elevation_km,
-        "elevation_m": elevation_km * 1000.0 if elevation_km is not None else None,
-        "is_dummy": elevation_km is None,
-        "planetocentric_latitude_degrees": latitude,
-        "east_longitude_degrees": longitude,
-        "coordinate_reference": metadata["coordinate_system"],
-        "reference_sphere_radius_km": metadata["reference_sphere_radius_km"],
-        "units": {"elevation": "km", "elevation_converted": "m"},
-        "validation_scope": (
-            "One bounded four-byte sample retrieved using an exact HTTP 206 Range response. "
-            "This PDS3 product is a spherical-interpolation grid derived from LALT_LGT_TS, "
-            "not a raw laser shot. It is a cross-sensor comparison candidate, not independent "
-            "geodetic ground truth; orbit/frame provenance and interpolation uncertainty remain "
-            "relevant."
         ),
     }
