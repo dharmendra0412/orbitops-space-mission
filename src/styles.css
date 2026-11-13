@@ -59,6 +59,17 @@
 .pds-file-row span,.pds-file-row small{font-size:8px;color:#90a2b8}
 .pds-file-row code{font-size:8px;color:#8bd5ef;overflow-wrap:anywhere}
 
+.lola-coordinate-tool{display:grid;gap:10px;margin-top:13px;padding:12px;background:#0d1928;border:1px solid #2a4057;border-radius:6px}
+.lola-coordinate-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lola-coordinate-fields label{display:grid;gap:5px;color:#a7b7ca;font-size:8px}
+.lola-coordinate-fields input{width:100%;min-width:0;padding:8px 9px;background:#091321;border:1px solid #31465d;border-radius:4px;color:#e3edf8;font:10px 'DM Mono',monospace}
+.lola-coordinate-fields input:focus{outline:1px solid #67c9ed;border-color:#67c9ed}
+.lola-coordinate-result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.lola-coordinate-result>div{display:grid;gap:4px;padding:9px;background:#102238;border:1px solid #29445d;border-radius:4px;min-width:0}
+.lola-coordinate-result>div:last-child{grid-column:1/-1}
+.lola-coordinate-result span{font-size:8px;color:#8fa3b9}
+.lola-coordinate-result strong{font:10px 'DM Mono',monospace;color:#9de3f8;overflow-wrap:anywhere}
+
 .pds-load-more{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:8px 11px;border:1px solid #38536c;border-radius:4px;background:#102238;color:#a3e2f8;font:9px 'Manrope',sans-serif;cursor:pointer}
 .pds-load-more:disabled{opacity:.55;cursor:wait}
 
