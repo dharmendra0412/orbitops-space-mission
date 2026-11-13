@@ -161,6 +161,17 @@ def validate_against_pgda(
             "product_page": PGDA_PRODUCT_PAGE,
             "remote_cog_url": PGDA_REFERENCE_URL,
             "reference_frame": "MOON_ME / DE421 as stated by the PGDA product page",
+            "embedded_crs_definition": (
+                "Moon (2015) - Sphere / Ocentric / South Polar, IAU 30100, "
+                "as read from the GeoTIFF WKT"
+            ),
+            "frame_reconciliation_status": (
+                "The product page declares MOON_ME / DE421, while the embedded WKT "
+                "names the IAU 30100 Moon (2015) spherical CRS. This workflow records "
+                "both declarations but does not independently establish their frame "
+                "equivalence; treat residual statistics as exploratory pending a "
+                "documented frame transformation/reconciliation."
+            ),
             "interpretation": (
                 "Separately adjusted and processed LOLA reference DEM. This is a "
                 "cross-product geodetic/height comparison, not an independent sensor "
@@ -188,6 +199,7 @@ def validate_against_pgda(
         "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         "limitations": [
             "The PGDA product is a separately adjusted LOLA DEM, not an independent instrument dataset.",
+            "The product page declares MOON_ME / DE421, but the embedded GeoTIFF WKT names IAU 30100 Moon (2015); explicit frame equivalence remains to be reconciled.",
             "The comparison samples four bounded 512x512 windows rather than the full source raster.",
             "The PGDA COG is read by HTTP range requests; the full 685 MB file is not downloaded.",
             "Bilinear resampling is used to align the reference DEM to the PDS source grid.",
