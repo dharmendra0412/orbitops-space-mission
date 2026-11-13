@@ -88,6 +88,8 @@ type LolaProfileResponse = {
   line_index: number
   start_sample_index: number
   sample_count: number
+  sample_spacing_m: number
+  profile_span_m: number
   byte_range_inclusive: { start: number; end: number }
   coordinate_reference: string
   points: Array<{
@@ -656,13 +658,13 @@ function App() {
                 </div>
                 {lolaProfileError && <p className="pds-search-error" role="alert">{lolaProfileError}</p>}
                 {lolaProfileResponse && <div className="lola-profile-panel">
-                  <div className="lola-profile-heading"><strong>LOLA source elevation profile</strong><span>{lolaProfileResponse.sample_count} original samples · line {lolaProfileResponse.line_index}</span></div>
-                  <svg className="lola-profile-chart" viewBox="0 0 800 220" role="img" aria-label="Source-derived LOLA elevation profile in metres, with no interpolation">
+                  <div className="lola-profile-heading"><strong>LOLA source elevation profile</strong><span>{lolaProfileResponse.sample_count} original samples · line {lolaProfileResponse.line_index} · {lolaProfileResponse.sample_spacing_m} m/pixel</span></div>
+                  <svg className="lola-profile-chart" viewBox="0 0 800 220" role="img" aria-label={`Source-derived LOLA elevation profile in metres, sampled every ${lolaProfileResponse.sample_spacing_m} metres, with no interpolation`}>
                     <line x1="12" y1="190" x2="788" y2="190" stroke="#344b62" strokeWidth="1"/>
                     <line x1="12" y1="30" x2="12" y2="190" stroke="#344b62" strokeWidth="1"/>
                     <polyline points={profilePolyline} fill="none" stroke="#8bd5ef" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
                   </svg>
-                  <div className="lola-profile-range"><span>Min {profileMinHeight.toFixed(2)} m</span><span>Max {profileMaxHeight.toFixed(2)} m</span></div>
+                  <div className="lola-profile-range"><span>Min {profileMinHeight.toFixed(2)} m</span><span>Max {profileMaxHeight.toFixed(2)} m</span><span>Span {lolaProfileResponse.profile_span_m.toFixed(2)} m</span></div>
                   <div className="lola-profile-heading"><span>Samples {lolaProfileResponse.start_sample_index}–{lolaProfileResponse.start_sample_index + lolaProfileResponse.sample_count - 1}</span><a href={lolaProfileResponse.source_url} target="_blank" rel="noopener noreferrer">Original PDS raster <ExternalLink size={11}/></a></div>
                   <p className="pds-search-note">{lolaProfileResponse.validation_scope} No smoothing or interpolation is applied to this plotted series.</p>
                 </div>}
