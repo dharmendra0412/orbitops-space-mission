@@ -56,3 +56,16 @@ def test_upstream_not_found_is_not_reported_as_empty_success(monkeypatch):
 
     response = client.get("/api/v1/pds/products/urn:nasa:pds:missing")
     assert response.status_code == 404
+
+def test_product_lookup_endpoint_returns_upstream_metadata_and_provenance(monkeypatch):
+    monkeypatch.setattr(api, "pds_client", StubPdsClient())
+    client = TestClient(api.app)
+
+    identifier = "urn:nasa:pds:example::1.0"
+    response = client.get("/api/v1/pds/products/" + identifier)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["identifier"] == identifier
+    assert payload["response"] == {"lidvid": identifier}
+    assert payload["retrieved_at"]
