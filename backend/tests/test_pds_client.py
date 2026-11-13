@@ -13,7 +13,7 @@ async def test_search_preserves_upstream_json_and_query_parameters():
         assert request.url.params["keywords"] == "LOLA"
         assert request.url.params["limit"] == "5"
         assert request.headers["accept"] == "application/kvp+json"
-        assert request.url.params.get_list("fields") == ["lidvid", "title", "product_class", "start_date_time", "stop_date_time"]
+        assert request.url.params.get_list("fields") == ["lidvid", "title"]
         return httpx.Response(200, json=expected_payload)
 
     client = PdsClient(transport=httpx.MockTransport(handler))
