@@ -54,16 +54,23 @@ The detached label identifies this particular product as **PDS3**, product versi
 This sample is suitable for parser/metadata contract testing only at this stage. Before any pixel is displayed as terrain height, ingestion must retrieve the original IMG and label from the archive, verify byte count and a source checksum (if published), validate the exact PDS label and projection conventions, and test decoding against an independent reference implementation. The 115 MB file has not been downloaded or processed by ORBITOPS.
 
 
-### Interpretation hold: LOLA GDR height conversion
+### ### Resolved LOLA GDR height and polar-grid conventions
 
-The source material is not internally consistent enough to authorize an elevation calculation for `LDEM_85S_40M.IMG`:
+The selected product label declares `IMAGE.NAME = HEIGHT`, `SAMPLE_TYPE = LSB_INTEGER`, `SAMPLE_BITS = 16`, `SCALING_FACTOR = 0.5`, and `OFFSET = 1737400.`. The product-family interpretation is supported by two matching authoritative references:
 
-- The selected 2017 PDS3 label has `IMAGE.NAME = HEIGHT`, describes height relative to a reference radius, and records `SCALING_FACTOR = 0.5` and `OFFSET = 1737400.`.
-- The [PDS Geosciences Node LOLA FAQ](https://pds-geosciences.wustl.edu/missions/lro/lola_faq.htm) says `HEIGHT = (DATA VALUE * SCALING_FACTOR) + OFFSET`.
-- The [PDS Orbital Data Explorer GDRDEM reference](https://ode.rsl.wustl.edu/MArs/pagehelp/Content/Missions_Instruments/Lunar%20Reconnaissance%20Orbiter%20(LRO)/LOLA/GDR/GDRDEM.htm) says `HEIGHT = DN * SCALING_FACTOR`, and separately says `PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET`.
-- The [LOLA RDR SIS v2.2 sample GDR label](https://science.nasa.gov/wp-content/uploads/2024/01/lola-rdrsis.pdf) describes a different older product with `IMAGE.NAME = PLANETARY_RADIUS`, unsigned samples, a different scaling factor, and a different projection. It must not be transplanted as the selected product's conversion rule.
+- The [LOLA RDR/GDR Software Interface Specification, section 5.4](https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/document/rdrsis.htm) gives a GDR example in the same `LRO-L-LOLA-4-GDR-V1.0` data set, product version V2.0, with the same `IMAGE.NAME = HEIGHT`, signed 16-bit little-endian samples, scaling factor 0.5, and offset 1737400 m. Its explicit conversion note defines `HEIGHT = DN * SCALING_FACTOR`; it separately defines `PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET`. It also states that planetopotential topography requires subtracting a geoid radius.
+- The [PDS Orbital Data Explorer GDRDEM reference](https://ode.rsl.wustl.edu/MArs/pagehelp/Content/Missions_Instruments/Lunar%20Reconnaissance%20Orbiter%20(LRO)/LOLA/GDR/GDRDEM.htm) independently repeats the same distinction for LOLA GDRDEM products.
+- The [PDS Geosciences Node FAQ](https://pds-geosciences.wustl.edu/missions/lro/lola_faq.htm) gives a generic formula that adds OFFSET to HEIGHT. That statement conflicts with the GDR-specific SIS and GDRDEM documentation above; ORBITOPS records the discrepancy but follows the more specific GDR product definition. OFFSET is not added to HEIGHT.
 
-Until the exact product's archive-volume SIS/catalogue and an independently produced reference value establish the intended interpretation, ORBITOPS must expose only the raw label metadata. It must not apply either formula, label a computed value as elevation, or present a terrain visualization derived from unvalidated pixels.
+Accordingly, the documented conversions for this GDR product family are:
+
+- Height/elevation relative to the reference sphere: `HEIGHT_m = DN * 0.5`.
+- Planetary radius: `RADIUS_m = DN * 0.5 + 1,737,400`.
+- Planetopotential topography is not derivable from this raster alone; it additionally requires a matching geoid-radius model and reference.
+
+The official [DSMAP_POLAR.CAT](https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/catalog/dsmap_polar.cat) supplies the exact polar stereographic equations and pixel-center convention for data set `LRO-L-LOLA-4-GDR-V1.0`. For the southern hemisphere it defines `NS = -1`, `X = (I - N/2 - 0.5) * MAP_SCALE`, `Y = (J - N/2 - 0.5) * MAP_SCALE * NS`, `R = sqrt(X^2 + Y^2)`, `LON = atan2(X,Y) * 180/pi`, and `LAT = -90 + 2*atan(0.5*R/1737400) * 180/pi`. The implementation uses the source label's projection offsets and map scale, and rejects unsupported coordinate references or non-matching projection parameters.
+
+This resolves the formula selection, not the data-ingestion gate. The 115 MB IMG has not been downloaded, checksum-verified, decoded, or compared against an independent pixel reference. The decoder and projection functions added to the backend are isolated and tested against small synthetic byte buffers and the source catalog equations; they are not wired to the public UI or an endpoint that claims to display terrain. No actual terrain pixels, elevations, radii, or derived topography are currently displayed by ORBITOPS.
 
 ## Live discovery endpoint
 
