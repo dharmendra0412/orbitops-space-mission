@@ -25,12 +25,19 @@ class StubPixelClient:
             dn += 1
         return PDS_LOLA_GDR_SAMPLE_IMG_URL, dn, (byte_start, byte_start + 1)
 
+    async def fetch_lola_gdr_row_segment(self, *, line_index: int, start_sample_index: int, sample_count: int):
+        values = tuple(self.samples[(line_index, start_sample_index + offset)] for offset in range(sample_count))
+        byte_start = line_index * PDS_LOLA_GDR_RECORD_BYTES + start_sample_index * 2
+        return PDS_LOLA_GDR_SAMPLE_IMG_URL, values, (byte_start, byte_start + sample_count * 2 - 1)
+
 
 def make_sparse_lola_image(path: Path) -> dict[tuple[int, int], int]:
     samples = {
         point: -1295 - index
         for index, point in enumerate(SAMPLE_POINTS)
     }
+    for offset in range(2, 8):
+        samples[(3791, 3791 + offset)] = -12000 + offset
     with path.open("wb") as image:
         image.truncate(PDS_LOLA_GDR_IMAGE_BYTES)
         for (line_index, sample_index), dn in samples.items():
@@ -51,6 +58,8 @@ async def test_range_validation_exercises_eight_live_api_offsets_and_matches_loc
     assert [ (sample["line_index"], sample["sample_index"]) for sample in report["samples"] ] == list(SAMPLE_POINTS)
     assert all(sample["matches_validated_local_img"] for sample in report["samples"])
     assert client.calls == list(SAMPLE_POINTS)
+    assert report["profile_segment"]["sample_count"] == 8
+    assert report["profile_segment"]["matches_validated_local_img"] is True
 
 
 @pytest.mark.asyncio
