@@ -30,7 +30,7 @@ The source-validation workflow passed in [run #43416474484](https://github.com/d
 
 ### 1. Independent geodetic and cross-sensor validation
 
-- Characterize the raw Kaguya LALT calibrated range products, archived orbit solutions, time systems, and reference frames beyond the currently inspected interpolated grid.
+- Resolve the exact daily LALT_LGT_TS product and orbit file/version corresponding to the validated 2008-01-05 raw range day; do not assume the example SGM100g kernel is equivalent to the archived SGMH candidate.
 - Find a source-supported bounded access path or a reviewed persistent-cache deployment design before exposing LALT grid pixels; do not download the 64.9 MB image for each user click.
 - Convert the LALT `TI` clock tags to ET with the corrected SCLK kernel, verify SPK/CK coverage and frame IDs for every selected record, and reconstruct a bounded sample of raw LALT footprints using the SGMH two-way-tracking orbit candidate.
 - Compare reconstructed footprints/ranges with the published LALT_LGT_TS product and the LOLA source while preserving orbit, attitude, instrument, and measurement uncertainty; do not treat the SGMH solution as independent absolute ground truth.
