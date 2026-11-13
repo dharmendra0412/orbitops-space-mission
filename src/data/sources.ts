@@ -69,15 +69,23 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya SELENE LALT calibrated range archive',
     owner: 'NASA PDS Geosciences Node / JAXA',
     kind: 'DATA ARCHIVE',
-    description: 'Separate-mission laser-altimeter range and time-series products. The instrument ranges from orbit at 1 Hz with a stated range precision within ±5 m; verify the selected product label, orbit solution, time system, and frame before deriving or comparing elevations.',
+    description: 'Separate-mission laser-altimeter range and time-series products. PDS3 dataset IDs include SLN-L-LALT-3-RANGE-V1.0 and SLN-L-LALT-4-TOPO-LGT-TS-V2.0. The range archive reports 1 Hz measurements and ±5 m range precision; verify the selected product label, orbit solution, time system, and frame before deriving or comparing elevations.',
     url: 'https://ode.rsl.wustl.edu/moon2/pagehelp/Content/Missions_Instruments/KAGUYA%20%28SELENE%29/LALT/Calibrated_Data.htm',
+  },
+  {
+    id: 'kaguya-lalt-range-darts',
+    title: 'SELENE LALT range dataset on DARTS',
+    owner: 'JAXA / DARTS ISAS',
+    kind: 'DATASET RECORD',
+    description: 'Primary dataset landing page for darts:sln-l-lalt-3-range-v1.0. Reports temporal coverage from 2007-12-30 to 2009-06-10 and range precision within ±5 m. The derived surface position still depends on orbit and frame provenance.',
+    url: 'https://darts.isas.jaxa.jp/en/datasets/darts:sln-l-lalt-3-range-v1.0/',
   },
   {
     id: 'kaguya-lalt-south-pole',
     title: 'Kaguya LALT south-pole topographic grid',
     owner: 'JAXA Kaguya Mission',
     kind: 'DATASET GUIDE',
-    description: 'JAXA-published south-pole topographic grid and readme downloads. The source documents void cells encoded as -99; inspect the readme, datum, projection, and orbit-processing history before any cross-product comparison.',
+    description: 'JAXA-published south-pole topographic grid (PDS3 dataset SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0) and readme downloads. The source documents void cells encoded as -99; inspect the readme, datum, projection, and orbit-processing history before any cross-product comparison.'
     url: 'https://www.kaguya.jaxa.jp/en/science/LALT/The_lunar_topographic_data_e.htm',
   },
   {
