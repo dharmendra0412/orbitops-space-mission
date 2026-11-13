@@ -29,7 +29,7 @@ The FastAPI service exposes:
 - `GET /api/v1/pds/search?keywords=LOLA&limit=10` — forwards a keyword query to the NASA PDS Search API.
 - `GET /api/v1/pds/products/{identifier}` — resolves a PDS product LID/LIDVID.
 
-The service returns the upstream JSON unchanged under `response`, plus the exact request URL, search parameters, and retrieval timestamp. It does not download the linked product files, invent a result when the API returns none, or claim that all PDS archives are indexed. A successful metadata search is discovery only, not dataset ingestion.
+The search request asks for the `application/kvp+json` representation and selected source fields (`lidvid`, `title`, `product_class`, `start_date_time`, and `stop_date_time`) as documented by PDS. The service returns the upstream JSON unchanged under `response`, plus the exact request URL, search parameters, and retrieval timestamp. It does not download the linked product files, invent a result when the API returns none, or claim that all PDS archives are indexed. A successful metadata search is discovery only, not dataset ingestion.
 
 ## Integration requirements
 
