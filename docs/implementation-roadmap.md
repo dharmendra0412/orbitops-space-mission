@@ -20,7 +20,7 @@ Every numerical source-derived value must carry its source product, source URL, 
 - Fixed-source JAXA DARTS Kaguya LALT PDS3 label endpoint with strict product-layout validation and an explicit interpolated-grid caveat. A live pixel endpoint is blocked because DARTS did not honor HTTP Range for a four-byte sample request; the UI therefore exposes label metadata only.
 - Real-source Kaguya LALT south-polar grid download and 7.37 million-cell cross-product comparison against LOLA; this is a consistency check, not independent geodetic ground truth.
 - A user-authored mission brief builder with browser-local autosave, JSON import/export, and a requirement matrix for statements, target/units, source URLs, and evidence notes. Source links are explicitly marked as not independently validated.
-- API and web tests, dependency audits, typechecks, production builds, and data-provenance documentation.
+- API and web tests, Playwright browser tests for mission-brief persistence/import/export and the LALT label-only UI, dependency audits, typechecks, production builds, and data-provenance documentation.
 
 The source-validation workflow passed in [run #43416474484](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484); retained evidence is in [artifact #14031861899](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484/artifacts/14031861899).
 
@@ -53,7 +53,7 @@ The source-validation workflow passed in [run #43416474484](https://github.com/d
 
 ### 4. Product hardening and release
 
-- Add end-to-end tests for PDS search, LOLA and LALT label retrieval, pixel lookup, and row-profile workflows.
+- Extend browser-level end-to-end tests to cover live PDS search, LOLA label/pixel/profile workflows, and upstream failure states. The current Playwright suite covers mission-brief persistence/import/export and the LALT label-only UI.
 - Test upstream timeouts, rate limits, malformed responses, redirects, range rejection, and source unavailability.
 - Review accessibility, responsive layouts, API limits, observability, deployment configuration, and security controls.
 - Complete human review and release checklist before merging the draft PR.
