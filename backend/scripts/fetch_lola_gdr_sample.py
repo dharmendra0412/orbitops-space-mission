@@ -16,6 +16,10 @@ SOURCE_URL = (
     "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/"
     "lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.img"
 )
+FALLBACK_SOURCE_URL = (
+    "https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_85S_40M.IMG"
+)
+SOURCE_URLS = (SOURCE_URL, FALLBACK_SOURCE_URL)
 EXPECTED_IMG_BYTES = 115_034_112
 DEFAULT_OUTPUT = Path("data/raw/lola/ldem_85s_40m.img")
 
@@ -26,11 +30,11 @@ async def download_lola_gdr_img(
     client: httpx.AsyncClient | None = None,
     expected_bytes: int = EXPECTED_IMG_BYTES,
 ) -> dict[str, Any]:
-    """Download one fixed PDS IMG, verify exact byte count, and write a SHA-256 manifest.
+    """Download the fixed LOLA IMG from PDS, with the LOLA Data Node as fallback.
 
     No URL can be supplied by the caller. The SHA-256 is a locally computed
     provenance fingerprint; this script does not claim an upstream checksum
-    because the archive directory listing does not publish one for this file.
+    because the inspected archive listings do not publish one for this file.
     """
     if expected_bytes <= 0:
         raise ValueError("expected_bytes must be positive")
@@ -52,38 +56,58 @@ async def download_lola_gdr_img(
             follow_redirects=False,
         )
 
-    digest = hashlib.sha256()
     received = 0
     output_created = False
+    downloaded_source: str | None = None
+    last_transport_error: httpx.RequestError | None = None
     try:
-        async with client.stream(
-            "GET",
-            SOURCE_URL,
-            headers={"Accept": "application/octet-stream", "Accept-Encoding": "identity"},
-        ) as response:
-            if response.is_redirect:
-                raise RuntimeError("PDS raster source redirected; refusing an unverified destination")
-            response.raise_for_status()
-            content_length = response.headers.get("content-length")
-            if content_length is not None:
-                try:
-                    declared_length = int(content_length)
-                except ValueError as exc:
-                    raise RuntimeError("PDS response supplied an invalid Content-Length") from exc
-                if declared_length != expected_bytes:
-                    raise RuntimeError(
-                        f"PDS Content-Length mismatch: expected {expected_bytes}, received {declared_length}"
-                    )
+        for source_url in SOURCE_URLS:
+            digest = hashlib.sha256()
+            received = 0
+            try:
+                async with client.stream(
+                    "GET",
+                    source_url,
+                    headers={"Accept": "application/octet-stream", "Accept-Encoding": "identity"},
+                ) as response:
+                    if response.is_redirect:
+                        raise RuntimeError("LOLA raster source redirected; refusing an unverified destination")
+                    response.raise_for_status()
+                    content_length = response.headers.get("content-length")
+                    if content_length is not None:
+                        try:
+                            declared_length = int(content_length)
+                        except ValueError as exc:
+                            raise RuntimeError("LOLA response supplied an invalid Content-Length") from exc
+                        if declared_length != expected_bytes:
+                            raise RuntimeError(
+                                f"LOLA Content-Length mismatch: expected {expected_bytes}, received {declared_length}"
+                            )
 
-            with temporary_path.open("xb") as output:
-                async for chunk in response.aiter_bytes():
-                    received += len(chunk)
-                    if received > expected_bytes:
-                        raise RuntimeError("PDS raster exceeded the expected product byte count")
-                    output.write(chunk)
-                    digest.update(chunk)
-                output.flush()
-                os.fsync(output.fileno())
+                    with temporary_path.open("xb") as output:
+                        async for chunk in response.aiter_bytes():
+                            received += len(chunk)
+                            if received > expected_bytes:
+                                raise RuntimeError("LOLA raster exceeded the expected product byte count")
+                            output.write(chunk)
+                            digest.update(chunk)
+                        output.flush()
+                        os.fsync(output.fileno())
+                downloaded_source = source_url
+                break
+            except httpx.RequestError as exc:
+                temporary_path.unlink(missing_ok=True)
+                last_transport_error = exc
+                continue
+            except httpx.HTTPStatusError as exc:
+                temporary_path.unlink(missing_ok=True)
+                if exc.response.status_code < 500:
+                    raise
+                last_transport_error = exc
+                continue
+
+        if downloaded_source is None:
+            raise RuntimeError("All fixed LOLA raster sources failed before a complete response was received") from last_transport_error
 
         if received != expected_bytes:
             raise RuntimeError(
@@ -91,7 +115,8 @@ async def download_lola_gdr_img(
             )
 
         manifest = {
-            "source_url": SOURCE_URL,
+            "source_url": downloaded_source,
+            "source_attempts": list(SOURCE_URLS),
             "file_name": destination.name,
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "expected_bytes_from_archive_listing": expected_bytes,
@@ -102,7 +127,8 @@ async def download_lola_gdr_img(
             "note": (
                 "The SHA-256 is a local provenance fingerprint. It is not an "
                 "independent checksum verification because no upstream checksum "
-                "for this IMG was present in the inspected archive directory listing."
+                "for this IMG was present in the inspected archive directory listings. "
+                "source_url records the endpoint that actually supplied the complete file."
             ),
         }
         manifest_temporary_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
