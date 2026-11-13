@@ -16,6 +16,15 @@ describe('mission resource catalogue', () => {
     }
   })
 
+  it('includes the authoritative LOLA GDR conversion and projection references', () => {
+    const sis = missionResources.find((resource) => resource.id === 'lola-rdr-sis')
+    const projection = missionResources.find((resource) => resource.id === 'lola-polar-projection')
+    const jp2 = missionResources.find((resource) => resource.id === 'lola-jp2-format')
+    expect(sis?.url).toContain('/document/rdrsis.htm')
+    expect(projection?.url).toContain('/catalog/dsmap_polar.cat')
+    expect(jp2?.url).toContain('/document/jp2info.txt')
+  })
+
   it('does not describe reference-only tools as integrated data feeds', () => {
     const missionViz = missionResources.find((resource) => resource.id === 'mission-viz')
     const gmat = missionResources.find((resource) => resource.id === 'gmat')
