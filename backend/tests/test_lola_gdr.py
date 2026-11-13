@@ -133,6 +133,35 @@ def test_lola_polar_projection_uses_south_pole_y_sign(lola_metadata):
     assert longitude == pytest.approx(135.0)
 
 
+def test_lola_polar_projection_uses_catalog_axis_orientation(lola_metadata):
+    # The half-pixel projection offset means no integer pixel lies exactly
+    # on an axis. These adjacent pixels exercise opposite sides of the axes
+    # and distinguish the catalog's atan2(Y, X) convention from swapped axes.
+    _, east_side = lola_polar_pixel_to_latlon(
+        lola_metadata, line_index=3792, sample_index=3791
+    )
+    _, west_side = lola_polar_pixel_to_latlon(
+        lola_metadata, line_index=3791, sample_index=3792
+    )
+
+    assert east_side == pytest.approx(45.0)
+    assert west_side == pytest.approx(225.0)
+
+
+def test_lola_polar_projection_distinguishes_all_four_quadrants(lola_metadata):
+    cases = [
+        ((3792, 3791), 45.0),
+        ((3792, 3792), 135.0),
+        ((3791, 3792), 225.0),
+        ((3791, 3791), 315.0),
+    ]
+    for (line_index, sample_index), expected_longitude in cases:
+        _, longitude = lola_polar_pixel_to_latlon(
+            lola_metadata, line_index=line_index, sample_index=sample_index
+        )
+        assert longitude == pytest.approx(expected_longitude)
+
+
 def test_lola_polar_projection_rejects_out_of_bounds_pixels(lola_metadata):
     with pytest.raises(LolaRasterError, match="outside the image bounds"):
         lola_polar_pixel_to_latlon(lola_metadata, line_index=7584, sample_index=0)
