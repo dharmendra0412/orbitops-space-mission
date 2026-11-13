@@ -130,6 +130,31 @@ def test_members_endpoint_forwards_search_after_and_exposes_only_source_cursor(m
 
 
 
+
+def test_members_endpoint_does_not_offer_next_page_for_short_pds_result(monkeypatch):
+    class ShortPagePdsClient:
+        async def list_members(self, *, identifier: str, depth: int = 1, limit: int = 100, search_after: str | None = None):
+            return (
+                "https://pds.nasa.gov/api/search/1/products/example/members",
+                [
+                    {
+                        "id": "urn:nasa:pds:example:item::1.0",
+                        "ops:Harvest_Info.ops:harvest_date_time": ["2026-10-17T10:00:00Z"],
+                    }
+                ],
+            )
+
+    monkeypatch.setattr(api, "pds_client", ShortPagePdsClient())
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds/products/urn:nasa:pds:example::1.0/members",
+        params={"limit": 2},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["next_search_after"] is None
+
+
 def test_members_endpoint_hides_non_advancing_pagination_cursor(monkeypatch):
     class RepeatingCursorPdsClient:
         async def list_members(self, *, identifier: str, depth: int = 1, limit: int = 100, search_after: str | None = None):
