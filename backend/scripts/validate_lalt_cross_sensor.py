@@ -56,7 +56,9 @@ def _download_fixed_source(url: str, destination: Path, *, expected_bytes: int |
             ) as response:
                 if response.is_redirect:
                     raise RuntimeError("Kaguya LALT source redirected; refusing an unverified destination")
-                response.raise_for_status()
+                if response.status_code != 200:
+                    response.raise_for_status()
+                    raise RuntimeError(f"Unexpected Kaguya LALT HTTP status {response.status_code}")
                 if response.url.host != "data.darts.isas.jaxa.jp":
                     raise RuntimeError("Kaguya LALT response came from an unexpected host")
                 content_length = response.headers.get("content-length")
@@ -117,6 +119,11 @@ def compare_lalt_grid_to_lola(
     if lola_metadata.get("FILE_NAME") != "LDEM_85S_40M.IMG":
         raise RuntimeError("Unexpected LOLA reference image label")
     lola_scale_m = _number(lola_metadata, "SCALING_FACTOR")
+    if lola_metadata.get("COORDINATE_SYSTEM_NAME") != "MEAN EARTH/POLAR AXIS OF DE421":
+        raise RuntimeError("LOLA reference frame does not match the LALT DE421 Mean Earth/Polar Axis frame")
+    lola_radius_km = _number(lola_metadata, "A_AXIS_RADIUS")
+    if not math.isclose(lola_radius_km, LALT_GT_SP_RADIUS_KM, abs_tol=1e-9):
+        raise RuntimeError("LOLA and LALT reference sphere radii do not match")
     lola_min_dn = int(float(lola_metadata["DERIVED_MINIMUM"]))
     lola_max_dn = int(float(lola_metadata["DERIVED_MAXIMUM"]))
 
@@ -153,6 +160,7 @@ def compare_lalt_grid_to_lola(
         longitude_signed = np.where(longitude > 180.0, longitude - 360.0, longitude)
         nearest_residual_rows: list[np.ndarray] = []
         neighborhood_residual_rows: list[np.ndarray] = []
+        neighborhood_valid_count = 0
         total_overlap_cells = 0
         total_lalt_valid_cells = 0
         total_matched_cells = 0
@@ -226,8 +234,19 @@ def compare_lalt_grid_to_lola(
                 ],
                 axis=0,
             )
-            neighborhood_median = np.median(neighbors, axis=0) * lola_scale_m
-            neighborhood_residual_rows.append(lalt_height_m - neighborhood_median)
+            neighbors = np.where(
+                (neighbors >= lola_min_dn) & (neighbors <= lola_max_dn),
+                neighbors,
+                np.nan,
+            )
+            neighborhood_median_dn = np.nanmedian(neighbors, axis=0)
+            neighborhood_valid = np.isfinite(neighborhood_median_dn)
+            neighborhood_valid_count += int(np.count_nonzero(neighborhood_valid))
+            if np.any(neighborhood_valid):
+                neighborhood_median = neighborhood_median_dn[neighborhood_valid] * lola_scale_m
+                neighborhood_residual_rows.append(
+                    lalt_height_m[neighborhood_valid] - neighborhood_median
+                )
 
     nearest_residuals = np.concatenate(nearest_residual_rows)
     neighborhood_residuals = np.concatenate(neighborhood_residual_rows)
@@ -262,6 +281,7 @@ def compare_lalt_grid_to_lola(
             "lola_in_bounds_cells": total_overlap_cells - total_out_of_bounds_cells,
             "out_of_bounds_cells": total_out_of_bounds_cells,
             "matched_valid_cells": total_matched_cells,
+            "matched_cells_with_valid_3x3_neighborhood": neighborhood_valid_count,
         },
         "nearest_lola_pixel": _stats(nearest_residuals),
         "lola_3x3_neighborhood_median": _stats(neighborhood_residuals),
