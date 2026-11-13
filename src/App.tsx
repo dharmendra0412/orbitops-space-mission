@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Activity, ArrowUpRight, Atom, BatteryCharging, BookOpen, Check, ClipboardList,
   ChevronDown, CircleHelp, Compass, Database, Globe2, Layers3,
@@ -145,14 +145,19 @@ function App() {
   const [orbit, setOrbit] = useState('low')
   const [showAll, setShowAll] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
+  const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!mobileMenu) return
+    document.getElementById('mobile-menu-close')?.focus()
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setMobileMenu(false)
     }
     window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape)
+      mobileMenuTriggerRef.current?.focus()
+    }
   }, [mobileMenu])
   const [pdsKeywords, setPdsKeywords] = useState('LOLA')
   const [pdsSearchResponse, setPdsSearchResponse] = useState<PdsSearchResponse | null>(null)
@@ -422,7 +427,7 @@ function App() {
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Skip to main content</a>
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
-      <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>SPACE SCIENCE WORKSPACE</span></div><button type="button" className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close navigation menu"><X size={18}/></button></div>
+      <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>SPACE SCIENCE WORKSPACE</span></div><button id="mobile-menu-close" type="button" className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close navigation menu"><X size={18}/></button></div>
       <div className="workspace-label">WORKSPACE</div>
       <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">RESEARCH</div>
@@ -443,7 +448,7 @@ function App() {
     {mobileMenu && <button type="button" className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
     <main className="main-area" id="main-content" tabIndex={-1}>
       <header className="topbar">
-        <div className="breadcrumbs"><button type="button" className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open navigation menu" aria-expanded={mobileMenu} aria-controls="research-navigation"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
+        <div className="breadcrumbs"><button ref={mobileMenuTriggerRef} type="button" className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open navigation menu" aria-expanded={mobileMenu} aria-controls="research-navigation"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
         <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local session · not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
       </header>
 
