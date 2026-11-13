@@ -23,7 +23,13 @@ EXPECTED_JP2_BYTES = 24_960_972
 EXPECTED_SHAPE = (7_584, 7_584)
 
 
-def _download(\n    url: str, destination: Path, expected_bytes: int, *, accept: str = \"application/octet-stream\"\n) -> dict[str, object]:
+def _download(
+    url: str,
+    destination: Path,
+    expected_bytes: int,
+    *,
+    accept: str = "application/octet-stream",
+) -> dict[str, object]:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_name(destination.name + ".part")
     if destination.exists():
@@ -151,7 +157,12 @@ def main() -> None:
         parser.error(f"Validated IMG does not exist: {args.image}")
 
     jp2_manifest = _download(JP2_URL, args.jp2, EXPECTED_JP2_BYTES)
-    label_manifest = _download(\n        JP2_LABEL_URL, args.jp2_label, 6_354, accept="text/plain, */*"\n    )
+    label_manifest = _download(
+        JP2_LABEL_URL,
+        args.jp2_label,
+        6_354,
+        accept="text/plain, */*",
+    )
     label_text = args.jp2_label.read_text(encoding="ascii")
     required_label_values = (
         'PRODUCT_VERSION_ID        = "V2.1"',
