@@ -14,7 +14,7 @@ from app.services.lalt_pds3 import (
     LALT_GT_SP_WESTERNMOST_LONGITUDE,
     LaltPdsError,
     decode_lalt_pc_real_sample,
-    lalt_grid_pixel_to_lat_lon,
+    lalt_grid_node_to_lat_lon,
     parse_and_validate_lalt_gt_sp_label,
     validate_lalt_gt_sp_image_file,
 )
@@ -34,12 +34,12 @@ def test_lalt_pds3_label_matches_documented_v2_image_layout():
     assert result["map_projection_type"] == "N/A"
 
 
-def test_lalt_grid_pixel_centers_follow_label_latitude_and_longitude_axes():
-    assert lalt_grid_pixel_to_lat_lon(0, 0) == (
+def test_lalt_grid_nodes_follow_label_latitude_and_longitude_axes():
+    assert lalt_grid_node_to_lat_lon(0, 0) == (
         LALT_GT_SP_MAXIMUM_LATITUDE,
         LALT_GT_SP_WESTERNMOST_LONGITUDE,
     )
-    assert lalt_grid_pixel_to_lat_lon(1407, 11519) == (
+    assert lalt_grid_node_to_lat_lon(1407, 11519) == (
         LALT_GT_SP_MINIMUM_LATITUDE,
         LALT_GT_SP_EASTERNMOST_LONGITUDE,
     )
@@ -51,7 +51,7 @@ def test_lalt_grid_pixel_centers_follow_label_latitude_and_longitude_axes():
 )
 def test_lalt_grid_pixel_coordinates_reject_out_of_bounds_or_non_integer_indices(line, sample):
     with pytest.raises(LaltPdsError):
-        lalt_grid_pixel_to_lat_lon(line, sample)
+        lalt_grid_node_to_lat_lon(line, sample)
 
 
 def test_lalt_pc_real_samples_decode_little_endian_and_honor_dummy_value():
