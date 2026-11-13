@@ -178,8 +178,13 @@ def test_lola_pds3_label_endpoint_returns_parsed_source_metadata(monkeypatch):
     assert payload["product_file"] == "LDEM_85S_40M.IMG"
     assert payload["metadata"]["SCALING_FACTOR"] == "0.5"
     assert payload["metadata"]["OFFSET"] == "1737400."
+    assert payload["metadata"]["NAME"] == "HEIGHT"
+    assert payload["metadata"]["FILE_RECORDS"] == "7584"
+    assert payload["metadata"]["RECORD_BYTES"] == "15168"
     assert payload["metadata"]["MAP_SCALE"] == "40 <m/pix>"
     assert "not been downloaded or decoded" in payload["note"]
+    assert "conversion is on hold" in payload["note"]
+    assert "no elevation or radius is calculated" in payload["note"]
 
 
 def test_lola_pds3_label_endpoint_reports_malformed_upstream_label(monkeypatch):
