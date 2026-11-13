@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import os
 from typing import Any, Annotated
 
 from fastapi import FastAPI, HTTPException, Path, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.pds_client import PdsApiError, PdsClient, extract_next_search_after
 from app.services.pds3_label import PdsLabelError, parse_pds3_label
@@ -23,6 +25,22 @@ app = FastAPI(
     version="0.1.0",
     description="Read-only discovery proxy for authoritative planetary-science archives.",
 )
+
+# Keep the API same-origin by default. Configure exact browser origins only when
+# the frontend and API are deployed on separate hosts.
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv("ORBITOPS_CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=False,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
 
 pds_client = PdsClient()
 lalt_client = LaltClient()
