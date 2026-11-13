@@ -1,0 +1,95 @@
+name: Lunar Source Validation Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feat/**"]
+    paths:
+      - ".github/workflows/lola-source-retrieval.yml"
+      - "backend/scripts/fetch_lola_gdr_sample.py"
+      - "backend/scripts/fetch_lola_gdr_label.py"
+      - "backend/scripts/validate_lola_gdr_sample.py"
+      - "backend/scripts/validate_lola_http_range.py"
+      - "backend/scripts/validate_lola_jp2_reference.py"
+      - "backend/scripts/validate_lola_pgda_reference.py"
+      - "backend/scripts/validate_lola_haworth_reference.py"
+      - "backend/scripts/validate_lalt_cross_sensor.py"
+      - "backend/scripts/validate_lalt_raw_range.py"
+      - "backend/app/services/lola_gdr.py"
+      - "backend/app/services/lalt_pds3.py"
+      - "backend/app/services/pds3_label.py"
+
+concurrency:
+  group: lunar-source-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  retrieve-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install data retrieval dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Retrieve original LOLA IMG
+        run: python -m scripts.fetch_lola_gdr_sample
+      - name: Retrieve matching archive-host label
+        run: python -m scripts.fetch_lola_gdr_label
+      - name: Validate complete raster against downloaded label
+        run: python -m scripts.validate_lola_gdr_sample
+      - name: Verify exact two-byte HTTP Range against validated local IMG
+        run: python -m scripts.validate_lola_http_range
+      - name: Install independent JPEG2000 decoder
+        run: pip install rasterio pyproj
+      - name: Retrieve and cross-check JPEG2000 counterpart
+        run: python -m scripts.validate_lola_jp2_reference
+      - name: Retrieve Kaguya LALT south-polar grid and compare with LOLA
+        timeout-minutes: 12
+        run: |
+          python -m scripts.validate_lalt_cross_sensor \
+            --lola-image data/raw/lola/ldem_85s_40m.img \
+            --lola-jp2 data/raw/lola/ldem_85s_40m.jp2 \
+            --lola-label data/raw/lola/ldem_85s_40m.lbl \
+            --lalt-dir data/raw/kaguya_lalt \
+            --output data/raw/kaguya_lalt/lalt_lola_cross_sensor_comparison.json
+      - name: Retrieve and validate calibrated Kaguya LALT daily range data
+        timeout-minutes: 3
+        run: python -m scripts.validate_lalt_raw_range --output-dir data/raw/kaguya_lalt_range
+      - name: Compare against NASA PGDA high-resolution Haworth 5 m DEM
+        timeout-minutes: 5
+        run: python -m scripts.validate_lola_haworth_reference
+      - name: Preserve retrieved source and provenance as workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: lola-ldem-85s-40m-source-and-validation
+          path: |
+            backend/data/raw/lola/ldem_85s_40m.img
+            backend/data/raw/lola/ldem_85s_40m.lbl
+            backend/data/raw/lola/ldem_85s_40m.img.manifest.json
+            backend/data/raw/lola/ldem_85s_40m.range-validation.json
+            backend/data/raw/lola/ldem_85s_40m.jp2
+            backend/data/raw/lola/ldem_85s_40m_jp2.lbl
+            backend/data/raw/lola/ldem_85s_40m.jp2.manifest.json
+            backend/data/raw/lola/haworth_5mpp_surf.tif
+            backend/data/raw/lola/ldem_85s_40m.haworth-comparison.json
+            backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.lbl
+            backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.IMG
+            backend/data/raw/kaguya_lalt/lalt_lola_cross_sensor_comparison.json
+            backend/data/raw/kaguya_lalt_range/LALT_RD_20080105.lbl
+            backend/data/raw/kaguya_lalt_range/LALT_RD_20080105.TAB
+            backend/data/raw/kaguya_lalt_range/LALT_RD_20080105.validation.json
+          if-no-files-found: warn
+          retention-days: 30

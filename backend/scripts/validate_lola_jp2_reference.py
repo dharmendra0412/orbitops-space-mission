@@ -1,0 +1,318 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import re
+from pathlib import Path
+
+import httpx
+import numpy as np
+import rasterio
+from pyproj import CRS, Transformer
+from rasterio.windows import Window
+
+
+JP2_URL = (
+    "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/"
+    "lrolol_1xxx/data/lola_gdr/polar/jp2/ldem_85s_40m.jp2"
+)
+JP2_LABEL_URL = (
+    "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/"
+    "lrolol_1xxx/data/lola_gdr/polar/jp2/ldem_85s_40m_jp2.lbl"
+)
+EXPECTED_JP2_BYTES = 24_960_972
+EXPECTED_SHAPE = (7_584, 7_584)
+MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE = 1
+LUNAR_REFERENCE_RADIUS_M = 1_737_400.0
+
+
+def _validate_projection_against_pds_pixel_centers(
+    dataset: rasterio.DatasetReader,
+) -> dict[str, object]:
+    """Cross-check JP2 CRS/affine georeferencing against PDS polar pixel centers.
+
+    PROJ independently transforms the JP2's declared stereographic CRS into a
+    spherical lunar geographic CRS. Expected coordinates are computed from
+    the PDS DSMAP_POLAR pixel-center equations and the detached GDR label's
+    40 m scale, 3791.5-pixel offsets, and south-polar Y sign.
+    """
+    if dataset.crs is None:
+        raise RuntimeError("JP2 has no CRS for independent projection validation")
+
+    geographic_crs = CRS.from_proj4(
+        "+proj=longlat +R=1737400 +no_defs +type=crs"
+    )
+    transformer = Transformer.from_crs(
+        dataset.crs, geographic_crs, always_xy=True
+    )
+    sample_pixels = (
+        (3791, 3791),
+        (3791, 3792),
+        (3792, 3791),
+        (3792, 3792),
+        (0, 3791),
+        (3791, 7583),
+        (7583, 3791),
+        (7583, 7583),
+    )
+    checks: list[dict[str, float | int]] = []
+    for row, column in sample_pixels:
+        # Affine transform at the center of a pixel, not its upper-left corner.
+        x_map, y_map = dataset.transform * (column + 0.5, row + 0.5)
+        projected_lon, projected_lat = transformer.transform(x_map, y_map)
+
+        # PDS DSMAP_POLAR.CAT: X=(I-N/2-0.5)*scale;
+        # Y=(J-N/2-0.5)*scale*NS, with NS=-1 in the south.
+        sample_coordinate = column + 1
+        line_coordinate = row + 1
+        pds_x = (sample_coordinate - 3792.5) * 40.0
+        pds_y = (line_coordinate - 3792.5) * 40.0 * -1.0
+        radial_distance = math.hypot(pds_x, pds_y)
+        expected_lat = -90.0 + math.degrees(
+            2.0 * math.atan(radial_distance / (2.0 * LUNAR_REFERENCE_RADIUS_M))
+        )
+        expected_lon = math.degrees(math.atan2(pds_x, pds_y)) % 360.0
+        longitude_error = abs((projected_lon - expected_lon + 180.0) % 360.0 - 180.0)
+        latitude_error = abs(projected_lat - expected_lat)
+        if longitude_error > 1e-7 or latitude_error > 1e-7:
+            raise RuntimeError(
+                "JP2 CRS/affine transform disagrees with PDS DSMAP_POLAR "
+                f"pixel-center geometry at row={row}, column={column}: "
+                f"PROJ=({projected_lat}, {projected_lon}), "
+                f"PDS=({expected_lat}, {expected_lon})"
+            )
+        checks.append({
+            "row": row,
+            "column": column,
+            "latitude_error_degrees": latitude_error,
+            "longitude_error_degrees": longitude_error,
+        })
+
+    return {
+        "method": "PROJ transformation of JP2 CRS/affine pixel centers versus PDS DSMAP_POLAR equations",
+        "target_geographic_crs": geographic_crs.to_string(),
+        "reference_radius_m": LUNAR_REFERENCE_RADIUS_M,
+        "pds_map_scale_m_per_pixel": 40.0,
+        "pds_line_and_sample_projection_offset_pixels": 3791.5,
+        "samples_checked": len(checks),
+        "maximum_latitude_error_degrees": max(item["latitude_error_degrees"] for item in checks),
+        "maximum_longitude_error_degrees": max(item["longitude_error_degrees"] for item in checks),
+        "tolerance_degrees": 1e-7,
+        "checks": checks,
+        "scope": "Validates projected pixel-center geometry and CRS orientation; it does not independently validate the DE421 ephemeris realization or absolute lunar control.",
+    }
+
+
+def _download(
+    url: str,
+    destination: Path,
+    expected_bytes: int,
+    *,
+    accept: str = "application/octet-stream",
+) -> dict[str, object]:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(destination.name + ".part")
+    if destination.exists():
+        raise FileExistsError(f"Refusing to overwrite existing reference file: {destination}")
+    digest = hashlib.sha256()
+    received = 0
+    try:
+        with httpx.stream(
+            "GET",
+            url,
+            headers={"Accept": accept, "Accept-Encoding": "identity"},
+            timeout=httpx.Timeout(120.0, connect=20.0),
+            follow_redirects=False,
+        ) as response:
+            if response.is_redirect:
+                raise RuntimeError(f"Reference source redirected; refusing unverified destination: {url}")
+            response.raise_for_status()
+            declared = response.headers.get("content-length")
+            if declared is not None and int(declared) != expected_bytes:
+                raise RuntimeError(
+                    f"Reference Content-Length mismatch: expected {expected_bytes}, received {declared}"
+                )
+            with temporary.open("xb") as output:
+                for chunk in response.iter_bytes():
+                    received += len(chunk)
+                    if received > expected_bytes:
+                        raise RuntimeError("Reference download exceeded expected byte count")
+                    output.write(chunk)
+                    digest.update(chunk)
+                output.flush()
+        if received != expected_bytes:
+            raise RuntimeError(f"Reference byte count mismatch: expected {expected_bytes}, received {received}")
+        temporary.replace(destination)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+    return {
+        "source_url": url,
+        "file_name": destination.name,
+        "expected_bytes_from_archive_listing": expected_bytes,
+        "actual_bytes_downloaded": received,
+        "sha256_local": digest.hexdigest(),
+        "upstream_checksum": None,
+        "verification_status": "byte_count_verified_local_sha256_computed_no_upstream_checksum_published",
+    }
+
+
+def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, object]:
+    raw = np.memmap(image_path, dtype="<i2", mode="r", shape=EXPECTED_SHAPE)
+    mismatch_count = 0
+    samples_over_tolerance = 0
+    max_absolute_difference = 0
+    absolute_difference_sum = 0
+    squared_difference_sum = 0
+    minimum_value: int | None = None
+    maximum_value: int | None = None
+
+    with rasterio.open(jp2_path) as reference:
+        if reference.driver != "JP2OpenJPEG":
+            raise RuntimeError(f"Expected independent JP2OpenJPEG decoder, received {reference.driver}")
+        if reference.count != 1 or (reference.height, reference.width) != EXPECTED_SHAPE:
+            raise RuntimeError(
+                f"JP2 dimensions/bands mismatch: {reference.count} bands, "
+                f"{reference.height}x{reference.width}"
+            )
+        if reference.dtypes[0] != "int16":
+            raise RuntimeError(f"Expected signed 16-bit JP2 samples, received {reference.dtypes[0]}")
+
+        for row_index in range(EXPECTED_SHAPE[0]):
+            decoded = reference.read(
+                1,
+                window=Window(0, row_index, EXPECTED_SHAPE[1], 1),
+            )[0]
+            expected = np.asarray(raw[row_index], dtype=np.int16)
+            difference = np.abs(decoded.astype(np.int32) - expected.astype(np.int32))
+            row_mismatches = int(np.count_nonzero(difference))
+            mismatch_count += row_mismatches
+            row_over_tolerance = int(
+                np.count_nonzero(difference > MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE)
+            )
+            samples_over_tolerance += row_over_tolerance
+            max_absolute_difference = max(max_absolute_difference, int(difference.max()))
+            absolute_difference_sum += int(difference.sum())
+            squared_difference_sum += int(np.square(difference, dtype=np.int64).sum())
+            row_min = int(decoded.min())
+            row_max = int(decoded.max())
+            minimum_value = row_min if minimum_value is None else min(minimum_value, row_min)
+            maximum_value = row_max if maximum_value is None else max(maximum_value, row_max)
+
+        driver = reference.driver
+        transform = tuple(reference.transform)
+        expected_transform = (
+            40.0, 0.0, -151_680.0,
+            0.0, -40.0, 151_680.0,
+            0.0, 0.0, 1.0,
+        )
+        if len(transform) != len(expected_transform) or any(
+            not math.isclose(actual, expected, rel_tol=0.0, abs_tol=1e-9)
+            for actual, expected in zip(transform, expected_transform, strict=True)
+        ):
+            raise RuntimeError(
+                f"JP2 geotransform does not match the PDS 40 m pixel-registered grid: {transform}"
+            )
+        crs = reference.crs.to_wkt() if reference.crs else None
+        if crs is None or "Polar_Stereographic" not in crs or "1737400" not in crs:
+            raise RuntimeError("JP2 CRS does not declare the expected 1737.4 km lunar polar stereographic frame")
+        projection_validation = _validate_projection_against_pds_pixel_centers(reference)
+
+    total_samples = EXPECTED_SHAPE[0] * EXPECTED_SHAPE[1]
+    if samples_over_tolerance:
+        raise RuntimeError(
+            f"{samples_over_tolerance} JP2 samples exceed the allowed "
+            f"{MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE}-DN tolerance; "
+            f"maximum absolute DN difference={max_absolute_difference}"
+        )
+
+    return {
+        "reference_driver": driver,
+        "dimensions": {"lines": EXPECTED_SHAPE[0], "samples_per_line": EXPECTED_SHAPE[1]},
+        "decoded_samples": total_samples,
+        "minimum_dn": minimum_value,
+        "maximum_dn": maximum_value,
+        "sample_mismatch_count": mismatch_count,
+        "sample_mismatch_percentage": mismatch_count / total_samples * 100.0,
+        "samples_over_tolerance": samples_over_tolerance,
+        "comparison_tolerance_dn": MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE,
+        "max_absolute_dn_difference": max_absolute_difference,
+        "mean_absolute_dn_difference": absolute_difference_sum / total_samples,
+        "root_mean_square_dn_difference": math.sqrt(squared_difference_sum / total_samples),
+        "exact_sample_match": mismatch_count == 0,
+        "within_tolerance": True,
+        "geotransform": transform,
+        "crs": crs,
+        "pds_projection_validation": projection_validation,
+        "scope": (
+            "Every JP2OpenJPEG-decoded sample was compared with the corresponding raw "
+            "signed little-endian IMG sample. The compressed JP2 representation is "
+            "accepted only when every decoded sample is within 1 DN of the raw IMG. "
+            "This is an independent decoder/encoding cross-check of the archived "
+            "product, not an independent measurement dataset."
+        ),
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Cross-check the PDS LOLA IMG raster against its separately archived JPEG2000 counterpart."
+    )
+    parser.add_argument("--image", type=Path, default=Path("data/raw/lola/ldem_85s_40m.img"))
+    parser.add_argument("--jp2", type=Path, default=Path("data/raw/lola/ldem_85s_40m.jp2"))
+    parser.add_argument(
+        "--jp2-label",
+        type=Path,
+        default=Path("data/raw/lola/ldem_85s_40m_jp2.lbl"),
+    )
+    args = parser.parse_args()
+
+    if not args.image.is_file():
+        parser.error(f"Validated IMG does not exist: {args.image}")
+
+    jp2_manifest = _download(JP2_URL, args.jp2, EXPECTED_JP2_BYTES)
+    label_manifest = _download(
+        JP2_LABEL_URL,
+        args.jp2_label,
+        6_354,
+        accept="text/plain, */*",
+    )
+    label_text = args.jp2_label.read_text(encoding="ascii")
+    required_label_fields = {
+        "PRODUCT_VERSION_ID": '"V2.1"',
+        "PRODUCT_ID": '"LDEM_85S_40M"',
+        "ENCODING_TYPE": '"JP2"',
+        "UNCOMPRESSED_FILE_NAME": '"LDEM_85S_40M.IMG"',
+        "REQUIRED_STORAGE_BYTES": '"24960972"',
+        "DERIVED_MINIMUM": "-11002",
+        "DERIVED_MAXIMUM": "14054",
+    }
+    missing = [
+        f"{key}={value}"
+        for key, value in required_label_fields.items()
+        if not re.search(
+            rf"^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$",
+            label_text,
+            re.MULTILINE,
+        )
+    ]
+    if missing:
+        parser.error(f"JP2 PDS label is missing required source fields: {missing}")
+
+    result = validate_jp2_against_img(args.image, args.jp2)
+    output = {
+        "jp2_manifest": jp2_manifest,
+        "jp2_label_manifest": label_manifest,
+        "jp2_label_product_version": "V2.1",
+        "raw_img_product_version": "V2.0",
+        "validation": result,
+    }
+    manifest_path = args.jp2.with_name(args.jp2.name + ".manifest.json")
+    manifest_path.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(output, indent=2))
+
+
+if __name__ == "__main__":
+    main()

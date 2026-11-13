@@ -1,0 +1,24 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.vscode/
+coverage/
+
+# Python backend
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Downloaded scientific source products stay out of Git history
+/data/raw/
+/backend/data/raw/
+*.part
+
+# Browser test output
+/playwright-report/
+/test-results/

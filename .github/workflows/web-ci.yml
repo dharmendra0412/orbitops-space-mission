@@ -1,0 +1,63 @@
+name: Web CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, "feat/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install dependencies
+        run: npm install
+      - name: Unit tests
+        run: npm test
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser end-to-end tests
+        run: npm run test:e2e
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
+      - name: Typecheck and production build
+        run: npm run build
+      - name: Set up Python for Vercel runtime smoke test
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install FastAPI runtime dependencies
+        run: pip install -r backend/requirements-runtime.txt
+      - name: Verify Vercel serves the real website and API on one origin
+        env:
+          PYTHONPATH: backend
+        run: |
+          python - <<'PY'
+          from fastapi.testclient import TestClient
+          from app.main import app
+
+          client = TestClient(app)
+          homepage = client.get("/")
+          assert homepage.status_code == 200, homepage.text[:300]
+          assert "ORBITOPS" in homepage.text
+          assert client.get("/health").json()["status"] == "ok"
+          assert client.get("/api/v1/pds/search", params={"keywords": "x"}).status_code == 422
+          print("Vercel same-origin smoke test passed: Vite homepage, FastAPI health, and API route.")
+          PY
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+      - name: Build production website container
+        run: docker build --tag orbitops-web:ci .
