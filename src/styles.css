@@ -58,3 +58,6 @@
 .pds-file-row strong{font-size:9px;color:#e0e9f4;overflow-wrap:anywhere}
 .pds-file-row span,.pds-file-row small{font-size:8px;color:#90a2b8}
 .pds-file-row code{font-size:8px;color:#8bd5ef;overflow-wrap:anywhere}
+
+.pds-load-more{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:8px 11px;border:1px solid #38536c;border-radius:4px;background:#102238;color:#a3e2f8;font:9px 'Manrope',sans-serif;cursor:pointer}
+.pds-load-more:disabled{opacity:.55;cursor:wait}
