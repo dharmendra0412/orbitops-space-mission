@@ -4,7 +4,7 @@
 
 ORBITOPS must not fabricate measurements, mission telemetry, orbital states, spacecraft performance, or NASA observations. A value is displayed as a sourced observation only after the underlying product has been retrieved and its metadata parsed. If a value is unavailable, the interface must say **Not available from an integrated source**.
 
-The source catalogue in `src/data/sources.ts` is a list of external references only. It does not mean the project has downloaded, cached, processed, or synchronized the linked datasets.
+The source catalogue in `src/data/sources.ts` is a list of external references only. It does not mean the project has downloaded, cached, processed, or synchronized the linked datasets. The NASA PDS Search API is the preferred discovery interface for PDS4 products once an ingestion backend is implemented.
 
 ## Verified source entry points
 
@@ -12,7 +12,7 @@ The source catalogue in `src/data/sources.ts` is a list of external references o
 |---|---|---|
 | [NASA PDS LRO archive index](https://pds-geosciences.wustl.edu/missions/lro/) | Discovery of LOLA, Diviner, LROC, SPICE and other LRO archives; release metadata | Linked reference only |
 | [LOLA archive guide](https://pds-geosciences.wustl.edu/missions/lro/lola.htm) | Lunar topography and elevation product discovery | Linked reference only |
-| [NASA LRO data products](https://science.nasa.gov/mission/lro/data-products/) | Official mission data-product entry point, LROC, PDS and QuickMap links | Linked reference only |
+| [NASA LRO data products](https://science.nasa.gov/mission/lro/data-products/) | Official mission data-product entry point, LROC, PDS and QuickMap links | Linked reference only |\n| [NASA PDS Search API](https://nasa-pds.github.io/pds-api/) | Programmatic discovery of PDS4 products | Documentation link only |\n| [LOLA product FAQ](https://pds-geosciences.wustl.edu/missions/lro/lola_faq.htm) | EDR/RDR/GDR product selection and data format guidance | Documentation link only |\n| [LROC calibrated archive](https://doi.org/10.17189/bx7p-0d06) | Calibrated NAC/WAC data with pointing and housekeeping information | Archive link only |\n| [Diviner archive documentation](https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/document/) | Diviner derived-product documentation and SIS | Documentation link only |
 | [NASA south-pole shadows](https://science.nasa.gov/resource/shadows-near-the-moons-south-pole/) | Scientific context for polar shadow regions | Static reference only; not a live illumination feed |
 | [NASA Mission Visualization](https://nasa.github.io/mission-viz/) | External visualization/learning reference | External link only; not embedded or executed |
 | [NASA GMAT catalogue entry](https://software.nasa.gov/software/GSC-19468-1) | Reference to an external mission analysis tool | External link only; not executed by ORBITOPS |
@@ -20,7 +20,7 @@ The source catalogue in `src/data/sources.ts` is a list of external references o
 | [NASA Webb telescope learning game](https://science.nasa.gov/mission/webb/game-build-it-yourself/) | Educational design reference | External link only |
 | [Canadian Space Agency digital games](https://www.asc-csa.gc.ca/eng/youth-educators/digital-games-and-activities.asp) | External educational reference | External link only; its own terms apply |
 
-The PDS Geosciences Node describes LOLA as a lunar topography instrument and directs users to the Lunar Orbital Data Explorer for the most recent holdings. It also lists LRO archives by instrument, including Diviner, LOLA, LROC, and SPICE. LROC PDS archive descriptions identify calibrated NAC/WAC data and associated pointing and housekeeping information.
+The PDS Geosciences Node describes LOLA as a lunar topography instrument and directs users to the Lunar Orbital Data Explorer for the most recent holdings. It also lists LRO archives by instrument, including Diviner, LOLA, LROC, and SPICE. LOLA documentation distinguishes gridded GDR maps from individual RDR altimetry tracks. For scaled GDR image products, the scaling factor and offset are specified in each PDS label and must be read from that label rather than copied as global constants. LROC PDS archive descriptions identify calibrated NAC/WAC data and associated pointing and housekeeping information.
 
 ## Integration requirements
 
@@ -41,7 +41,7 @@ Raw source files must remain distinguishable from derived products. Derived valu
 ## Planned data integration sequence
 
 1. Implement an archive metadata catalogue and ingestion manifest; do not download bulk data before selecting specific product collections and coverage.
-2. Select a bounded lunar south-pole region and a specific LOLA product collection; parse its PDS labels before rendering any elevation value.
+2. Use the PDS Search API to identify a bounded lunar south-pole collection and a specific LOLA product. Choose GDR products for gridded latitude/longitude maps or RDR products for individual altimetry tracks. Parse the selected product's PDS label before rendering any elevation value.
 3. Add selected LROC products with their original pointing/geometry metadata and source citations.
 4. Evaluate Diviner products for thermal-context views, keeping the instrument's observation time and processing level visible.
 5. Add SPICE kernels only if a later, explicitly approved engineering requirement needs geometry or ephemeris calculations. No orbit propagation or mission simulation is part of the current product scope.
