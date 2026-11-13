@@ -93,7 +93,7 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya LALT PDS3 product format specification',
     owner: 'JAXA / DARTS ISAS',
     kind: 'TECHNICAL DOCUMENT',
-    description: 'Product format and actual v2.0 label for LALT_GT_SP_IMG.IMG: detached label; 11,520 × 1,408 pixels; 64,880,640 data bytes; 32-bit PC_REAL (little-endian) samples; 1/128° latitude and 1/32° longitude grid from 79.00390625°S to 89.99609375°S; elevations in km on a 1737.4 km sphere; MEAN EARTH/POLAR AXIS OF DE421 body-fixed coordinates; 99.999 dummy value. The grid is derived from LALT_LGT_TS by spherical interpolation and is not a direct raw altimeter measurement. It is distinct from JAXA LALT_SP.txt.',
+    description: 'Product format and actual v2.0 label for LALT_GT_SP_IMG.IMG: detached label; 11,520 × 1,408 pixels; 64,880,640 data bytes; 32-bit PC_REAL (little-endian) samples; pixel-node registered 1/128° latitude and 1/32° longitude grid from 79.00390625°S to 89.99609375°S; elevations in km on a 1737.4 km sphere; MEAN EARTH/POLAR AXIS OF DE421 body-fixed coordinates; 99.999 dummy value. The grid is derived from LALT_LGT_TS by spherical interpolation and is not a direct raw altimeter measurement. It is distinct from JAXA LALT_SP.txt.',
     url: 'https://data.darts.isas.jaxa.jp/pub/pds3/sln-l-lalt-5-topo-gt-sp-img-v2.0/document/LALT_Format_en_V01.pdf',
   },
   {
