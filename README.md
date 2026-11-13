@@ -82,7 +82,7 @@ See [docs/data-provenance.md](docs/data-provenance.md) for the source list, arch
 
 ## Quality gates
 
-- Unit tests for source catalogues and any future parsing/derivation logic.
+- Unit tests for source catalogues and parsing/derivation logic, plus Playwright browser end-to-end tests for mission brief and source-inspection workflows.
 - Typecheck and production build.
 - Dependency security audit.
 - Source attribution, product identifiers, units, reference frames, and retrieval timestamps.
