@@ -177,6 +177,14 @@ def test_parse_real_lola_pds3_label_preserves_source_units_and_reference_frame()
     assert metadata["PRODUCT_VERSION_ID"] == "V2.0"
     assert metadata["DATA_SET_ID"] == "LRO-L-LOLA-4-GDR-V1.0"
     assert metadata["FILE_NAME"] == "LDEM_85S_40M.IMG"
+    assert metadata["FILE_RECORDS"] == "7584"
+    assert metadata["RECORD_BYTES"] == "15168"
+    assert metadata["NAME"] == "HEIGHT"
+    assert metadata["DERIVED_MINIMUM"] == "-11002"
+    assert metadata["DERIVED_MAXIMUM"] == "14054"
+    # The detached label is internally consistent about its fixed-length layout.
+    assert int(metadata["FILE_RECORDS"]) * int(metadata["RECORD_BYTES"]) == 115_034_112
+    assert int(metadata["LINES"]) * int(metadata["LINE_SAMPLES"]) * (int(metadata["SAMPLE_BITS"]) // 8) == 115_034_112
     assert metadata["SAMPLE_TYPE"] == "LSB_INTEGER"
     assert metadata["SAMPLE_BITS"] == "16"
     assert metadata["UNIT"] == "METER"
