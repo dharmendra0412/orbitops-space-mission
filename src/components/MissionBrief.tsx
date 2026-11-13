@@ -8,6 +8,7 @@ import {
   parseMissionBriefDraft,
   serializeMissionBriefDraft,
   type MissionBriefDraft,
+  type MissionRequirement,
 } from '../data/missionBrief'
 
 const STORAGE_KEY = 'orbitops.mission-brief.v1'
@@ -43,6 +44,37 @@ export function MissionBrief() {
 
   const updateField = (key: keyof MissionBriefDraft, value: string) => {
     setDraft((current) => ({ ...current, [key]: value }))
+  }
+
+  const addRequirement = () => {
+    setDraft((current) => {
+      const nextNumber = current.requirements.reduce((max, row) => {
+        const parsed = Number(row.id.replace(/^REQ-/, ''))
+        return Number.isInteger(parsed) ? Math.max(max, parsed) : max
+      }, 0) + 1
+      const requirement: MissionRequirement = {
+        id: 'REQ-' + String(nextNumber).padStart(3, '0'),
+        statement: '',
+        targetValue: '',
+        sourceUrl: '',
+        evidenceNote: '',
+      }
+      return { ...current, requirements: [...current.requirements, requirement] }
+    })
+  }
+
+  const updateRequirement = (id: string, key: keyof Omit<MissionRequirement, 'id'>, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      requirements: current.requirements.map((row) => row.id === id ? { ...row, [key]: value } : row),
+    }))
+  }
+
+  const removeRequirement = (id: string) => {
+    setDraft((current) => ({
+      ...current,
+      requirements: current.requirements.filter((row) => row.id !== id),
+    }))
   }
 
   const exportDraft = () => {
@@ -119,6 +151,39 @@ export function MissionBrief() {
               <small>{field.hint}</small>
             </div>
           ))}
+        </div>
+
+
+        <div className="mission-requirements">
+          <div className="mission-requirements-heading">
+            <div><strong>Requirement traceability matrix</strong><small>{draft.requirements.length} user-authored requirements · source links are not independently validated</small></div>
+            <button type="button" onClick={addRequirement}>+ Add requirement</button>
+          </div>
+          {draft.requirements.length === 0
+            ? <p className="mission-requirements-empty">No requirements added yet. Add a requirement only when your team has a real objective or constraint to record.</p>
+            : draft.requirements.map((row) => (
+              <article className="mission-requirement-row" key={row.id}>
+                <div className="mission-requirement-topline">
+                  <strong>{row.id}</strong>
+                  <span className={row.sourceUrl.trim() ? 'mission-source-linked' : 'mission-source-missing'}>
+                    {row.sourceUrl.trim() ? 'Source link added · not independently validated' : 'No source linked'}
+                  </span>
+                  <button type="button" onClick={() => removeRequirement(row.id)} aria-label={'Remove ' + row.id}>Remove</button>
+                </div>
+                <label>Requirement statement
+                  <textarea rows={2} value={row.statement} placeholder="Describe the requirement without inventing a threshold." onChange={(event) => updateRequirement(row.id, 'statement', event.target.value)}/>
+                </label>
+                <label>Target / threshold and units
+                  <input type="text" value={row.targetValue} placeholder="Enter a sourced value or mark it TBD" onChange={(event) => updateRequirement(row.id, 'targetValue', event.target.value)}/>
+                </label>
+                <label>Source URL
+                  <input type="url" value={row.sourceUrl} placeholder="https://…" onChange={(event) => updateRequirement(row.id, 'sourceUrl', event.target.value)}/>
+                </label>
+                <label>Evidence notes
+                  <textarea rows={2} value={row.evidenceNote} placeholder="Record product ID, units, uncertainty, assumptions, and validation status." onChange={(event) => updateRequirement(row.id, 'evidenceNote', event.target.value)}/>
+                </label>
+              </article>
+            ))}
         </div>
 
         <div className="mission-brief-validation">
