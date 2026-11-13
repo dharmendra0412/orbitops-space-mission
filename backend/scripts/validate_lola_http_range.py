@@ -75,15 +75,47 @@ async def validate_source_range(
                 "matches_validated_local_img": True,
             })
 
+    profile_line = 3791
+    profile_start_sample = 3791
+    profile_count = 8
+    profile_byte_start = profile_line * PDS_LOLA_GDR_RECORD_BYTES + profile_start_sample * 2
+    profile_byte_end = profile_byte_start + profile_count * 2 - 1
+    with image_path.open("rb") as image:
+        image.seek(profile_byte_start)
+        local_profile_bytes = image.read(profile_count * 2)
+    if len(local_profile_bytes) != profile_count * 2:
+        raise RuntimeError("Local validated IMG ended before the requested profile segment")
+    profile_url, profile_samples, profile_range = await client.fetch_lola_gdr_row_segment(
+        line_index=profile_line,
+        start_sample_index=profile_start_sample,
+        sample_count=profile_count,
+    )
+    if profile_url != PDS_LOLA_GDR_SAMPLE_IMG_URL:
+        raise RuntimeError("LOLA API client returned an unexpected row-profile source URL")
+    if profile_range != (profile_byte_start, profile_byte_end):
+        raise RuntimeError("LOLA API client returned an unexpected row-profile byte range")
+    if struct.pack("<" + "h" * profile_count, *profile_samples) != local_profile_bytes:
+        raise RuntimeError("Remote LOLA row profile does not match the validated local IMG")
+    profile_segment = {
+        "line_index": profile_line,
+        "start_sample_index": profile_start_sample,
+        "sample_count": len(profile_samples),
+        "byte_range_inclusive": {"start": profile_byte_start, "end": profile_byte_end},
+        "raw_dn": list(profile_samples),
+        "matches_validated_local_img": True,
+    }
+
     return {
         "source_url": PDS_LOLA_GDR_SAMPLE_IMG_URL,
         "samples_checked": len(samples),
         "samples": samples,
+        "profile_segment": profile_segment,
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "scope": (
             "Exercises the same fixed-source PDSClient range method used by the live API. "
-            "Eight two-byte reads at center-adjacent, quadrant, and image-edge locations "
-            "matched the fully downloaded and validated local IMG. This does not establish "
+            "Eight two-byte reads at center-adjacent, quadrant, and image-edge locations, "
+            "plus one eight-sample row segment, matched the fully downloaded and validated "
+            "local IMG using the same client methods as the live API. This does not establish "
             "geodetic accuracy."
         ),
     }
