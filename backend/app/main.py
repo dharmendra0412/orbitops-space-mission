@@ -7,6 +7,13 @@ from fastapi import FastAPI, HTTPException, Path, Query
 
 from app.services.pds_client import PdsApiError, PdsClient, extract_next_search_after
 from app.services.pds3_label import PdsLabelError, parse_pds3_label
+from app.services.lola_gdr import (
+    LolaRasterError,
+    lola_dn_to_height_m,
+    lola_dn_to_planetary_radius_m,
+    lola_polar_pixel_to_latlon,
+    validate_lola_gdr_label,
+)
 
 app = FastAPI(
     title="ORBITOPS Data API",
@@ -109,6 +116,58 @@ async def resolve_pds_product(
         "response": upstream_payload,
     }
 
+
+
+@app.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel")
+async def get_lola_gdr_sample_pixel(
+    line_index: Annotated[int, Query(ge=0, le=7_583)],
+    sample_index: Annotated[int, Query(ge=0, le=7_583)],
+) -> dict[str, Any]:
+    """Retrieve one real LOLA GDR DN using a strict two-byte HTTP Range request."""
+    try:
+        label_url, label_text = await pds_client.fetch_lola_gdr_sample_label()
+        metadata = parse_pds3_label(label_text)
+        lines, samples, _ = validate_lola_gdr_label(metadata)
+        if lines != 7_584 or samples != 7_584:
+            raise LolaRasterError("The selected LOLA source label does not match the validated 7584 x 7584 product")
+        raster_url, dn, byte_range = await pds_client.fetch_lola_gdr_sample_dn(
+            line_index=line_index,
+            sample_index=sample_index,
+        )
+        latitude, longitude = lola_polar_pixel_to_latlon(
+            metadata,
+            line_index=line_index,
+            sample_index=sample_index,
+        )
+        height_m = lola_dn_to_height_m(dn, metadata)
+        planetary_radius_m = lola_dn_to_planetary_radius_m(dn, metadata)
+    except PdsApiError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except (PdsLabelError, LolaRasterError) as exc:
+        raise HTTPException(status_code=502, detail=f"NASA LOLA source metadata failed validation: {exc}") from exc
+
+    return {
+        "source": "NASA PDS Geosciences Node",
+        "source_url": raster_url,
+        "label_source_url": label_url,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "product_file": metadata["FILE_NAME"],
+        "line_index": line_index,
+        "sample_index": sample_index,
+        "byte_range_inclusive": {"start": byte_range[0], "end": byte_range[1]},
+        "raw_dn": dn,
+        "height_m": height_m,
+        "planetary_radius_m": planetary_radius_m,
+        "planetocentric_latitude_degrees": latitude,
+        "east_longitude_degrees": longitude,
+        "units": {"raw_dn": "signed 16-bit integer", "height": "m", "planetary_radius": "m"},
+        "coordinate_reference": metadata["COORDINATE_SYSTEM_NAME"],
+        "validation_scope": (
+            "One source-backed raw sample retrieved with an exact two-byte HTTP Range response. "
+            "Height and radius use the LOLA GDR SIS scaling and offset. This is not a terrain tile, "
+            "a full-raster integrity check, or independent geodetic ground truth."
+        ),
+    }
 
 
 @app.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/label")
