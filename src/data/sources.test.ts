@@ -59,6 +59,6 @@ describe('mission resource catalogue', () => {
     expect(laltGrid?.url).toContain('sln-l-lalt-5-topo-gt-sp-img-v2.0')
     expect(laltGrid?.description).toMatch(/interpolated from LALT global topographic time-series/i)
     expect(kaguyaSpice?.url).toContain('sln-l-spice-6-v1.0')
-    expect(kaguyaSpice?.description).toMatch(/not automatically the exact SGM100g orbit/i)
+    expect(kaguyaSpice?.description).toMatch(/Neither is automatically the exact SGM100g orbit/i)
     expect(usgs?.description).toMatch(/not independent absolute geodetic truth/i)
   })
