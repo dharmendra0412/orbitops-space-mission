@@ -102,6 +102,8 @@ Checks:
 
 ```bash
 npm test
+npx playwright install chromium
+npm run test:e2e
 npm run build
 npm audit --audit-level=high
 
