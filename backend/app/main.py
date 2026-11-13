@@ -5,7 +5,7 @@ from typing import Any, Annotated
 
 from fastapi import FastAPI, HTTPException, Path, Query
 
-from app.services.pds_client import PdsApiError, PdsClient
+from app.services.pds_client import PdsApiError, PdsClient, extract_next_search_after
 
 app = FastAPI(
     title="ORBITOPS Data API",
@@ -52,12 +52,16 @@ async def search_pds_products(
 async def list_pds_product_members(
     identifier: Annotated[str, Path(min_length=5, max_length=512)],
     depth: Annotated[int, Query(ge=1, le=2)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 100,
+    search_after: Annotated[str | None, Query(max_length=128)] = None,
 ) -> dict[str, Any]:
     """Browse one or two levels down the official PDS product hierarchy."""
     try:
         request_url, upstream_payload = await pds_client.list_members(
             identifier=identifier,
             depth=depth,
+            limit=limit,
+            search_after=search_after,
         )
     except PdsApiError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
@@ -71,6 +75,8 @@ async def list_pds_product_members(
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "identifier": identifier,
         "depth": depth,
+        "page": {"limit": limit, "sort": "ops:Harvest_Info.ops:harvest_date_time", "search_after": search_after},
+        "next_search_after": extract_next_search_after(upstream_payload),
         "response": upstream_payload,
     }
 
