@@ -22,9 +22,11 @@ The current feature branch includes:
 - Explicit unavailable states for mass, power, data volume, mission cost, and engineering verification.
 - A curated catalogue linking directly to NASA, NASA PDS, JPL, and partner reference pages.
 - A documented source-provenance and data-ingestion plan.
-- Automated checks for source catalogue integrity and a production build.
+- A read-only FastAPI proxy for live PDS keyword search, product resolution, and archive hierarchy browsing.
+- PDS metadata parsing for original label/data-file references, sizes, MIME types, and checksums when supplied by the source.
+- Automated frontend and backend tests, dependency audits, and production builds.
 
-The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline; no external datasets are currently downloaded, processed, cached, or synchronized.
+The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline. The PDS API integration currently retrieves metadata and archive hierarchy records only; no observation files are downloaded, processed, cached, or synchronized.
 
 ## Read-only NASA PDS API
 
@@ -47,7 +49,7 @@ npm install
 npm run dev
 ```
 
-The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index.
+The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index. Available endpoints are `GET /api/v1/pds/search`, `GET /api/v1/pds/products/{identifier}`, and `GET /api/v1/pds/products/{identifier}/members?depth=1|2`.
 
 ## Data resources and provenance
 
@@ -56,7 +58,7 @@ See [docs/data-provenance.md](docs/data-provenance.md) for the source list, arch
 ## Planned architecture
 
 - **Web client:** React, TypeScript, Vite.
-- **API:** Python and FastAPI, introduced when source ingestion and user workflows are specified.
+- **API:** Python and FastAPI read-only PDS discovery proxy; bulk ingestion and user workflows remain future work.
 - **Persistence:** PostgreSQL after data contracts, authorization, and audit requirements are defined.
 - **Data pipeline:** source-specific ingestion, immutable raw products, metadata validation, and traceable derived products.
 - **Engineering:** only deterministic, documented calculations using sourced inputs and independent verification cases. Mission simulation is excluded.
