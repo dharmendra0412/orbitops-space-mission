@@ -69,6 +69,12 @@
 .lola-coordinate-result>div:last-child{grid-column:1/-1}
 .lola-coordinate-result span{font-size:8px;color:#8fa3b9}
 .lola-coordinate-result strong{font:10px 'DM Mono',monospace;color:#9de3f8;overflow-wrap:anywhere}
+.lola-pixel-button{margin-top:2px}
+.lola-pixel-result{margin-top:3px}
+.lola-pixel-result .lola-pixel-provenance{grid-column:1/-1;gap:7px}
+.lola-pixel-provenance span,.lola-pixel-provenance small{font-size:8px;color:#8fa3b9;line-height:1.55}
+.lola-pixel-provenance a{display:inline-flex;align-items:center;gap:5px;font-size:9px;color:#8bd5ef;text-decoration:none}
+.lola-pixel-provenance a:hover{text-decoration:underline}
 
 .pds-load-more{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:8px 11px;border:1px solid #38536c;border-radius:4px;background:#102238;color:#a3e2f8;font:9px 'Manrope',sans-serif;cursor:pointer}
 .pds-load-more:disabled{opacity:.55;cursor:wait}
