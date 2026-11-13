@@ -45,7 +45,7 @@ describe('mission resource catalogue', () => {
     expect(lalt?.description).toContain('SLN-L-LALT-3-RANGE-V1.0')
     expect(laltDarts?.url).toContain('sln-l-lalt-3-range-v1.0')
     expect(southPole?.description).toMatch(/LALT_SP/)
-    expect(southPole?.description).toMatch(/void cells are encoded as -99/)
+    expect(southPole?.description).toMatch(/void cells are encoded as -99/i)
     expect(laltFormat?.description).toMatch(/1\/128° latitude and 1\/32° longitude/)
     expect(laltFormat?.url).toContain('LALT_Format_en_V01.pdf')
     expect(usgs?.description).toMatch(/not independent absolute geodetic truth/i)
