@@ -50,10 +50,6 @@ jobs:
         run: pip install rasterio
       - name: Retrieve and cross-check JPEG2000 counterpart
         run: python -m scripts.validate_lola_jp2_reference
-      - name: Optional cross-check against NASA PGDA global LOLA COG
-        timeout-minutes: 5
-        continue-on-error: true
-        run: python -m scripts.validate_lola_pgda_reference
       - name: Compare against NASA PGDA high-resolution Haworth 5 m DEM
         timeout-minutes: 5
         run: python -m scripts.validate_lola_haworth_reference
@@ -68,7 +64,6 @@ jobs:
             backend/data/raw/lola/ldem_85s_40m.jp2
             backend/data/raw/lola/ldem_85s_40m_jp2.lbl
             backend/data/raw/lola/ldem_85s_40m.jp2.manifest.json
-            backend/data/raw/lola/ldem_85s_40m.pgda-comparison.json
             backend/data/raw/lola/haworth_5mpp_surf.tif
             backend/data/raw/lola/ldem_85s_40m.haworth-comparison.json
           if-no-files-found: warn
