@@ -393,3 +393,47 @@ def test_kaguya_lalt_label_endpoint_integrates_fixed_client_and_pds3_parser(monk
     assert payload["metadata"]["sample_type"].startswith("PC_REAL")
     assert payload["metadata"]["image_bytes"] == 64_880_640
     assert payload["metadata"]["coordinate_system"] == "MEAN EARTH/POLAR AXIS OF DE421"
+
+
+def test_cors_allows_only_explicit_frontend_origins_and_read_only_methods():
+    from fastapi import FastAPI
+
+    application = FastAPI()
+    application.get("/health")(lambda: {"status": "ok"})
+    api.configure_cors(application, [" https://orbitops.example.com ", ""])
+    client = TestClient(application)
+
+    allowed = client.options(
+        "/health",
+        headers={
+            "Origin": "https://orbitops.example.com",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert allowed.status_code == 200
+    assert allowed.headers["access-control-allow-origin"] == "https://orbitops.example.com"
+    assert "GET" in allowed.headers["access-control-allow-methods"]
+    assert "POST" not in allowed.headers["access-control-allow-methods"]
+
+    denied = client.options(
+        "/health",
+        headers={
+            "Origin": "https://untrusted.example.net",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert "access-control-allow-origin" not in denied.headers
+
+
+def test_cors_is_not_added_when_no_frontend_origins_are_configured():
+    from fastapi import FastAPI
+
+    application = FastAPI()
+    application.get("/health")(lambda: {"status": "ok"})
+    api.configure_cors(application, ["", "   "])
+    response = TestClient(application).get(
+        "/health",
+        headers={"Origin": "https://untrusted.example.net"},
+    )
+    assert response.status_code == 200
+    assert "access-control-allow-origin" not in response.headers
