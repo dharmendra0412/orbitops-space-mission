@@ -362,3 +362,36 @@ test('mobile navigation manages keyboard focus and closes with Escape', async ({
   await expect(openButton).toHaveAttribute('aria-expanded', 'false')
   await expect(openButton).toBeFocused()
 })
+
+
+test('NASA PDS search supports keyboard submission and validates minimum query length', async ({ page }) => {
+  let requestedKeywords = ''
+  await page.route('**/api/v1/pds/search*', async (route) => {
+    requestedKeywords = new URL(route.request().url()).searchParams.get('keywords') ?? ''
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA Planetary Data System Search API',
+        source_url: 'https://pds.nasa.gov/api/search?keyword=Moon%20South%20Pole',
+        api_documentation: 'https://nasa-pds.github.io/pds-api/',
+        retrieved_at: '2026-11-13T12:00:00Z',
+        query: { keywords: 'Moon South Pole', limit: 10 },
+        response: { summary: { hits: 0 }, data: [] },
+      }),
+    })
+  })
+
+  await page.goto('/')
+  await page.locator('.side-nav').getByRole('button', { name: 'NASA data sources' }).click()
+  const searchInput = page.getByLabel('Product keywords')
+  const searchButton = page.getByRole('button', { name: 'Search PDS' })
+  await searchInput.fill('x')
+  await expect(searchButton).toBeDisabled()
+  await searchInput.fill('Moon South Pole')
+  await searchInput.press('Enter')
+
+  await expect.poll(() => requestedKeywords).toBe('Moon South Pole')
+  await expect(page.getByText(/PDS API returned no product records/)).toBeVisible()
+  await expect(page.locator('.pds-product-card')).toHaveCount(0)
+})
