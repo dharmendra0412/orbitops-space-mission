@@ -112,6 +112,11 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
         "RECORD_TYPE": "FIXED_LENGTH",
         "RECORD_BYTES": "162",
         "FILE_RECORDS": "12003",
+        "PRODUCT_NAME": "LALT_RD",
+        "ROWS": "12002",
+        "COLUMNS": "11",
+        "ROW_BYTES": "162",
+        "INTERCHANGE_FORMAT": "ASCII",
     }
     for key, expected in expected_label.items():
         if label.get(key) != expected:
