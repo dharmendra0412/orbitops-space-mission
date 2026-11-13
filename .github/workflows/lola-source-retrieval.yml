@@ -9,6 +9,7 @@ on:
       - "backend/scripts/fetch_lola_gdr_sample.py"
       - "backend/scripts/fetch_lola_gdr_label.py"
       - "backend/scripts/validate_lola_gdr_sample.py"
+      - "backend/scripts/validate_lola_http_range.py"
       - "backend/scripts/validate_lola_jp2_reference.py"
       - "backend/scripts/validate_lola_pgda_reference.py"
       - "backend/scripts/validate_lola_haworth_reference.py"
@@ -46,6 +47,8 @@ jobs:
         run: python -m scripts.fetch_lola_gdr_label
       - name: Validate complete raster against downloaded label
         run: python -m scripts.validate_lola_gdr_sample
+      - name: Verify exact two-byte HTTP Range against validated local IMG
+        run: python -m scripts.validate_lola_http_range
       - name: Install independent JPEG2000 decoder
         run: pip install rasterio pyproj
       - name: Retrieve and cross-check JPEG2000 counterpart
@@ -61,6 +64,7 @@ jobs:
             backend/data/raw/lola/ldem_85s_40m.img
             backend/data/raw/lola/ldem_85s_40m.lbl
             backend/data/raw/lola/ldem_85s_40m.img.manifest.json
+            backend/data/raw/lola/ldem_85s_40m.range-validation.json
             backend/data/raw/lola/ldem_85s_40m.jp2
             backend/data/raw/lola/ldem_85s_40m_jp2.lbl
             backend/data/raw/lola/ldem_85s_40m.jp2.manifest.json
