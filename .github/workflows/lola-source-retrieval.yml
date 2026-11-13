@@ -9,6 +9,7 @@ on:
       - "backend/scripts/fetch_lola_gdr_sample.py"
       - "backend/scripts/fetch_lola_gdr_label.py"
       - "backend/scripts/validate_lola_gdr_sample.py"
+      - "backend/scripts/validate_lola_jp2_reference.py"
       - "backend/app/services/lola_gdr.py"
       - "backend/app/services/pds3_label.py"
 
@@ -39,6 +40,10 @@ jobs:
         run: python -m scripts.fetch_lola_gdr_label
       - name: Validate complete raster against downloaded label
         run: python -m scripts.validate_lola_gdr_sample
+      - name: Install independent JPEG2000 decoder
+        run: pip install rasterio
+      - name: Retrieve and cross-check JPEG2000 counterpart
+        run: python -m scripts.validate_lola_jp2_reference
       - name: Preserve retrieved source and provenance as workflow artifact
         uses: actions/upload-artifact@v6
         with:
@@ -47,5 +52,8 @@ jobs:
             backend/data/raw/lola/ldem_85s_40m.img
             backend/data/raw/lola/ldem_85s_40m.lbl
             backend/data/raw/lola/ldem_85s_40m.img.manifest.json
+            backend/data/raw/lola/ldem_85s_40m.jp2
+            backend/data/raw/lola/ldem_85s_40m_jp2.lbl
+            backend/data/raw/lola/ldem_85s_40m.jp2.manifest.json
           if-no-files-found: error
           retention-days: 30
