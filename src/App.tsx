@@ -49,6 +49,16 @@ type PdsLookupResponse = {
   response: unknown
 }
 
+type Pds3LabelResponse = {
+  source: string
+  source_url: string
+  retrieved_at: string
+  label_format: string
+  product_file: string
+  metadata: Record<string, string>
+  note: string
+}
+
 
 function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
@@ -69,6 +79,9 @@ function App() {
   const [pdsMembersLoading, setPdsMembersLoading] = useState(false)
   const [pdsMembersRecords, setPdsMembersRecords] = useState<import('./data/pds').PdsMemberRecord[]>([])
   const [pdsMembersStructured, setPdsMembersStructured] = useState(true)
+  const [pdsLabelResponse, setPdsLabelResponse] = useState<Pds3LabelResponse | null>(null)
+  const [pdsLabelError, setPdsLabelError] = useState('')
+  const [pdsLabelLoading, setPdsLabelLoading] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -176,6 +189,25 @@ function App() {
       setPdsMembersError(error instanceof Error ? error.message : 'Unable to retrieve PDS child products.')
     } finally {
       setPdsMembersLoading(false)
+    }
+  }
+
+  const fetchLolaSampleLabel = async () => {
+    setPdsLabelLoading(true)
+    setPdsLabelError('')
+    setPdsLabelResponse(null)
+    try {
+      const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/label')
+      const payload = await response.json() as Pds3LabelResponse | { detail?: string }
+      if (!response.ok) {
+        const message = 'detail' in payload && payload.detail ? payload.detail : 'LOLA label request failed (HTTP ' + response.status + ')'
+        throw new Error(message)
+      }
+      setPdsLabelResponse(payload as Pds3LabelResponse)
+    } catch (error) {
+      setPdsLabelError(error instanceof Error ? error.message : 'Unable to retrieve the original LOLA label.')
+    } finally {
+      setPdsLabelLoading(false)
     }
   }
 
@@ -400,6 +432,41 @@ function App() {
               {pdsMembersResponse.next_search_after && <button className="pds-load-more" type="button" disabled={pdsMembersLoading} onClick={() => void browsePdsMembers(pdsMembersResponse.identifier, pdsMembersResponse.depth, pdsMembersResponse.next_search_after ?? undefined)}>
                 {pdsMembersLoading ? 'Loading next page…' : 'Load next 100 source records'} <ArrowUpRight size={12}/>
               </button>}
+            </div>}
+          </div>
+          <div className="panel pds-search-panel">
+            <div className="pds-search-heading"><div><strong>Verified LOLA south-polar label</strong><span>Fetch source metadata for one documented PDS3 GDR product</span></div><span className="resource-kind">LIVE LABEL LOOKUP</span></div>
+            <p className="pds-search-note">This endpoint retrieves the small detached label only. It does not download or decode the associated 115 MB image file, and it does not calculate terrain elevations.</p>
+            <button className="run-button" type="button" onClick={() => void fetchLolaSampleLabel()} disabled={pdsLabelLoading}>
+              <Database size={15}/>{pdsLabelLoading ? 'Fetching source label…' : 'Fetch original LOLA label metadata'}
+            </button>
+            {pdsLabelError && <p className="pds-search-error" role="alert">{pdsLabelError}</p>}
+            {pdsLabelResponse && <div className="pds-results">
+              <div className="pds-results-meta"><span>{pdsLabelResponse.source} · {pdsLabelResponse.label_format}</span><span>Retrieved {new Date(pdsLabelResponse.retrieved_at).toLocaleString()}</span></div>
+              <a href={pdsLabelResponse.source_url} target="_blank" rel="noopener noreferrer">Open original detached label <ExternalLink size={12}/></a>
+              <div className="pds-file-manifest">
+                <div className="pds-results-count">{pdsLabelResponse.product_file} · metadata exactly as returned from the source label</div>
+                {([
+                  ['Data set', 'DATA_SET_ID'],
+                  ['Product version', 'PRODUCT_VERSION_ID'],
+                  ['Target', 'TARGET_NAME'],
+                  ['Projection', 'MAP_PROJECTION_TYPE'],
+                  ['Latitude range', 'MINIMUM_LATITUDE'],
+                  ['Maximum latitude', 'MAXIMUM_LATITUDE'],
+                  ['Grid scale', 'MAP_SCALE'],
+                  ['Image dimensions', 'LINES'],
+                  ['Samples per line', 'LINE_SAMPLES'],
+                  ['Sample type', 'SAMPLE_TYPE'],
+                  ['Sample bits', 'SAMPLE_BITS'],
+                  ['Unit', 'UNIT'],
+                  ['Scaling factor', 'SCALING_FACTOR'],
+                  ['Offset', 'OFFSET'],
+                  ['Coordinate reference', 'COORDINATE_SYSTEM_NAME'],
+                ] as const).map(([label, key]) => pdsLabelResponse.metadata[key] ? <article className="pds-file-row" key={key}>
+                  <div><strong>{label}</strong><span>{pdsLabelResponse.metadata[key]}</span></div>
+                </article> : null)}
+              </div>
+              <p className="pds-search-note">{pdsLabelResponse.note} Values and units are source metadata; no unit conversion has been applied.</p>
             </div>}
           </div>
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
