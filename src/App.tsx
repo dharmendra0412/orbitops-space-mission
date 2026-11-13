@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Activity, ArrowUpRight, Atom, BatteryCharging, Check,
   ChevronDown, CircleHelp, Compass, Database, Globe2, Layers3,
@@ -170,6 +170,31 @@ function App() {
   const [lolaProfileResponse, setLolaProfileResponse] = useState<LolaProfileResponse | null>(null)
   const [lolaProfileError, setLolaProfileError] = useState('')
   const [lolaProfileLoading, setLolaProfileLoading] = useState(false)
+
+  useEffect(() => {
+    const sections = [
+      { id: 'research-overview', label: 'Research overview' },
+      { id: 'designer', label: 'Research categories' },
+      { id: 'input-readiness', label: 'Input readiness' },
+      { id: 'mission-brief', label: 'Mission brief' },
+      { id: 'data-sources', label: 'NASA data sources' },
+    ]
+    const updateActiveSection = () => {
+      let current = sections[0].label
+      for (const section of sections) {
+        const element = document.getElementById(section.id)
+        if (element && element.getBoundingClientRect().top <= 180) current = section.label
+      }
+      setActiveNav(current)
+    }
+    updateActiveSection()
+    window.addEventListener('scroll', updateActiveSection, { passive: true })
+    window.addEventListener('resize', updateActiveSection)
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection)
+      window.removeEventListener('resize', updateActiveSection)
+    }
+  }, [])
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -408,7 +433,7 @@ function App() {
       </header>
 
       <div className="content">
-        <section className="page-heading">
+        <section className="page-heading" id="research-overview">
           <div><div className="eyebrow"><span className="eyebrow-line"/> SCIENCE RESEARCH WORKSPACE</div><h1>Research overview<span className="heading-period">.</span></h1><p>Explore authoritative lunar science data and technical documentation.</p></div>
           <button className="primary-button" onClick={() => goTo('Research categories')}><Rocket size={16}/> Explore research areas <ArrowUpRight size={15}/></button>
         </section>
