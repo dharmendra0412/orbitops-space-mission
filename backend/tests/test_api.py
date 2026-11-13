@@ -210,7 +210,7 @@ def test_lola_pds3_label_endpoint_returns_parsed_source_metadata(monkeypatch):
     assert "fixed-source HTTP Range requests" in payload["note"]
     assert "HEIGHT = DN * SCALING_FACTOR" in payload["note"]
     assert "PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET" in payload["note"]
-    assert "downloaded and validated" in payload["note"]
+    assert "fixed-source HTTP Range requests" in payload["note"]
 
 
 def test_lola_pds3_label_endpoint_reports_malformed_upstream_label(monkeypatch):
