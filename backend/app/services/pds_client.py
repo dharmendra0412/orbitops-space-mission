@@ -41,10 +41,40 @@ class PdsClient:
                     params={
                         "keywords": keywords,
                         "limit": limit,
-                        "fields": ["lidvid", "title", "product_class", "start_date_time", "stop_date_time"],
+                        "fields": ["lidvid", "title"],
                     },
                     headers={"Accept": "application/kvp+json"},
                 )
+                response.raise_for_status()
+                payload = response.json()
+        except httpx.TimeoutException as exc:
+            raise PdsApiError("NASA PDS Search API request timed out", status_code=504) from exc
+        except httpx.HTTPStatusError as exc:
+            raise PdsApiError(
+                f"NASA PDS Search API returned HTTP {exc.response.status_code}",
+                status_code=404 if exc.response.status_code == 404 else 502,
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise PdsApiError("Could not connect to NASA PDS Search API") from exc
+        except ValueError as exc:
+            raise PdsApiError("NASA PDS Search API returned invalid JSON") from exc
+
+        return str(response.url), payload
+
+    async def list_members(self, *, identifier: str, depth: int = 1) -> tuple[str, Any]:
+        if depth not in (1, 2):
+            raise ValueError("PDS hierarchy depth must be 1 or 2")
+
+        encoded_identifier = quote(identifier, safe="")
+        suffix = "/members" * depth
+        url = f"{PDS_SEARCH_BASE_URL}/products/{encoded_identifier}{suffix}"
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout_seconds,
+                transport=self._transport,
+                follow_redirects=True,
+            ) as client:
+                response = await client.get(url, headers={"Accept": "application/json"})
                 response.raise_for_status()
                 payload = response.json()
         except httpx.TimeoutException as exc:
