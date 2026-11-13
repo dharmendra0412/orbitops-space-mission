@@ -98,7 +98,7 @@ def _validate_reference(dataset: rasterio.DatasetReader) -> str:
         raise RuntimeError(
             "Haworth DEM CRS does not match the required lunar south-polar "
             "stereographic geometry on a 1,737,400 m sphere; "
-            f"name={dataset.crs.name!r}, parameters={crs_parameters!r}, WKT={wkt}"
+            f"parameters={crs_parameters!r}, WKT={wkt}"
         )
     if not math.isclose(abs(dataset.transform.a), 5.0, abs_tol=1e-6):
         raise RuntimeError(
