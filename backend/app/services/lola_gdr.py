@@ -4,7 +4,6 @@ import math
 import re
 import struct
 from collections.abc import Iterator
-from typing import Any
 
 
 LOLA_MEAN_EARTH_REFERENCE_RADIUS_M = 1_737_400.0
@@ -65,6 +64,25 @@ def validate_lola_gdr_label(metadata: dict[str, str]) -> tuple[int, int, int]:
     if record_bytes != samples * 2:
         raise LolaRasterError("Record byte count does not match 16-bit image samples")
     return lines, samples, record_bytes
+
+
+def lola_dn_to_height_m(dn: int, metadata: dict[str, str]) -> float:
+    """Convert one raw DN to GDR height using the GDR SIS formula (DN * scale)."""
+    if not isinstance(dn, int) or isinstance(dn, bool):
+        raise LolaRasterError("Digital number must be an integer sample")
+    validate_lola_gdr_label(metadata)
+    scale = _number(metadata, "SCALING_FACTOR")
+    return dn * scale
+
+
+def lola_dn_to_planetary_radius_m(dn: int, metadata: dict[str, str]) -> float:
+    """Convert one raw DN to reference-sphere radius (DN * scale + OFFSET)."""
+    if not isinstance(dn, int) or isinstance(dn, bool):
+        raise LolaRasterError("Digital number must be an integer sample")
+    validate_lola_gdr_label(metadata)
+    scale = _number(metadata, "SCALING_FACTOR")
+    offset = _number(metadata, "OFFSET")
+    return dn * scale + offset
 
 
 def iter_lola_gdr_rows(data: bytes | bytearray | memoryview, metadata: dict[str, str]) -> Iterator[tuple[int, ...]]:
