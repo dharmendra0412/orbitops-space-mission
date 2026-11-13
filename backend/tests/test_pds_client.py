@@ -293,3 +293,24 @@ async def test_pds_api_redirects_are_not_followed(request_method: str):
     # Only the fixed NASA PDS host is contacted; redirect targets are not fetched.
     assert len(requests_seen) == 1
     assert requests_seen[0].url.host == "pds.nasa.gov"
+
+
+@pytest.mark.asyncio
+async def test_lola_label_redirects_are_not_followed():
+    from app.services.pds_client import PDS_LOLA_GDR_SAMPLE_LABEL_URL
+
+    requests_seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests_seen.append(request)
+        return httpx.Response(
+            302,
+            headers={"Location": "http://127.0.0.1:8000/internal-label"},
+        )
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    with pytest.raises(PdsApiError, match="HTTP 302"):
+        await client.fetch_lola_gdr_sample_label()
+
+    assert len(requests_seen) == 1
+    assert str(requests_seen[0].url) == PDS_LOLA_GDR_SAMPLE_LABEL_URL
