@@ -436,7 +436,7 @@ function App() {
           </div>
           <div className="panel pds-search-panel">
             <div className="pds-search-heading"><div><strong>Verified LOLA south-polar label</strong><span>Fetch source metadata for one documented PDS3 GDR product</span></div><span className="resource-kind">LIVE LABEL LOOKUP</span></div>
-            <p className="pds-search-note">This endpoint retrieves the small detached label only. It does not download or decode the associated 115 MB image file, and it does not calculate terrain elevations.</p>
+            <p className="pds-search-note">This endpoint retrieves the detached label only. It does not download or decode the associated 115 MB image file. Height conversion is deliberately disabled because official LOLA references disagree on whether OFFSET belongs in HEIGHT; no terrain elevations are calculated.</p>
             <button className="run-button" type="button" onClick={() => void fetchLolaSampleLabel()} disabled={pdsLabelLoading}>
               <Database size={15}/>{pdsLabelLoading ? 'Fetching source label…' : 'Fetch original LOLA label metadata'}
             </button>
