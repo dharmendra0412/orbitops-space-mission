@@ -47,11 +47,24 @@ The PDS Geosciences Node's public LOLA GDR archive directory exposes an individu
 - Source label: [LDEM_85S_40M.LBL](https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.lbl).
 - Directory listing reports the IMG at 115,034,112 bytes and the detached LBL at 4,986 bytes. The XML label translation is also listed alongside the pair.
 
-The detached label identifies this particular product as **PDS3**, product version **V2.0**, data set **LRO-L-LOLA-4-GDR-V1.0**. It describes a 40 m/pixel polar stereographic grid covering 85°S to 90°S, with 7,584 lines by 7,584 samples, 16-bit little-endian signed integer samples, and a source-reported scaling factor of 0.5 and offset of 1,737,400 m. It names the coordinate system as **MEAN EARTH/POLAR AXIS OF DE421**. These are label metadata values, not measurements calculated by ORBITOPS. The label's own comments distinguish height conversion from planetary-radius conversion; downstream code must preserve that distinction and must not treat the offset as a height offset.
+The detached label identifies this particular product as **PDS3**, product version **V2.0**, data set **LRO-L-LOLA-4-GDR-V1.0**. It describes a 40 m/pixel polar stereographic grid covering 85°S to 90°S, with 7,584 lines by 7,584 samples, 16-bit little-endian signed integer samples, and a source-reported scaling factor of 0.5 and offset of 1,737,400 m. It names the coordinate system as **MEAN EARTH/POLAR AXIS OF DE421**. These are label metadata values, not measurements calculated by ORBITOPS. The label identifies the image object as `HEIGHT` and describes samples as height relative to a reference radius, while also supplying `SCALING_FACTOR` and `OFFSET`. Interpretation is deliberately on hold: the PDS Geosciences Node FAQ currently states `HEIGHT = DATA VALUE * SCALING_FACTOR + OFFSET`, whereas the Orbital Data Explorer's GDRDEM reference distinguishes `HEIGHT = DN * SCALING_FACTOR` from `PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET`. The LOLA RDR SIS sample is an older, different GDR example whose image object is named `PLANETARY_RADIUS`; it is not proof of the exact conversion for this 2017 south-polar product. ORBITOPS therefore preserves the label values but does not calculate or display elevation, radius, or topography until this product-specific discrepancy is resolved against the applicable archive-volume documentation and independent reference output.
 
 **Format distinction:** the registry collection `urn:nasa:pds:lro_lola_rdr:data_gridded::1.0` is a PDS4 collection record, but this selected archive-volume sample's detached `.LBL` declares `PDS_VERSION_ID = "PDS3"`. The repository fixture `backend/tests/fixtures/lola_ldem_85s_40m.lbl` is a transcription of the retrieved source label used to validate the conservative PDS3 metadata parser. The parser preserves source strings and units; it does not decode the 115 MB image, convert pixel values, or claim that the IMG has been downloaded. Do not infer that the PDS4 collection API returns this PDS3 volume file as a PDS4 product.
 
 This sample is suitable for parser/metadata contract testing only at this stage. Before any pixel is displayed as terrain height, ingestion must retrieve the original IMG and label from the archive, verify byte count and a source checksum (if published), validate the exact PDS label and projection conventions, and test decoding against an independent reference implementation. The 115 MB file has not been downloaded or processed by ORBITOPS.
+
+
+### Interpretation hold: LOLA GDR height conversion
+
+The source material is not internally consistent enough to authorize an elevation calculation for `LDEM_85S_40M.IMG`:
+
+- The selected 2017 PDS3 label has `IMAGE.NAME = HEIGHT`, describes height relative to a reference radius, and records `SCALING_FACTOR = 0.5` and `OFFSET = 1737400.`.
+- The [PDS Geosciences Node LOLA FAQ](https://pds-geosciences.wustl.edu/missions/lro/lola_faq.htm) says `HEIGHT = (DATA VALUE * SCALING_FACTOR) + OFFSET`.
+- The [PDS Orbital Data Explorer GDRDEM reference](https://ode.rsl.wustl.edu/MArs/pagehelp/Content/Missions_Instruments/Lunar%20Reconnaissance%20Orbiter%20(LRO)/LOLA/GDR/GDRDEM.htm) says `HEIGHT = DN * SCALING_FACTOR`, and separately says `PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET`.
+- The [LOLA RDR SIS v2.2 sample GDR label](https://science.nasa.gov/wp-content/uploads/2024/01/lola-rdrsis.pdf) describes a different older product with `IMAGE.NAME = PLANETARY_RADIUS`, unsigned samples, a different scaling factor, and a different projection. It must not be transplanted as the selected product's conversion rule.
+
+Until the exact product's archive-volume SIS/catalogue and an independently produced reference value establish the intended interpretation, ORBITOPS must expose only the raw label metadata. It must not apply either formula, label a computed value as elevation, or present a terrain visualization derived from unvalidated pixels.
+
 ## Live discovery endpoint
 
 The FastAPI service exposes:
