@@ -56,10 +56,10 @@ function App() {
     setPdsSearchResponse(null)
     try {
       const params = new URLSearchParams({ keywords, limit: '10' })
-      const response = await fetch(\`/api/v1/pds/search?\${params.toString()}\`)
+      const response = await fetch('/api/v1/pds/search?' + params.toString())
       const payload = await response.json() as PdsSearchResponse | { detail?: string }
       if (!response.ok) {
-        const message = 'detail' in payload && payload.detail ? payload.detail : \`PDS search failed (HTTP \${response.status})\`
+        const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS search failed (HTTP ' + response.status + ')'
         throw new Error(message)
       }
       setPdsSearchResponse(payload as PdsSearchResponse)
