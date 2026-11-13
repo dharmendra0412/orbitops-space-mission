@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Download, FileText, Save, Trash2, Upload } from 'lucide-react'
 import {
   countCompletedMissionBriefFields,
@@ -91,7 +91,7 @@ export function MissionBrief() {
     URL.revokeObjectURL(objectUrl)
   }
 
-  const importDraft = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const importDraft = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     try {
