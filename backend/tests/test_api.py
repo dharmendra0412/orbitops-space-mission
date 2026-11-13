@@ -324,6 +324,8 @@ def test_lola_profile_endpoint_returns_bounded_real_source_samples_and_derived_c
     assert response.status_code == 200
     payload = response.json()
     assert payload["sample_count"] == 3
+    assert payload["sample_spacing_m"] == 40.0
+    assert payload["profile_span_m"] == 80.0
     assert payload["byte_range_inclusive"] == {"start": 57_509_470, "end": 57_509_475}
     assert [point["raw_dn"] for point in payload["points"]] == [-11002, -11001, -11000]
     assert [point["height_m"] for point in payload["points"]] == [-5501.0, -5500.5, -5500.0]
