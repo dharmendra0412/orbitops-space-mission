@@ -6,6 +6,7 @@ from urllib.parse import quote
 import httpx
 
 PDS_SEARCH_BASE_URL = "https://pds.nasa.gov/api/search/1"
+PDS_LOLA_GDR_SAMPLE_LABEL_MAX_BYTES = 1_000_000
 PDS_LOLA_GDR_SAMPLE_LABEL_URL = (
     "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/"
     "lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.lbl"
@@ -113,14 +114,19 @@ class PdsClient:
                 transport=self._transport,
                 follow_redirects=False,
             ) as client:
-                response = await client.get(
+                async with client.stream(
+                    "GET",
                     PDS_LOLA_GDR_SAMPLE_LABEL_URL,
                     headers={"Accept": "text/plain"},
-                )
-                response.raise_for_status()
-                if len(response.content) > 1_000_000:
-                    raise PdsApiError("NASA PDS label exceeds the configured size limit")
-                label_text = response.content.decode("ascii")
+                ) as response:
+                    response.raise_for_status()
+                    label_bytes = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        label_bytes.extend(chunk)
+                        if len(label_bytes) > PDS_LOLA_GDR_SAMPLE_LABEL_MAX_BYTES:
+                            raise PdsApiError("NASA PDS label exceeds the configured size limit")
+                    source_url = str(response.url)
+                label_text = bytes(label_bytes).decode("ascii")
         except PdsApiError:
             raise
         except UnicodeDecodeError as exc:
@@ -135,7 +141,7 @@ class PdsClient:
         except httpx.HTTPError as exc:
             raise PdsApiError("Could not connect to the NASA PDS archive") from exc
 
-        return str(response.url), label_text
+        return source_url, label_text
 
     async def resolve_product(self, *, identifier: str) -> tuple[str, Any]:
         encoded_identifier = quote(identifier, safe="")
