@@ -61,20 +61,29 @@ class PdsClient:
 
         return str(response.url), payload
 
-    async def list_members(self, *, identifier: str, depth: int = 1) -> tuple[str, Any]:
+    async def list_members(self, *, identifier: str, depth: int = 1, limit: int = 100, search_after: str | None = None) -> tuple[str, Any]:
         if depth not in (1, 2):
             raise ValueError("PDS hierarchy depth must be 1 or 2")
+
+        if not 1 <= limit <= 100:
+            raise ValueError("PDS hierarchy page size must be between 1 and 100")
 
         encoded_identifier = quote(identifier, safe="")
         suffix = "/members" * depth
         url = f"{PDS_SEARCH_BASE_URL}/products/{encoded_identifier}{suffix}"
+        params: dict[str, str | int] = {
+            "limit": limit,
+            "sort": "ops:Harvest_Info.ops:harvest_date_time",
+        }
+        if search_after:
+            params["search-after"] = search_after
         try:
             async with httpx.AsyncClient(
                 timeout=self._timeout_seconds,
                 transport=self._transport,
                 follow_redirects=True,
             ) as client:
-                response = await client.get(url, headers={"Accept": "application/json"})
+                response = await client.get(url, params=params, headers={"Accept": "application/json"})
                 response.raise_for_status()
                 payload = response.json()
         except httpx.TimeoutException as exc:
@@ -116,3 +125,19 @@ class PdsClient:
             raise PdsApiError("NASA PDS Search API returned invalid JSON") from exc
 
         return str(response.url), payload
+
+def extract_next_search_after(payload: Any) -> str | None:
+    """Read the documented harvest-time cursor from the final PDS result, if present."""
+    rows = payload if isinstance(payload, list) else (
+        payload.get("data") if isinstance(payload, dict) and isinstance(payload.get("data"), list) else None
+    )
+    if not rows:
+        return None
+    last = rows[-1]
+    if not isinstance(last, dict):
+        return None
+    value = last.get("ops:Harvest_Info.ops:harvest_date_time")
+    if isinstance(value, list):
+        value = value[-1] if value else None
+    return value if isinstance(value, str) and value else None
+
