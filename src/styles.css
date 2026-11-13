@@ -92,3 +92,37 @@
 /* The hero is a research status panel; no decorative spacecraft or fabricated scene is rendered. */
 .hero-copy{max-width:760px}
 .hero-copy>p{max-width:680px}
+
+
+.mission-brief-panel{display:grid;gap:14px;padding:16px;background:#0b1726;border:1px solid #2b4057;border-radius:7px}
+.mission-brief-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid #293d53}
+.mission-brief-status{display:flex;align-items:center;gap:9px;min-width:0}
+.mission-brief-status-icon{display:grid;place-items:center;width:30px;height:30px;border:1px solid #31516a;border-radius:5px;color:#9bdcf4;background:#10243a}
+.mission-brief-status>div{display:grid;gap:3px;min-width:0}
+.mission-brief-status strong{font-size:10px;color:#e1eaf5}
+.mission-brief-status small{font-size:8px;color:#8fa3b9}
+.mission-brief-actions{display:flex;gap:7px;flex-wrap:wrap}
+.mission-brief-actions button{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #38536c;border-radius:4px;background:#102238;color:#a3e2f8;font:8px 'Manrope',sans-serif;cursor:pointer}
+.mission-brief-actions button:hover{background:#18314b}
+.mission-brief-actions .mission-brief-clear{color:#b8c3d1;border-color:#394657;background:#111c2a}
+.mission-brief-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.mission-brief-field{display:grid;align-content:start;gap:6px;min-width:0}
+.mission-brief-field-wide{grid-column:1/-1}
+.mission-brief-field label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:9px;font-weight:700;color:#dce7f3}
+.mission-brief-field input,.mission-brief-field textarea{width:100%;min-width:0;padding:10px 11px;border:1px solid #31465d;border-radius:4px;background:#081321;color:#e4edf8;font:10px 'Manrope',sans-serif;line-height:1.5}
+.mission-brief-field input:focus,.mission-brief-field textarea:focus{outline:1px solid #67c9ed;border-color:#67c9ed}
+.mission-brief-field textarea{min-height:78px;resize:vertical}
+.mission-brief-field input::placeholder,.mission-brief-field textarea::placeholder{color:#60758d}
+.mission-brief-field>small{font-size:8px;line-height:1.5;color:#8599b0}
+.mission-required,.mission-optional{padding:2px 5px;border:1px solid #38536c;border-radius:3px;font-size:7px;font-weight:500;color:#9bdcf4}
+.mission-optional{color:#9aabba;border-color:#39495c}
+.mission-brief-validation{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid #3b4654;border-radius:5px;background:#101c2a;color:#a6c6d8}
+.mission-brief-validation>div{display:grid;gap:4px}
+.mission-brief-validation strong{font-size:9px;color:#d7e3ee}
+.mission-brief-validation p{margin:0;font-size:8px;line-height:1.6;color:#92a6ba}
+@media(max-width:640px){
+  .mission-brief-fields{grid-template-columns:minmax(0,1fr)}
+  .mission-brief-field-wide{grid-column:auto}
+  .mission-brief-actions{width:100%}
+  .mission-brief-actions button{flex:1;justify-content:center}
+}
