@@ -47,3 +47,7 @@
 .pds-product-card code{font-size:8px;color:#8bd5ef;overflow-wrap:anywhere}
 .pds-product-card button{display:inline-flex;align-items:center;gap:5px;width:max-content;border:0;background:transparent;padding:3px 0;color:#8bd5ef;font-size:8px;cursor:pointer}
 .pds-empty{font-size:9px;line-height:1.6;color:#a8b8ca}
+
+.pds-hierarchy-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.pds-hierarchy-actions button{display:inline-flex;align-items:center;gap:5px;background:#102238;border:1px solid #30465e;border-radius:4px;padding:7px 9px;color:#9bdcf4;font:8px 'Manrope',sans-serif;cursor:pointer}
+.pds-hierarchy-actions button:disabled{opacity:.55;cursor:wait}
