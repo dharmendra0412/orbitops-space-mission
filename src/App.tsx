@@ -438,6 +438,7 @@ function App() {
             {pdsLabelResponse && <div className="pds-results">
               <div className="pds-results-meta"><span>{pdsLabelResponse.source} · {pdsLabelResponse.label_format}</span><span>Retrieved {new Date(pdsLabelResponse.retrieved_at).toLocaleString()}</span></div>
               <a href={pdsLabelResponse.source_url} target="_blank" rel="noopener noreferrer">Open original detached label <ExternalLink size={12}/></a>
+              <div className="pds-search-note"><a href="https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/document/rdrsis.htm" target="_blank" rel="noopener noreferrer">LOLA RDR/GDR Software Interface Specification <ExternalLink size={12}/></a> · <a href="https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/catalog/dsmap_polar.cat" target="_blank" rel="noopener noreferrer">Official polar projection equations <ExternalLink size={12}/></a></div>
               <div className="pds-file-manifest">
                 <div className="pds-results-count">{pdsLabelResponse.product_file} · metadata exactly as returned from the source label</div>
                 {([
@@ -453,6 +454,10 @@ function App() {
                   ['Image records', 'FILE_RECORDS'],
                   ['Bytes per record', 'RECORD_BYTES'],
                   ['Image data field', 'NAME'],
+                  ['Reference sphere', 'A_AXIS_RADIUS'],
+                  ['Line projection offset', 'LINE_PROJECTION_OFFSET'],
+                  ['Sample projection offset', 'SAMPLE_PROJECTION_OFFSET'],
+                  ['Projection rotation', 'MAP_PROJECTION_ROTATION'],
                   ['Sample type', 'SAMPLE_TYPE'],
                   ['Sample bits', 'SAMPLE_BITS'],
                   ['Unit', 'UNIT'],
