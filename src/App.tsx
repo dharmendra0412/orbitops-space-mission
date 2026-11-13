@@ -155,7 +155,7 @@ function App() {
                 <div className="resource-card-top"><span className="resource-kind">{resource.kind}</span><span className="resource-owner">{resource.owner}</span></div>
                 <h4>{resource.title}</h4>
                 <p>{resource.description}</p>
-                <a href={resource.url} target="_blank" rel="noreferrer">
+                <a href={resource.url} target="_blank" rel="noopener noreferrer">
                   Open original source <ExternalLink size={13}/>
                 </a>
               </article>
