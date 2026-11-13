@@ -242,6 +242,8 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
   let hierarchyPage = 0
   await page.route('**/api/v1/pds/products/**/members*', async (route) => {
     hierarchyPage += 1
+    const depth = new URL(route.request().url()).searchParams.get('depth')
+    const isTwoLevelBrowse = depth === '2'
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -253,9 +255,11 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
         identifier: 'urn:nasa:pds:lro_lola_rdr:data_gridded::1.0',
         depth: 1,
         page: { limit: 100, sort: 'ops:Harvest_Info.ops:harvest_date_time', search_after: hierarchyPage > 1 ? 'cursor-1' : null },
-        next_search_after: hierarchyPage === 1 ? 'cursor-1' : null,
+        next_search_after: !isTwoLevelBrowse && hierarchyPage === 1 ? 'cursor-1' : null,
         response: {
-          data: hierarchyPage === 1
+          data: isTwoLevelBrowse
+            ? [{ id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:derived_nested_product::1.0', title: 'Nested product at depth two', type: 'Product_Observational' }]
+            : hierarchyPage === 1
             ? [
                 { id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:ldem_85s_40m::1.0', title: 'LOLA 85S 40M image', type: 'Product_Observational' },
                 { id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:ldem_80s_40m::1.0', title: 'LOLA 80S 40M image', type: 'Product_Observational' },
@@ -316,6 +320,8 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
   await expect(page.getByText('3 unique child records loaded across archive pages')).toBeVisible()
   await expect(page.getByText('LOLA 75S 40M image')).toBeVisible()
   await expect(page.getByText('LOLA 80S 40M image')).toHaveCount(1)
+  await page.getByRole('button', { name: /Browse two hierarchy levels/ }).click()
+  await expect(page.getByText('Nested product at depth two')).toBeVisible()
 })
 
 
