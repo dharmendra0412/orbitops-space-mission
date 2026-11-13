@@ -25,9 +25,10 @@ The current feature branch includes:
 - A read-only FastAPI proxy for live PDS keyword search, product resolution, and archive hierarchy browsing.
 - PDS metadata parsing for original label/data-file references, sizes, MIME types, and checksums when supplied by the source.
 - A bounded live metadata endpoint for one verified LOLA PDS3 south-polar GDR label, with a conservative parser and source-derived test fixture.
+- A source-backed pixel lookup that requests exactly two bytes from the fixed PDS Geosciences archive URL using HTTP Range, validates the PDS label, and returns the original signed DN plus documented height/radius conversions and PDS polar coordinates.
 - Automated frontend and backend tests, dependency audits, and production builds.
 
-The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline. The PDS API integration currently retrieves metadata and archive hierarchy records only; no observation files are downloaded, processed, cached, or synchronized.
+The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline. The source-validation workflow downloads and validates one fixed LOLA sample product for repeatable engineering checks. The live application does not bulk-download, cache, or synchronize observation files; the pixel endpoint requests only the two bytes for one selected pixel.
 
 ## Read-only NASA PDS API
 
@@ -50,7 +51,7 @@ npm install
 npm run dev
 ```
 
-The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index. Available endpoints are `GET /api/v1/pds/search`, `GET /api/v1/pds/products/{identifier}`, `GET /api/v1/pds/products/{identifier}/members?depth=1|2`, and `GET /api/v1/pds3/lola/gdr/ldem-85s-40m/label`. The last endpoint retrieves only a small, fixed PDS3 label; it does not download or decode the associated raster.
+The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index. Available endpoints are `GET /api/v1/pds/search`, `GET /api/v1/pds/products/{identifier}`, `GET /api/v1/pds/products/{identifier}/members?depth=1|2`, `GET /api/v1/pds3/lola/gdr/ldem-85s-40m/label`, and `GET /api/v1/pds3/lola/gdr/ldem-85s-40m/pixel?line_index=...&sample_index=...`. The pixel route validates the live fixed PDS3 label, then requires an exact HTTP 206 response with the expected `Content-Range` and exactly two bytes from the fixed IMG URL. It refuses a server that ignores Range rather than downloading 115 MB for one pixel. Returned height and planetary radius are derived from the original DN using the label's scaling factor and offset. This single-pixel read is not a terrain tile or a substitute for complete-raster validation.
 
 ## Data resources and provenance
 
