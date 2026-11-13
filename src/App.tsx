@@ -11,7 +11,7 @@ import { missionResources } from './data/sources'
 import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts, mergePdsMembers } from './data/pds'
 import { lolaPixelToLatLon } from './data/lolaProjection'
 import { MissionBrief } from './components/MissionBrief'
-import { LaltPixelInspector } from './components/LaltPixelInspector'
+import { LaltLabelInspector } from './components/LaltLabelInspector'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -678,7 +678,7 @@ function App() {
               <p className="pds-search-note">{pdsLabelResponse.note} Label fields retain their original source units; derived pixel and profile values are shown separately using the documented GDR conversions.</p>
             </div>}
           </div>
-          <LaltPixelInspector />
+          <LaltLabelInspector />
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
         </section>
 
