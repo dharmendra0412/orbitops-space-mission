@@ -116,7 +116,7 @@ export function MissionBrief() {
 
       <div className="mission-brief-panel">
         <div className="mission-brief-toolbar">
-          <div className="mission-brief-status">
+          <div className="mission-brief-status" role="status" aria-live="polite">
             <span className="mission-brief-status-icon"><Save size={14}/></span>
             <div><strong>{completed} / {missionBriefFields.length} sections filled</strong><small>{saveStatus}</small></div>
           </div>
@@ -136,6 +136,8 @@ export function MissionBrief() {
                 <textarea
                   id={'mission-brief-' + field.key}
                   rows={3}
+                  required={field.required}
+                  aria-required={field.required}
                   value={draft[field.key]}
                   placeholder={field.placeholder}
                   onChange={(event) => updateField(field.key, event.target.value)}
@@ -144,6 +146,8 @@ export function MissionBrief() {
                 <input
                   id={'mission-brief-' + field.key}
                   type="text"
+                  required={field.required}
+                  aria-required={field.required}
                   value={draft[field.key]}
                   placeholder={field.placeholder}
                   onChange={(event) => updateField(field.key, event.target.value)}
