@@ -19,14 +19,55 @@ function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   </div>
 }
 
+type PdsSearchResponse = {
+  source: string
+  source_url: string
+  api_documentation: string
+  retrieved_at: string
+  query: { keywords: string; limit: number }
+  response: unknown
+}
+
 function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
   const [selected, setSelected] = useState<string[]>([])
   const [orbit, setOrbit] = useState('low')
   const [showAll, setShowAll] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
+  const [pdsKeywords, setPdsKeywords] = useState('LOLA')
+  const [pdsSearchResponse, setPdsSearchResponse] = useState<PdsSearchResponse | null>(null)
+  const [pdsSearchError, setPdsSearchError] = useState('')
+  const [pdsSearchLoading, setPdsSearchLoading] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
+  }
+
+
+  const searchPds = async () => {
+    const keywords = pdsKeywords.trim()
+    if (keywords.length < 2) {
+      setPdsSearchError('Enter at least two characters to search the NASA PDS archive.')
+      setPdsSearchResponse(null)
+      return
+    }
+
+    setPdsSearchLoading(true)
+    setPdsSearchError('')
+    setPdsSearchResponse(null)
+    try {
+      const params = new URLSearchParams({ keywords, limit: '10' })
+      const response = await fetch(\`/api/v1/pds/search?\${params.toString()}\`)
+      const payload = await response.json() as PdsSearchResponse | { detail?: string }
+      if (!response.ok) {
+        const message = 'detail' in payload && payload.detail ? payload.detail : \`PDS search failed (HTTP \${response.status})\`
+        throw new Error(message)
+      }
+      setPdsSearchResponse(payload as PdsSearchResponse)
+    } catch (error) {
+      setPdsSearchError(error instanceof Error ? error.message : 'Unable to retrieve NASA PDS results.')
+    } finally {
+      setPdsSearchLoading(false)
+    }
   }
 
   const navItems = ['Mission overview', 'Spacecraft designer', 'Constraint checks', 'NASA data sources', 'Engineering guide']
@@ -149,6 +190,25 @@ function App() {
             <span className="section-note">SOURCE CATALOGUE · NOT INGESTED DATA</span>
           </div>
           <p className="resources-intro">Open the original archives and technical references. ORBITOPS does not fabricate measurements or imply that these external datasets have already been downloaded, processed, or synchronized.</p>
+          <div className="panel pds-search-panel">
+            <div className="pds-search-heading"><div><strong>Search the NASA PDS archive</strong><span>Live read-only request to the official PDS Search API</span></div><span className="resource-kind">LIVE SOURCE QUERY</span></div>
+            <div className="pds-search-controls">
+              <label className="pds-search-label" htmlFor="pds-keywords">Product keywords</label>
+              <div className="pds-search-input-row">
+                <input id="pds-keywords" value={pdsKeywords} onChange={(event) => setPdsKeywords(event.target.value)} placeholder="e.g. LOLA, Diviner, LROC" maxLength={120}/>
+                <button className="run-button" type="button" onClick={() => void searchPds()} disabled={pdsSearchLoading || pdsKeywords.trim().length < 2}>
+                  <Database size={15}/>{pdsSearchLoading ? 'Searching…' : 'Search PDS'}
+                </button>
+              </div>
+            </div>
+            <p className="pds-search-note">Results are returned from NASA PDS at request time. The PDS Search API documentation warns that its servers do not yet contain every PDS dataset; an empty response must be checked against the mission archive index.</p>
+            {pdsSearchError && <p className="pds-search-error" role="alert">{pdsSearchError}</p>}
+            {pdsSearchResponse && <div className="pds-results">
+              <div className="pds-results-meta"><span>{pdsSearchResponse.source}</span><span>Retrieved {new Date(pdsSearchResponse.retrieved_at).toLocaleString()}</span></div>
+              <a href={pdsSearchResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream query <ExternalLink size={12}/></a>
+              <pre>{JSON.stringify(pdsSearchResponse.response, null, 2)}</pre>
+            </div>}
+          </div>
           <div className="resource-grid">
             {missionResources.map((resource) => (
               <article className="resource-card" key={resource.id}>
