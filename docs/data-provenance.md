@@ -22,6 +22,15 @@ The source catalogue in `src/data/sources.ts` is a list of external references o
 
 The PDS Geosciences Node describes LOLA as a lunar topography instrument and directs users to the Lunar Orbital Data Explorer for the most recent holdings. It also lists LRO archives by instrument, including Diviner, LOLA, LROC, and SPICE. LOLA documentation distinguishes gridded GDR maps from individual RDR altimetry tracks. For scaled GDR image products, the scaling factor and offset are specified in each PDS label and must be read from that label rather than copied as global constants. LROC PDS archive descriptions identify calibrated NAC/WAC data and associated pointing and housekeeping information.
 
+## Live discovery endpoint
+
+The FastAPI service exposes:
+
+- `GET /api/v1/pds/search?keywords=LOLA&limit=10` — forwards a keyword query to the NASA PDS Search API.
+- `GET /api/v1/pds/products/{identifier}` — resolves a PDS product LID/LIDVID.
+
+The service returns the upstream JSON unchanged under `response`, plus the exact request URL, search parameters, and retrieval timestamp. It does not download the linked product files, invent a result when the API returns none, or claim that all PDS archives are indexed. A successful metadata search is discovery only, not dataset ingestion.
+
 ## Integration requirements
 
 Every imported product must preserve:
