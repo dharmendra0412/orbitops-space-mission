@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -36,6 +37,7 @@ def download_reference(url: str, destination: Path) -> dict[str, object]:
         prefix=f".{destination.name}.", suffix=".part", dir=destination.parent
     )
     total = 0
+    digest = hashlib.sha256()
     try:
         with os.fdopen(fd, "wb") as output, urllib.request.urlopen(
             request, timeout=60
@@ -56,6 +58,7 @@ def download_reference(url: str, destination: Path) -> dict[str, object]:
                     raise RuntimeError(
                         f"Haworth DEM exceeded the {MAX_DOWNLOAD_BYTES}-byte download limit"
                     )
+                digest.update(chunk)
                 output.write(chunk)
             output.flush()
             os.fsync(output.fileno())
@@ -69,7 +72,7 @@ def download_reference(url: str, destination: Path) -> dict[str, object]:
             pass
         raise
 
-    return {"url": url, "bytes": total}
+    return {"url": url, "bytes": total, "sha256": digest.hexdigest()}
 
 
 def _validate_reference(dataset: rasterio.DatasetReader) -> str:
@@ -92,6 +95,14 @@ def _validate_reference(dataset: rasterio.DatasetReader) -> str:
     if dataset.nodata is None:
         raise RuntimeError("Haworth DEM has no declared nodata value")
     return wkt
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _metrics(raw_height: np.ndarray, reference: np.ma.MaskedArray) -> tuple[dict[str, object], np.ndarray]:
@@ -141,6 +152,13 @@ def compare_haworth_site_dem(
             raise RuntimeError("PDS source JP2 dimensions do not match validated IMG")
         with rasterio.open(haworth_path) as haworth:
             haworth_wkt = _validate_reference(haworth)
+            reference_raster_metadata = {
+                "width": haworth.width,
+                "height": haworth.height,
+                "dtype": haworth.dtypes[0],
+                "nodata": haworth.nodata,
+                "transform": tuple(haworth.transform),
+            }
             with WarpedVRT(
                 haworth,
                 crs=source_grid.crs,
@@ -210,6 +228,7 @@ def compare_haworth_site_dem(
                 "roughly 90% of 5 m pixels are interpolated."
             ),
             "embedded_crs_wkt": haworth_wkt,
+            "raster_metadata": reference_raster_metadata,
         },
         "comparison": {
             "source_product": "LDEM_85S_40M PDS GDR",
@@ -250,6 +269,7 @@ def main() -> None:
         if reference_path.is_file()
         else download_reference(HAWORTH_DEM_URL, reference_path)
     )
+    download["sha256"] = download.get("sha256") or _sha256_file(reference_path)
     result = compare_haworth_site_dem(image_path, jp2_path, reference_path)
     result["download"] = download
     manifest = root / "ldem_85s_40m.haworth-comparison.json"
