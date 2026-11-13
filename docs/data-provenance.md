@@ -4,7 +4,7 @@
 
 ORBITOPS must not fabricate measurements, mission telemetry, orbital states, spacecraft performance, or NASA observations. A value is displayed as a sourced observation only after the underlying product has been retrieved and its metadata parsed. If a value is unavailable, the interface must say **Not available from an integrated source**.
 
-The source catalogue in `src/data/sources.ts` is a list of external references only. It does not mean the project has downloaded, cached, processed, or synchronized the linked datasets. The NASA PDS Search API is the preferred discovery interface for PDS4 products once an ingestion backend is implemented.
+The source catalogue in `src/data/sources.ts` is a list of external references only. It does not mean the project has downloaded, cached, processed, or synchronized the linked datasets. The NASA PDS Search API is a candidate programmatic discovery interface for PDS4 products once an ingestion backend is implemented. Its documentation warns that the API servers are not fully populated with all PDS datasets, so API search results must be cross-checked against the mission-specific archive index and direct archive holdings.
 
 ## Verified source entry points
 
@@ -41,7 +41,7 @@ Raw source files must remain distinguishable from derived products. Derived valu
 ## Planned data integration sequence
 
 1. Implement an archive metadata catalogue and ingestion manifest; do not download bulk data before selecting specific product collections and coverage.
-2. Use the PDS Search API to identify a bounded lunar south-pole collection and a specific LOLA product. Choose GDR products for gridded latitude/longitude maps or RDR products for individual altimetry tracks. Parse the selected product's PDS label before rendering any elevation value.
+2. Use the PDS Search API to identify candidate PDS4 products, then cross-check against the LRO/LOLA archive index because the Search API may not contain every archived dataset. Choose GDR products for gridded latitude/longitude maps or RDR products for individual altimetry tracks. Parse the selected product's PDS label before rendering any elevation value.
 3. Add selected LROC products with their original pointing/geometry metadata and source citations.
 4. Evaluate Diviner products for thermal-context views, keeping the instrument's observation time and processing level visible.
 5. Add SPICE kernels only if a later, explicitly approved engineering requirement needs geometry or ephemeris calculations. No orbit propagation or mission simulation is part of the current product scope.
