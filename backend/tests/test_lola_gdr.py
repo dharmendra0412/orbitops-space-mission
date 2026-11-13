@@ -9,6 +9,7 @@ from app.services.lola_gdr import (
     iter_lola_gdr_rows,
     lola_dn_to_height_m,
     lola_dn_to_planetary_radius_m,
+    lola_map_scale_m_per_pixel,
     lola_polar_pixel_to_latlon,
     validate_lola_gdr_file,
 )
@@ -219,3 +220,19 @@ def test_lola_gdr_planetary_radius_conversion_adds_reference_radius(lola_metadat
 def test_lola_gdr_conversion_rejects_non_integer_dn(lola_metadata):
     with pytest.raises(LolaRasterError, match="integer sample"):
         lola_dn_to_height_m(1.5, lola_metadata)
+
+
+def test_lola_map_scale_is_read_from_source_label_with_units(lola_metadata):
+    assert lola_map_scale_m_per_pixel(lola_metadata) == 40.0
+
+
+def test_lola_map_scale_rejects_wrong_units_and_non_positive_values(lola_metadata):
+    wrong_unit = dict(lola_metadata)
+    wrong_unit["MAP_SCALE"] = "40 <km/pix>"
+    with pytest.raises(LolaRasterError, match="must use m/pix"):
+        lola_map_scale_m_per_pixel(wrong_unit)
+
+    zero_scale = dict(lola_metadata)
+    zero_scale["MAP_SCALE"] = "0 <m/pix>"
+    with pytest.raises(LolaRasterError, match="must be positive"):
+        lola_map_scale_m_per_pixel(zero_scale)
