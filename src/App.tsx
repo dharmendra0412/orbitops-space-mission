@@ -24,11 +24,11 @@ const instruments: Instrument[] = [
   { id: 'thermal', name: 'Thermal radiometer', purpose: 'Surface temperature observations', mass: 5.1, power: 22, data: 1.2, science: 20 },
 ]
 
-const platform = { mass: 42, power: 85, data: 0.35, budget: 48 }
+const platform = { mass: 42, power: 85, data: 0.35 }
 const orbitOptions = [
-  { id: 'low', name: 'Low lunar orbit', altitude: '100 km', coverage: 'High-resolution regional passes', multiplier: 1, comm: 1 },
-  { id: 'elliptical', name: 'Elliptical polar orbit', altitude: '30 × 1,000 km', coverage: 'Long dwell near selected polar regions', multiplier: 1.12, comm: 0.82 },
-  { id: 'high', name: 'High lunar orbit', altitude: '500 km', coverage: 'Broader coverage, lower spatial detail', multiplier: 0.92, comm: 1.18 },
+  { id: 'low', name: 'Low lunar orbit', altitude: '100 km', coverage: 'High-resolution regional passes', comm: 1 },
+  { id: 'elliptical', name: 'Elliptical polar orbit', altitude: '30 × 1,000 km', coverage: 'Long dwell near selected polar regions', comm: 0.82 },
+  { id: 'high', name: 'High lunar orbit', altitude: '500 km', coverage: 'Broader coverage, lower spatial detail', comm: 1.18 },
 ]
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
@@ -77,12 +77,13 @@ function App() {
     setRunState('idle')
   }
 
-  const navItems = ['Mission overview', 'Mission designer', 'Mission control', 'Mission report']
+  const navItems = ['Mission overview', 'Spacecraft designer', 'Constraint checks', 'Engineering guide']
   const goTo = (item: string) => {
     setActiveNav(item)
     setMobileMenu(false)
-    if (item === 'Mission designer') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
+    if (item === 'Spacecraft designer') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
     else if (item === 'Mission overview') window.scrollTo({ top: 0, behavior: 'smooth' })
+    else if (item === 'Engineering guide') setShowAll(true)
     else document.getElementById('mission-output')?.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -102,11 +103,11 @@ function App() {
       <nav className="side-nav">{navItems.map((item, index) => {
         const icons = [Globe2, SlidersHorizontal, Activity, Database]
         const Icon = icons[index]
-        return <button key={item} className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">LIVE</span>}</button>
+        return <button key={item} className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
       })}</nav>
       <div className="nav-label tools-label">TOOLS</div>
-      <button className="nav-item" onClick={() => setShowAll(!showAll)}><Layers3 size={17}/><span>Component library</span><span className="nav-count">04</span></button>
-      <button className="nav-item" onClick={() => goTo('Mission report')}><ShieldCheck size={17}/><span>Verification log</span></button>
+      <button className="nav-item" onClick={() => setShowAll(!showAll)}><Layers3 size={17}/><span>Engineering guide</span></button>
+      <button className="nav-item" onClick={() => setShowAll(true)}><ShieldCheck size={17}/><span>Model limitations</span></button>
       <div className="sidebar-bottom">
         <div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><strong>Need a hand?</strong><p>Explore the engineering guide to understand mission trade-offs.</p><button onClick={() => setShowAll(!showAll)}>Open learning guide <ArrowUpRight size={13}/></button></div>
         <div className="profile"><div className="profile-avatar">DK</div><div><strong>Mission designer</strong><span>Individual workspace</span></div><Settings2 size={16}/></div>
@@ -117,13 +118,13 @@ function App() {
     <main className="main-area">
       <header className="topbar">
         <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>MISSIONS</span><span className="crumb-slash">/</span><strong>LUNAR PATHFINDER</strong></div>
-        <div className="top-actions"><span className="autosave"><span className="status-dot"/> All changes saved</span><button className="team-button"><Users size={16}/> Invite team <span className="team-count">1/4</span></button><div className="top-avatar">DK</div></div>
+        <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local preview · changes not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">DK</div></div>
       </header>
 
       <div className="content">
         <section className="page-heading">
           <div><div className="eyebrow"><span className="eyebrow-line"/> MISSION WORKSPACE <span className="eyebrow-tag">CONCEPT PHASE</span></div><h1>Mission overview<span className="heading-period">.</span></h1><p>Turn a scientific objective into an engineered mission concept.</p></div>
-          <button className="primary-button" onClick={() => goTo('Mission designer')}><Rocket size={16}/> Configure spacecraft <ArrowUpRight size={15}/></button>
+          <button className="primary-button" onClick={() => goTo('Spacecraft designer')}><Rocket size={16}/> Configure spacecraft <ArrowUpRight size={15}/></button>
         </section>
 
         <section className="mission-hero">
@@ -137,14 +138,14 @@ function App() {
           <div className="moon-scene" aria-label="Illustration of the Moon and a spacecraft in orbit">
             <div className="orbit-ring orbit-one"/><div className="orbit-ring orbit-two"/><div className="moon"><div className="moon-crater crater-one"/><div className="moon-crater crater-two"/><div className="moon-crater crater-three"/><div className="moon-crater crater-four"/></div>
             <div className="satellite-art"><div className="sat-body"/><div className="sat-panel left"/><div className="sat-panel right"/><div className="sat-antenna"/></div>
-            <div className="scene-label label-orbit"><span/> POLAR ORBIT</div><div className="scene-label label-altitude">100 KM <small>REFERENCE ALTITUDE</small></div>
-            <div className="scene-coordinates">89.0° S <span>/</span> 0.0° E</div>
+            <div className="scene-label label-orbit"><span/> POLAR ORBIT</div><div className="scene-label label-altitude">{design.link.altitude} <small>CONCEPT ORBIT</small></div>
+            <div className="scene-coordinates">EXAMPLE TARGET <span>/</span> LUNAR SOUTH POLE</div>
           </div>
-          <div className="hero-footer"><span>MISSION STATUS <strong><i/> DESIGN IN PROGRESS</strong></span><span>LAST UPDATED <strong>JUST NOW</strong></span><span>TEAM SIZE <strong>01 / 04</strong></span></div>
+          <div className="hero-footer"><span>MISSION STATUS <strong><i/> DESIGN IN PROGRESS</strong></span><span>LAST UPDATED <strong>JUST NOW</strong></span><span>TEAM MODE <strong>NOT CONNECTED</strong></span></div>
         </section>
 
         <section className="section-block">
-          <div className="section-heading"><div><div className="section-eyebrow">ENGINEERING SNAPSHOT</div><h3>Mission resources</h3></div><span className="section-note"><span className="status-dot"/> LIVE DESIGN ESTIMATE</span></div>
+          <div className="section-heading"><div><div className="section-eyebrow">ENGINEERING SNAPSHOT</div><h3>Mission resources</h3></div><span className="section-note"><span className="status-dot"/> INSTANT DESIGN ESTIMATE</span></div>
           <div className="metrics-grid">
             <Metric label="Spacecraft mass" value={design.mass.toFixed(1)} unit="kg" icon={Layers3} detail={`${Math.max(0, design.capacity - design.mass).toFixed(1)} kg capacity margin`} tone="blue"/>
             <Metric label="Peak power demand" value={String(design.power)} unit="W" icon={Zap} detail={`${design.generation - design.power} W generation margin`} tone="amber"/>
