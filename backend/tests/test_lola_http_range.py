@@ -15,8 +15,8 @@ def test_range_probe_requires_exact_206_and_matches_verified_img_prefix():
             "Content-Range": f"bytes 0-1/{EXPECTED_IMAGE_BYTES}",
             "Content-Length": "2",
         }),
-        body=b"\\x01\\x80",
-        local_prefix=b"\\x01\\x80",
+        body=bytes([1, 128]),
+        local_prefix=bytes([1, 128]),
     )
     assert result["source_url"] == SOURCE_URL
     assert result["bytes_returned"] == 2
@@ -30,8 +30,8 @@ def test_range_probe_rejects_status_without_partial_content(status_code):
         validate_range_response(
             status_code=status_code,
             headers=httpx.Headers({"Content-Range": f"bytes 0-1/{EXPECTED_IMAGE_BYTES}"}),
-            body=b"\\x00\\x00",
-            local_prefix=b"\\x00\\x00",
+            body=bytes([0, 0]),
+            local_prefix=bytes([0, 0]),
         )
 
 
@@ -40,8 +40,8 @@ def test_range_probe_rejects_incorrect_content_range():
         validate_range_response(
             status_code=206,
             headers=httpx.Headers({"Content-Range": f"bytes 2-3/{EXPECTED_IMAGE_BYTES}"}),
-            body=b"\\x00\\x00",
-            local_prefix=b"\\x00\\x00",
+            body=bytes([0, 0]),
+            local_prefix=bytes([0, 0]),
         )
 
 
@@ -50,6 +50,6 @@ def test_range_probe_rejects_nonmatching_source_bytes():
         validate_range_response(
             status_code=206,
             headers=httpx.Headers({"Content-Range": f"bytes 0-1/{EXPECTED_IMAGE_BYTES}"}),
-            body=b"\\x01\\x00",
-            local_prefix=b"\\x02\\x00",
+            body=bytes([1, 0]),
+            local_prefix=bytes([2, 0]),
         )
