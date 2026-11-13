@@ -17,7 +17,7 @@ Every numerical source-derived value must carry its source product, source URL, 
 - Eight-point PROJ transformation cross-check against the PDS DSMAP_POLAR pixel-center equations.
 - Fixed-source HTTP Range pixel reads and bounded row-profile reads, both using the same PdsClient methods as the live API.
 - Live UI for source-label-derived coordinates, actual raw DN/height/radius lookup, and un-interpolated row-profile plots.
-- A user-authored mission brief builder with browser-local autosave, JSON export, and a requirement matrix for statements, target/units, source URLs, and evidence notes. Source links are explicitly marked as not independently validated.
+- A user-authored mission brief builder with browser-local autosave, JSON import/export, and a requirement matrix for statements, target/units, source URLs, and evidence notes. Source links are explicitly marked as not independently validated.
 - API and web tests, dependency audits, typechecks, production builds, and data-provenance documentation.
 
 The source-validation workflow passed in [run #43416474484](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484); retained evidence is in [artifact #14031861899](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484/artifacts/14031861899).
