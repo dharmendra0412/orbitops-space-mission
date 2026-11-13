@@ -15,6 +15,10 @@ on:
       - "backend/app/services/lola_gdr.py"
       - "backend/app/services/pds3_label.py"
 
+concurrency:
+  group: lola-source-retrieval-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
