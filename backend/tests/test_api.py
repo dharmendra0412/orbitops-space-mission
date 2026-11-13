@@ -342,3 +342,100 @@ def test_lola_profile_endpoint_caps_sample_count_and_image_bounds():
         params={"line_index": 0, "start_sample_index": 0, "sample_count": 513},
     )
     assert response.status_code == 422
+
+
+def test_kaguya_lalt_label_endpoint_returns_validated_source_metadata(monkeypatch):
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "lalt_gt_sp_img.lbl"
+    label_text = fixture.read_text(encoding="ascii")
+
+    class LabelClient:
+        async def fetch_gt_sp_label(self):
+            return ("https://data.darts.isas.jaxa.jp/sample.lbl", label_text)
+
+    monkeypatch.setattr(api, "lalt_client", LabelClient())
+    response = TestClient(api.app).get("/api/v1/pds3/kaguya/lalt/gt-sp/label")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["source"] == "JAXA / DARTS SELENE Data Archive"
+    assert payload["metadata"]["dataset_id"] == "SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0"
+    assert payload["metadata"]["image_bytes"] == 64_880_640
+    assert "not raw laser-shot data" in payload["validation_scope"]
+
+
+def test_kaguya_lalt_pixel_endpoint_returns_original_sample_and_grid_coordinates(monkeypatch):
+    import struct
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "lalt_gt_sp_img.lbl"
+    label_text = fixture.read_text(encoding="ascii")
+
+    class PixelClient:
+        async def fetch_gt_sp_label(self):
+            return ("https://data.darts.isas.jaxa.jp/sample.lbl", label_text)
+
+        async def fetch_gt_sp_sample(self, *, line_index: int, sample_index: int):
+            assert (line_index, sample_index) == (0, 0)
+            return (
+                "https://data.darts.isas.jaxa.jp/sample.IMG",
+                struct.pack("<f", -1.234),
+                (0, 3),
+            )
+
+    monkeypatch.setattr(api, "lalt_client", PixelClient())
+    response = TestClient(api.app).get(
+        "/api/v1/pds3/kaguya/lalt/gt-sp/pixel",
+        params={"line_index": 0, "sample_index": 0},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["elevation_km"] == pytest.approx(-1.234)
+    assert payload["elevation_m"] == pytest.approx(-1234.0)
+    assert payload["is_dummy"] is False
+    assert payload["raw_sample_bytes_hex"] == struct.pack("<f", -1.234).hex()
+    assert payload["planetocentric_latitude_degrees"] == -79.00390625
+    assert payload["east_longitude_degrees"] == 0.015625
+    assert payload["byte_range_inclusive"] == {"start": 0, "end": 3}
+    assert "not a raw laser shot" in payload["validation_scope"]
+
+
+def test_kaguya_lalt_pixel_endpoint_marks_source_dummy_as_unavailable(monkeypatch):
+    import struct
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "lalt_gt_sp_img.lbl"
+    label_text = fixture.read_text(encoding="ascii")
+
+    class DummyClient:
+        async def fetch_gt_sp_label(self):
+            return ("https://data.darts.isas.jaxa.jp/sample.lbl", label_text)
+
+        async def fetch_gt_sp_sample(self, *, line_index: int, sample_index: int):
+            return (
+                "https://data.darts.isas.jaxa.jp/sample.IMG",
+                struct.pack("<f", 99.999),
+                (0, 3),
+            )
+
+    monkeypatch.setattr(api, "lalt_client", DummyClient())
+    response = TestClient(api.app).get(
+        "/api/v1/pds3/kaguya/lalt/gt-sp/pixel",
+        params={"line_index": 0, "sample_index": 0},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["is_dummy"] is True
+    assert payload["elevation_km"] is None
+    assert payload["elevation_m"] is None
+
+
+def test_kaguya_lalt_pixel_endpoint_rejects_out_of_bounds_indices():
+    response = TestClient(api.app).get(
+        "/api/v1/pds3/kaguya/lalt/gt-sp/pixel",
+        params={"line_index": 1408, "sample_index": 0},
+    )
+    assert response.status_code == 422
