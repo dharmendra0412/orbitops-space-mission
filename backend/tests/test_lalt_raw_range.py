@@ -9,6 +9,7 @@ from scripts.validate_lalt_raw_range import (
     LALT_RANGE_MAX_LABEL_BYTES,
     LaltRangeValidationError,
     _download_fixed,
+    _validate_response_origin,
     validate_lalt_rd_day,
 )
 
@@ -49,7 +50,7 @@ def test_validate_lalt_rd_day_checks_pds_layout_rows_and_time_tags():
         "0883526397 109414.2 21.0 67.3 206.4 -16.8 -8.7 -10.2 NON NML LO",
         "0883526399 109568.0 21.0 68.5 208.9 -16.8 -8.7 -10.2 NON NML LO",
     )
-    report = validate_lalt_rd_day(make_label(), table)
+    report = validate_lalt_rd_day(make_label(), table, require_full_archive_day=False)
 
     assert report["dataset_id"] == "SLN-L-LALT-3-RANGE-V1.0"
     assert report["product_id"] == "LALT_RD_20080105"
@@ -82,7 +83,7 @@ def test_validate_lalt_rd_day_checks_pds_layout_rows_and_time_tags():
 )
 def test_validate_lalt_rd_day_rejects_invalid_source_structure(label, table, message):
     with pytest.raises(LaltRangeValidationError, match=message):
-        validate_lalt_rd_day(label, table)
+        validate_lalt_rd_day(label, table, require_full_archive_day=False)
 
 
 def test_download_fixed_rejects_redirects_and_wrong_hosts():
@@ -92,12 +93,10 @@ def test_download_fixed_rejects_redirects_and_wrong_hosts():
     with pytest.raises(LaltRangeValidationError, match="redirected"):
         _download_fixed(LALT_RANGE_LABEL_URL, maximum_bytes=LALT_RANGE_MAX_LABEL_BYTES, transport=redirect)
 
-    wrong_host = httpx.MockTransport(
-        lambda request: httpx.Response(
-            200,
-            content=b"not source data",
-            request=httpx.Request("GET", "https://example.com/file"),
-        )
+    wrong_host_response = httpx.Response(
+        200,
+        content=b"not source data",
+        request=httpx.Request("GET", "https://example.com/file"),
     )
     with pytest.raises(LaltRangeValidationError, match="unexpected source host"):
-        _download_fixed(LALT_RANGE_LABEL_URL, maximum_bytes=LALT_RANGE_MAX_LABEL_BYTES, transport=wrong_host)
+        _validate_response_origin(wrong_host_response)
