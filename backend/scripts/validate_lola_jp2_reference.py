@@ -10,6 +10,7 @@ from pathlib import Path
 import httpx
 import numpy as np
 import rasterio
+from pyproj import CRS, Transformer
 from rasterio.windows import Window
 
 
@@ -24,6 +25,84 @@ JP2_LABEL_URL = (
 EXPECTED_JP2_BYTES = 24_960_972
 EXPECTED_SHAPE = (7_584, 7_584)
 MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE = 1
+LUNAR_REFERENCE_RADIUS_M = 1_737_400.0
+
+
+def _validate_projection_against_pds_pixel_centers(
+    dataset: rasterio.DatasetReader,
+) -> dict[str, object]:
+    """Cross-check JP2 CRS/affine georeferencing against PDS polar pixel centers.
+
+    PROJ independently transforms the JP2's declared stereographic CRS into a
+    spherical lunar geographic CRS. Expected coordinates are computed from
+    the PDS DSMAP_POLAR pixel-center equations and the detached GDR label's
+    40 m scale, 3791.5-pixel offsets, and south-polar Y sign.
+    """
+    if dataset.crs is None:
+        raise RuntimeError("JP2 has no CRS for independent projection validation")
+
+    geographic_crs = CRS.from_proj4(
+        "+proj=longlat +R=1737400 +no_defs +type=crs"
+    )
+    transformer = Transformer.from_crs(
+        dataset.crs, geographic_crs, always_xy=True
+    )
+    sample_pixels = (
+        (3791, 3791),
+        (3791, 3792),
+        (3792, 3791),
+        (3792, 3792),
+        (0, 3791),
+        (3791, 7583),
+        (7583, 3791),
+        (7583, 7583),
+    )
+    checks: list[dict[str, float | int]] = []
+    for row, column in sample_pixels:
+        # Affine transform at the center of a pixel, not its upper-left corner.
+        x_map, y_map = dataset.transform * (column + 0.5, row + 0.5)
+        projected_lon, projected_lat = transformer.transform(x_map, y_map)
+
+        # PDS DSMAP_POLAR.CAT: X=(I-N/2-0.5)*scale;
+        # Y=(J-N/2-0.5)*scale*NS, with NS=-1 in the south.
+        sample_coordinate = column + 1
+        line_coordinate = row + 1
+        pds_x = (sample_coordinate - 3792.0) * 40.0
+        pds_y = (line_coordinate - 3792.0) * 40.0 * -1.0
+        radial_distance = math.hypot(pds_x, pds_y)
+        expected_lat = -90.0 + math.degrees(
+            2.0 * math.atan(radial_distance / (2.0 * LUNAR_REFERENCE_RADIUS_M))
+        )
+        expected_lon = math.degrees(math.atan2(pds_x, pds_y)) % 360.0
+        longitude_error = abs((projected_lon - expected_lon + 180.0) % 360.0 - 180.0)
+        latitude_error = abs(projected_lat - expected_lat)
+        if longitude_error > 1e-7 or latitude_error > 1e-7:
+            raise RuntimeError(
+                "JP2 CRS/affine transform disagrees with PDS DSMAP_POLAR "
+                f"pixel-center geometry at row={row}, column={column}: "
+                f"PROJ=({projected_lat}, {projected_lon}), "
+                f"PDS=({expected_lat}, {expected_lon})"
+            )
+        checks.append({
+            "row": row,
+            "column": column,
+            "latitude_error_degrees": latitude_error,
+            "longitude_error_degrees": longitude_error,
+        })
+
+    return {
+        "method": "PROJ transformation of JP2 CRS/affine pixel centers versus PDS DSMAP_POLAR equations",
+        "target_geographic_crs": geographic_crs.to_string(),
+        "reference_radius_m": LUNAR_REFERENCE_RADIUS_M,
+        "pds_map_scale_m_per_pixel": 40.0,
+        "pds_line_and_sample_projection_offset_pixels": 3791.5,
+        "samples_checked": len(checks),
+        "maximum_latitude_error_degrees": max(item["latitude_error_degrees"] for item in checks),
+        "maximum_longitude_error_degrees": max(item["longitude_error_degrees"] for item in checks),
+        "tolerance_degrees": 1e-7,
+        "checks": checks,
+        "scope": "Validates projected pixel-center geometry and CRS orientation; it does not independently validate the DE421 ephemeris realization or absolute lunar control.",
+    }
 
 
 def _download(
@@ -139,6 +218,7 @@ def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, obje
         crs = reference.crs.to_wkt() if reference.crs else None
         if crs is None or "Polar_Stereographic" not in crs or "1737400" not in crs:
             raise RuntimeError("JP2 CRS does not declare the expected 1737.4 km lunar polar stereographic frame")
+        projection_validation = _validate_projection_against_pds_pixel_centers(reference)
 
     total_samples = EXPECTED_SHAPE[0] * EXPECTED_SHAPE[1]
     if samples_over_tolerance:
@@ -165,6 +245,7 @@ def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, obje
         "within_tolerance": True,
         "geotransform": transform,
         "crs": crs,
+        "pds_projection_validation": projection_validation,
         "scope": (
             "Every JP2OpenJPEG-decoded sample was compared with the corresponding raw "
             "signed little-endian IMG sample. The compressed JP2 representation is "
