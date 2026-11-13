@@ -79,6 +79,28 @@ type LolaPixelResponse = {
   validation_scope: string
 }
 
+type LolaProfileResponse = {
+  source: string
+  source_url: string
+  label_source_url: string
+  retrieved_at: string
+  product_file: string
+  line_index: number
+  start_sample_index: number
+  sample_count: number
+  byte_range_inclusive: { start: number; end: number }
+  coordinate_reference: string
+  points: Array<{
+    sample_index: number
+    raw_dn: number
+    height_m: number
+    planetary_radius_m: number
+    planetocentric_latitude_degrees: number
+    east_longitude_degrees: number
+  }>
+  validation_scope: string
+}
+
 
 
 async function readApiResponse<T>(response: Response, operation: string): Promise<T> {
@@ -140,6 +162,10 @@ function App() {
   const [lolaPixelResponse, setLolaPixelResponse] = useState<LolaPixelResponse | null>(null)
   const [lolaPixelError, setLolaPixelError] = useState('')
   const [lolaPixelLoading, setLolaPixelLoading] = useState(false)
+  const [lolaProfileCount, setLolaProfileCount] = useState('128')
+  const [lolaProfileResponse, setLolaProfileResponse] = useState<LolaProfileResponse | null>(null)
+  const [lolaProfileError, setLolaProfileError] = useState('')
+  const [lolaProfileLoading, setLolaProfileLoading] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -147,6 +173,15 @@ function App() {
 
   const pdsProducts = pdsSearchResponse ? extractPdsProducts(pdsSearchResponse.response) : null
   const pdsFiles = pdsLookupResponse ? extractPdsFileManifest(pdsLookupResponse.response) : []
+  const profileHeights = lolaProfileResponse?.points.map((point) => point.height_m) ?? []
+  const profileMinHeight = profileHeights.length ? Math.min(...profileHeights) : 0
+  const profileMaxHeight = profileHeights.length ? Math.max(...profileHeights) : 0
+  const profileHeightRange = Math.max(profileMaxHeight - profileMinHeight, 1e-9)
+  const profilePolyline = lolaProfileResponse?.points.map((point, index) => {
+    const x = 12 + (index / Math.max(lolaProfileResponse.points.length - 1, 1)) * 776
+    const y = 190 - ((point.height_m - profileMinHeight) / profileHeightRange) * 160
+    return x.toFixed(2) + ',' + y.toFixed(2)
+  }).join(' ') ?? ''
   let lolaPixelLocation: ReturnType<typeof lolaPixelToLatLon> | null = null
   let lolaPixelLocationError = ''
   if (pdsLabelResponse) {
@@ -255,6 +290,8 @@ function App() {
     setPdsLabelResponse(null)
     setLolaPixelResponse(null)
     setLolaPixelError('')
+    setLolaProfileResponse(null)
+    setLolaProfileError('')
     try {
       const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/label')
       const payload = await readApiResponse<Pds3LabelResponse>(response, 'LOLA label request')
@@ -284,6 +321,44 @@ function App() {
       setLolaPixelError(error instanceof Error ? error.message : 'Unable to retrieve this LOLA source pixel.')
     } finally {
       setLolaPixelLoading(false)
+    }
+  }
+
+  const fetchLolaProfile = async () => {
+    const line = Number(lolaLineIndex)
+    const startSample = Number(lolaSampleIndex)
+    const count = Number(lolaProfileCount)
+    if (!pdsLabelResponse || !lolaPixelLocation) {
+      setLolaProfileError(lolaPixelLocationError || 'Enter valid line and starting sample indices first.')
+      setLolaProfileResponse(null)
+      return
+    }
+    if (!Number.isInteger(count) || count < 1 || count > 512) {
+      setLolaProfileError('Choose between 1 and 512 source samples for one row profile.')
+      setLolaProfileResponse(null)
+      return
+    }
+    if (startSample + count > Number(pdsLabelResponse.metadata.LINE_SAMPLES)) {
+      setLolaProfileError('The requested profile would extend beyond the source image row.')
+      setLolaProfileResponse(null)
+      return
+    }
+    setLolaProfileLoading(true)
+    setLolaProfileError('')
+    setLolaProfileResponse(null)
+    try {
+      const params = new URLSearchParams({
+        line_index: String(line),
+        start_sample_index: String(startSample),
+        sample_count: String(count),
+      })
+      const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/profile?' + params.toString())
+      const payload = await readApiResponse<LolaProfileResponse>(response, 'LOLA source profile request')
+      setLolaProfileResponse(payload)
+    } catch (error) {
+      setLolaProfileError(error instanceof Error ? error.message : 'Unable to retrieve the LOLA source profile.')
+    } finally {
+      setLolaProfileLoading(false)
     }
   }
 
@@ -548,7 +623,7 @@ function App() {
                 <div className="pds-results-count">PDS polar-grid coordinate lookup · zero-based pixel indices</div>
                 <div className="lola-coordinate-fields">
                   <label>Line index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" disabled={lolaPixelLoading} value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" disabled={lolaPixelLoading} value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
                   </label>
                   <label>Sample index
                     <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" disabled={lolaPixelLoading} value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
@@ -569,6 +644,26 @@ function App() {
                   <div><span>Planetary radius</span><strong>{lolaPixelResponse.planetary_radius_m.toFixed(2)} m</strong></div>
                   <div><span>Source byte range</span><strong>{lolaPixelResponse.byte_range_inclusive.start}–{lolaPixelResponse.byte_range_inclusive.end}</strong></div>
                   <div className="lola-pixel-provenance"><span>Retrieved {new Date(lolaPixelResponse.retrieved_at).toLocaleString()}</span><a href={lolaPixelResponse.source_url} target="_blank" rel="noopener noreferrer">Original PDS raster source <ExternalLink size={11}/></a><small>{lolaPixelResponse.validation_scope}</small></div>
+                </div>}
+                <div className="lola-profile-controls">
+                  <label>Profile samples
+                    <input type="number" min="1" max="512" step="1" disabled={lolaPixelLoading || lolaProfileLoading} value={lolaProfileCount} onChange={(event) => { setLolaProfileCount(event.target.value); setLolaProfileResponse(null); setLolaProfileError('') }} />
+                  </label>
+                  <button className="run-button" type="button" onClick={() => void fetchLolaProfile()} disabled={!lolaPixelLocation || lolaProfileLoading || lolaPixelLoading}>
+                    <Activity size={15}/>{lolaProfileLoading ? 'Reading source row segment…' : 'Fetch real elevation profile'}
+                  </button>
+                </div>
+                {lolaProfileError && <p className="pds-search-error" role="alert">{lolaProfileError}</p>}
+                {lolaProfileResponse && <div className="lola-profile-panel">
+                  <div className="lola-profile-heading"><strong>LOLA source elevation profile</strong><span>{lolaProfileResponse.sample_count} original samples · line {lolaProfileResponse.line_index}</span></div>
+                  <svg className="lola-profile-chart" viewBox="0 0 800 220" role="img" aria-label="Source-derived LOLA elevation profile in metres, with no interpolation">
+                    <line x1="12" y1="190" x2="788" y2="190" stroke="#344b62" strokeWidth="1"/>
+                    <line x1="12" y1="30" x2="12" y2="190" stroke="#344b62" strokeWidth="1"/>
+                    <polyline points={profilePolyline} fill="none" stroke="#8bd5ef" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+                  </svg>
+                  <div className="lola-profile-range"><span>Min {profileMinHeight.toFixed(2)} m</span><span>Max {profileMaxHeight.toFixed(2)} m</span></div>
+                  <div className="lola-profile-heading"><span>Samples {lolaProfileResponse.start_sample_index}–{lolaProfileResponse.start_sample_index + lolaProfileResponse.sample_count - 1}</span><a href={lolaProfileResponse.source_url} target="_blank" rel="noopener noreferrer">Original PDS raster <ExternalLink size={11}/></a></div>
+                  <p className="pds-search-note">{lolaProfileResponse.validation_scope} No smoothing or interpolation is applied to this plotted series.</p>
                 </div>}
                 <p className="pds-search-note">Coordinates are calculated from the retrieved PDS label and DSMAP_POLAR equations. The pixel action requests exactly two bytes from the fixed PDS archive URL using HTTP Range; it refuses servers that return the full raster instead.</p>
               </div>
