@@ -60,6 +60,25 @@ type Pds3LabelResponse = {
   note: string
 }
 
+type LolaPixelResponse = {
+  source: string
+  source_url: string
+  label_source_url: string
+  retrieved_at: string
+  product_file: string
+  line_index: number
+  sample_index: number
+  byte_range_inclusive: { start: number; end: number }
+  raw_dn: number
+  height_m: number
+  planetary_radius_m: number
+  planetocentric_latitude_degrees: number
+  east_longitude_degrees: number
+  units: { raw_dn: string; height: string; planetary_radius: string }
+  coordinate_reference: string
+  validation_scope: string
+}
+
 
 
 async function readApiResponse<T>(response: Response, operation: string): Promise<T> {
@@ -118,6 +137,9 @@ function App() {
   const [pdsLabelLoading, setPdsLabelLoading] = useState(false)
   const [lolaLineIndex, setLolaLineIndex] = useState('3791')
   const [lolaSampleIndex, setLolaSampleIndex] = useState('3791')
+  const [lolaPixelResponse, setLolaPixelResponse] = useState<LolaPixelResponse | null>(null)
+  const [lolaPixelError, setLolaPixelError] = useState('')
+  const [lolaPixelLoading, setLolaPixelLoading] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -239,6 +261,27 @@ function App() {
       setPdsLabelError(error instanceof Error ? error.message : 'Unable to retrieve the original LOLA label.')
     } finally {
       setPdsLabelLoading(false)
+    }
+  }
+
+  const fetchLolaPixel = async () => {
+    if (!lolaPixelLocation || !pdsLabelResponse) {
+      setLolaPixelError(lolaPixelLocationError || 'Enter valid line and sample indices first.')
+      setLolaPixelResponse(null)
+      return
+    }
+    setLolaPixelLoading(true)
+    setLolaPixelError('')
+    setLolaPixelResponse(null)
+    try {
+      const params = new URLSearchParams({ line_index: lolaLineIndex, sample_index: lolaSampleIndex })
+      const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel?' + params.toString())
+      const payload = await readApiResponse<LolaPixelResponse>(response, 'LOLA source pixel request')
+      setLolaPixelResponse(payload)
+    } catch (error) {
+      setLolaPixelError(error instanceof Error ? error.message : 'Unable to retrieve this LOLA source pixel.')
+    } finally {
+      setLolaPixelLoading(false)
     }
   }
 
@@ -503,10 +546,10 @@ function App() {
                 <div className="pds-results-count">PDS polar-grid coordinate lookup · zero-based pixel indices</div>
                 <div className="lola-coordinate-fields">
                   <label>Line index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" value={lolaLineIndex} onChange={(event) => setLolaLineIndex(event.target.value)} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
                   </label>
                   <label>Sample index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" value={lolaSampleIndex} onChange={(event) => setLolaSampleIndex(event.target.value)} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
                   </label>
                 </div>
                 {lolaPixelLocation ? <div className="lola-coordinate-result" aria-live="polite">
@@ -514,7 +557,18 @@ function App() {
                   <div><span>East longitude</span><strong>{lolaPixelLocation.eastLongitudeDegrees.toFixed(8)}°</strong></div>
                   <div><span>Projected X / Y</span><strong>{lolaPixelLocation.xMapMeters.toFixed(2)} m / {lolaPixelLocation.yMapMeters.toFixed(2)} m</strong></div>
                 </div> : <p className="pds-search-error" role="alert">{lolaPixelLocationError}</p>}
-                <p className="pds-search-note">Coordinates are calculated from the retrieved PDS label and DSMAP_POLAR equations. This tool locates a grid cell only; it does not read the IMG raster or return an elevation value.</p>
+                <button className="run-button lola-pixel-button" type="button" onClick={() => void fetchLolaPixel()} disabled={!lolaPixelLocation || lolaPixelLoading}>
+                  <Database size={15}/>{lolaPixelLoading ? 'Reading two source bytes…' : 'Fetch actual NASA LOLA pixel'}
+                </button>
+                {lolaPixelError && <p className="pds-search-error" role="alert">{lolaPixelError}</p>}
+                {lolaPixelResponse && <div className="lola-coordinate-result lola-pixel-result" aria-live="polite">
+                  <div><span>Original signed DN</span><strong>{lolaPixelResponse.raw_dn}</strong></div>
+                  <div><span>LOLA GDR height</span><strong>{lolaPixelResponse.height_m.toFixed(2)} m</strong></div>
+                  <div><span>Planetary radius</span><strong>{lolaPixelResponse.planetary_radius_m.toFixed(2)} m</strong></div>
+                  <div><span>Source byte range</span><strong>{lolaPixelResponse.byte_range_inclusive.start}–{lolaPixelResponse.byte_range_inclusive.end}</strong></div>
+                  <div className="lola-pixel-provenance"><span>Retrieved {new Date(lolaPixelResponse.retrieved_at).toLocaleString()}</span><a href={lolaPixelResponse.source_url} target="_blank" rel="noopener noreferrer">Original PDS raster source <ExternalLink size={11}/></a><small>{lolaPixelResponse.validation_scope}</small></div>
+                </div>}
+                <p className="pds-search-note">Coordinates are calculated from the retrieved PDS label and DSMAP_POLAR equations. The pixel action requests exactly two bytes from the fixed PDS archive URL using HTTP Range; it refuses servers that return the full raster instead.</p>
               </div>
               <p className="pds-search-note">{pdsLabelResponse.note} Values and units are source metadata; no unit conversion has been applied.</p>
             </div>}
