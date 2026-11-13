@@ -2,70 +2,68 @@
 
 **Plan. Trace. Verify. Discover.**
 
-ORBITOPS is an independent educational workspace for exploring space-mission requirements and authoritative science resources. It is being built without fabricated observations or pretend mission simulations. The product will distinguish user-entered assumptions, sourced observations, derived values, and unavailable information.
+ORBITOPS is an independent educational workspace for exploring space-mission requirements and authoritative science resources. It is being built without fabricated observations, synthetic mission outputs, or mission simulations.
 
-## Product principles
+## Non-negotiable product rules
 
-- Engineering decisions must have explicit, traceable consequences.
-- Calculations must be deterministic, unit-aware, and testable.
-- NASA and partner data must retain source attribution, retrieval metadata, units, coordinate reference, and limitations.
-- Synthetic scenarios, if used for teaching, must be clearly labelled as synthetic and never presented as real NASA observations.
-- A visual animation is not evidence of a physical simulation. Every displayed result must identify its model and fidelity.
-- A failed or infeasible design must explain the violated requirement and the calculation behind it.
+- Do not display invented NASA observations, telemetry, spacecraft specifications, orbital states, costs, or performance values.
+- Distinguish user-entered values, original source observations, derived values, and unavailable information.
+- If an input has not been sourced and validated, show **Not sourced** or **Not available**. Never fill gaps with placeholder numbers.
+- Every ingested value must retain its source, product identifier, retrieval metadata, units, coordinate reference, and limitations.
+- Do not imply that an external resource has been downloaded or integrated merely because it appears in the source catalogue.
+- No orbital propagation, mission simulation, simulated operations, or synthetic telemetry is in the product scope.
 
-## Initial vertical slice
+## Current implementation
 
-The first release focuses on a lunar polar exploration mission and should deliver one complete browser journey:
+The current feature branch includes:
 
-1. Review the mission briefing and scientific objectives.
-2. Configure a spacecraft and payload.
-3. Select a launch and orbit option.
-4. Evaluate mass, power, data, communications, and budget constraints.
-5. Run a deterministic, explicitly scoped mission scenario.
-6. Review requirement verification, performance, and a technical debrief.
+- Responsive React/TypeScript mission-planning interface.
+- Selectable research categories and non-numeric orbit architecture labels.
+- Explicit unavailable states for mass, power, data volume, mission cost, and engineering verification.
+- A curated catalogue linking directly to NASA, NASA PDS, JPL, and partner reference pages.
+- A documented source-provenance and data-ingestion plan.
+- Automated checks for source catalogue integrity and a production build.
+
+The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline; no external datasets are currently downloaded, processed, cached, or synchronized.
+
+## Data resources and provenance
+
+See [docs/data-provenance.md](docs/data-provenance.md) for the source list, archive descriptions, and required provenance fields. The initial science-data candidates are LRO products such as LOLA topography, LROC imagery, and Diviner thermal observations, discovered through NASA's Planetary Data System.
 
 ## Planned architecture
 
 - **Web client:** React, TypeScript, Vite.
-- **3D/geospatial presentation:** Three.js / React Three Fiber, with a geospatial globe only where it adds scientific value.
-- **API:** Python and FastAPI.
-- **Persistence and collaboration:** PostgreSQL / Supabase, introduced behind explicit authorization and server-side validation.
-- **Science and engineering:** isolated, versioned calculation modules with unit-aware inputs and automated verification.
-- **Data sources:** NASA/JPL datasets and tools such as SPICE and GMAT where appropriate; each integration must document its actual scope and limitations.
+- **API:** Python and FastAPI, introduced when source ingestion and user workflows are specified.
+- **Persistence:** PostgreSQL after data contracts, authorization, and audit requirements are defined.
+- **Data pipeline:** source-specific ingestion, immutable raw products, metadata validation, and traceable derived products.
+- **Engineering:** only deterministic, documented calculations using sourced inputs and independent verification cases. Mission simulation is excluded.
 
-## Engineering quality gates
+## Quality gates
 
-- Unit and integration tests for calculations and API contracts.
-- Frontend lint, typecheck, and production build.
-- Reproducible scenario inputs and outputs.
-- Data provenance and model-fidelity labels.
+- Unit tests for source catalogues and any future parsing/derivation logic.
+- Typecheck and production build.
+- Dependency security audit.
+- Source attribution, product identifiers, units, reference frames, and retrieval timestamps.
 - No secrets committed to the repository.
 - No merge to the default branch without maintainer approval.
 
-## Run the web preview locally
+## Run locally
 
-Requirements: Node.js 20 or later and npm.
+Requirements: Node.js 22 or later and npm.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Create a production build with:
+Checks:
 
 ```bash
+npm test
 npm run build
-npm run preview
+npm audit --audit-level=high
 ```
-
-## Current implementation status
-
-The first web foundation includes a responsive mission workspace, interactive payload selection, conceptual orbit and launch-class presets, a live resource estimate, visible constraint checks, and a preview mission score. The current calculation assumptions and limitations are documented in [docs/preview-model.md](docs/preview-model.md).
-
-This is an initial frontend vertical slice. It does not yet include a backend API, user authentication, persistent mission storage, multiplayer synchronization, NASA data ingestion, validated trajectory propagation, or detailed subsystem simulation.
-
-Changes are developed on feature branches and reviewed through pull requests. Features are not considered complete until their acceptance criteria and tests pass.
 
 ## Disclaimer
 
-ORBITOPS is an independent educational project, not NASA software and not flight-qualified mission-design software. NASA does not endorse this project. It must not be used for operational spacecraft design, navigation, launch decisions, or flight safety. Non-U.S. Government resources are subject to their own data-use terms.
+ORBITOPS is an independent educational project, not NASA software and not flight-qualified mission-design software. NASA does not endorse this project. It must not be used for operational spacecraft design, navigation, launch decisions, or flight safety. Non-U.S. Government resources are subject to their own data-use and reuse terms.
