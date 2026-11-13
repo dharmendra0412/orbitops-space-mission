@@ -37,7 +37,7 @@ The selectable categories are research prompts only. They are not a verified fli
 Open **Mission brief** from the sidebar to record a team-authored concept. The fields start blank by design; the application does not invent a target, duration, orbit, payload, spacecraft bus, or operational assumption.
 
 - Drafts autosave in the current browser's local storage. They are not uploaded to the API.
-- Use **Export JSON** to keep a portable copy and **Import JSON** to restore a version-1 export (maximum file size 1 MB).
+- Use **Export JSON** to keep a portable copy and **Import JSON** to restore a version-1 export (maximum file size 1 MB). Import sanitizes unknown fields and rejects unsupported schema versions.
 - The requirement matrix records a statement, target/threshold with units, a source URL, and evidence notes.
 - A typed source URL is shown as **not fetched or validated**. The app does not silently claim a source proves a requirement.
 - The section count measures how many brief fields contain text; it is not a feasibility score, mission-readiness score, or pass/fail assessment.
