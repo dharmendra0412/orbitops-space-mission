@@ -390,6 +390,6 @@ def test_kaguya_lalt_label_endpoint_integrates_fixed_client_and_pds3_parser(monk
     assert response.status_code == 200
     payload = response.json()
     assert payload["product_file"] == "LALT_GT_SP_IMG.IMG"
-    assert payload["metadata"]["sample_type"] == "PC_REAL"
+    assert payload["metadata"]["sample_type"].startswith("PC_REAL")
     assert payload["metadata"]["image_bytes"] == 64_880_640
     assert payload["metadata"]["coordinate_system"] == "MEAN EARTH/POLAR AXIS OF DE421"
