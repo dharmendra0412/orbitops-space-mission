@@ -380,6 +380,7 @@ function App() {
   }
 
   return <div className="app-shell">
+    <a className="skip-link" href="#main-content">Skip to main content</a>
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
       <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>SPACE SCIENCE WORKSPACE</span></div><button className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close menu"><X size={18}/></button></div>
       <div className="workspace-label">WORKSPACE</div>
@@ -400,7 +401,7 @@ function App() {
     </aside>
 
     {mobileMenu && <button className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
-    <main className="main-area">
+    <main className="main-area" id="main-content" tabIndex={-1}>
       <header className="topbar">
         <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
         <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local session · not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
