@@ -25,7 +25,7 @@ async def test_lola_img_downloader_checks_size_and_writes_local_digest_manifest(
     assert manifest["sha256_local"] == hashlib.sha256(payload).hexdigest()
     assert manifest["upstream_checksum"] is None
     assert manifest["source_url"] == SOURCE_URL
-    assert manifest["source_attempts"] == [SOURCE_URL, FALLBACK_SOURCE_URL]
+    assert manifest["source_attempts"] == [SOURCE_URL]
     assert "no_upstream_checksum_published" in manifest["verification_status"]
     assert (tmp_path / "lola.img.manifest.json").exists()
 
