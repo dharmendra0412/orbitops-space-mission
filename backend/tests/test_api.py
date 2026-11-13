@@ -241,7 +241,7 @@ def test_lola_pixel_endpoint_returns_source_dn_height_radius_and_coordinates(mon
             return (
                 "https://pds-geosciences.wustl.edu/sample.img",
                 -11002,
-                (57_509_102, 57_509_103),
+                (57_509_470, 57_509_471),
             )
 
     monkeypatch.setattr(api, "pds_client", PixelClient())
@@ -258,7 +258,7 @@ def test_lola_pixel_endpoint_returns_source_dn_height_radius_and_coordinates(mon
     assert payload["planetary_radius_m"] == 1_731_899.0
     assert payload["planetocentric_latitude_degrees"] < -89.99
     assert payload["east_longitude_degrees"] == 315.0
-    assert payload["byte_range_inclusive"] == {"start": 57_509_102, "end": 57_509_103}
+    assert payload["byte_range_inclusive"] == {"start": 57_509_470, "end": 57_509_471}
     assert payload["source_url"].endswith("ldem_85s_40m.img")
     assert "not a terrain tile" in payload["validation_scope"]
 
@@ -287,4 +287,4 @@ def test_lola_pixel_endpoint_rejects_wrong_source_label(monkeypatch):
         params={"line_index": 0, "sample_index": 0},
     )
     assert response.status_code == 502
-    assert "unsupported label" in response.json()["detail"]
+    assert "source metadata failed validation" in response.json()["detail"]
