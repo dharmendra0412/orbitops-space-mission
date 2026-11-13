@@ -23,10 +23,11 @@ Endpoints:
 - `GET /api/v1/pds/products/{identifier}/members?depth=1|2&limit=100&search_after=...` — browse paginated child collections/products or two hierarchy levels.
 - `GET /api/v1/pds/products/{identifier}`
 - `GET /api/v1/pds3/lola/gdr/ldem-85s-40m/label` — fetch one fixed public PDS3 label from the PDS Geosciences Node and return allowlisted metadata fields.
+- `GET /api/v1/pds3/lola/gdr/ldem-85s-40m/pixel?line_index=3791&sample_index=3791` — fetch one source-backed signed DN using an exact two-byte HTTP Range request and return label-derived height/radius and PDS pixel coordinates.
 
 The API returns the original upstream JSON under `response`, together with the actual request URL, query, and retrieval timestamp. The product-resolution endpoint requests the full PDS4 JSON representation, which can include label/data-file references, file sizes, and checksums. The hierarchy endpoint browses one or two levels of the PDS archive. It caps pages at 100 records and uses the PDS harvest-time sort/cursor documented for search-after pagination. It does not download the referenced files, generate fallback records, or transform observations. The LOLA sample-label route uses a fixed allowlisted HTTPS source URL, refuses redirects, caps the response at 1 MB, requires ASCII text, and parses only an allowlist of PDS3 scalar fields. It does not fetch or decode the associated IMG raster.
 
-The PDS Search API documentation warns that its servers are not fully populated with all PDS datasets. A zero-result or missing product response is not proof that a product does not exist. Cross-check against the relevant mission archive and PDS node index.
+The PDS Search API documentation warns that its servers are not fully populated with all PDS datasets. A zero-result or missing product response is not proof that a product does not exist. Cross-check against the relevant mission archive and PDS node index. The single-pixel route reads the live fixed PDS3 label, validates the selected 7584 × 7584 signed 16-bit little-endian product layout, then requests exactly two bytes from the fixed PDS Geosciences IMG URL. It requires HTTP 206 and an exact `Content-Range` matching the calculated byte offset and the published 115,034,112-byte product size. Redirects, ignored ranges, incorrect ranges, incomplete bodies, and oversized bodies are rejected. The route does not accept caller-supplied URLs, does not download the full raster, and does not cache data. It returns the original DN and explicitly labelled GDR SIS height/radius conversions, plus coordinates derived from the source label. It is a single-cell query, not a terrain tile service.
 
 ## Bounded LOLA raster retrieval
 
@@ -43,9 +44,10 @@ Fetch the companion label from the same archive host that supplied the IMG, then
 ```bash
 python -m scripts.fetch_lola_gdr_label
 python -m scripts.validate_lola_gdr_sample
+python -m scripts.validate_lola_http_range
 ```
 
-The label-fetch command reads the IMG provenance manifest, permits only the two fixed LOLA archive hosts, rechecks the IMG's on-disk byte count and SHA-256, retrieves the matching `.LBL` from that same host, parses its PDS3 product/layout fields, and verifies that its dimensions agree with the IMG download manifest. It then records the label URL, local SHA-256, data-set/version identifiers, dimensions, and declared DN extrema in the manifest. The validator defaults to this downloaded companion label, memory-maps the raster, and checks the full byte count, decoded sample count, signed little-endian DN extrema, and agreement with the source label's declared extrema. This does not substitute for an upstream checksum or independent geodetic comparison.
+The label-fetch command reads the IMG provenance manifest, permits only the two fixed LOLA archive hosts, rechecks the IMG's on-disk byte count and SHA-256, retrieves the matching `.LBL` from that same host, parses its PDS3 product/layout fields, and verifies that its dimensions agree with the IMG download manifest. It then records the label URL, local SHA-256, data-set/version identifiers, dimensions, and declared DN extrema in the manifest. The validator defaults to this downloaded companion label, memory-maps the raster, and checks the full byte count, decoded sample count, signed little-endian DN extrema, and agreement with the source label's declared extrema. This does not substitute for an upstream checksum or independent geodetic comparison. The source-validation workflow also performs an exact two-byte HTTP Range request against the fixed PDS IMG URL and compares the returned bytes with the first two bytes of the already validated local raster. This proves the selected archive endpoint supports the same bounded read contract used by the live pixel endpoint. The check is implemented in `scripts/validate_lola_http_range.py`; it is not a substitute for full-raster validation.
 
 ## Tests
 
