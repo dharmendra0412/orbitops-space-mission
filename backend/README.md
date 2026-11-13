@@ -21,10 +21,9 @@ Endpoints:
 - `GET /health`
 - `GET /api/v1/pds/search?keywords=LOLA&limit=10`
 - `GET /api/v1/pds/products/{identifier}/members?depth=1|2` — browse child collections/products or two hierarchy levels.
-- `GET /api/v1/pds/products/{identifier}/members?depth=1|2`
 - `GET /api/v1/pds/products/{identifier}`
 
-The API returns the original upstream JSON under `response`, together with the actual request URL, query, and retrieval timestamp. It does not generate fallback records or transform observations.
+The API returns the original upstream JSON under `response`, together with the actual request URL, query, and retrieval timestamp. The product-resolution endpoint requests the full PDS4 JSON representation, which can include label/data-file references, file sizes, and checksums. The hierarchy endpoint browses one or two levels of the PDS archive. It does not download the referenced files, generate fallback records, or transform observations.
 
 The PDS Search API documentation warns that its servers are not fully populated with all PDS datasets. A zero-result or missing product response is not proof that a product does not exist. Cross-check against the relevant mission archive and PDS node index.
 
