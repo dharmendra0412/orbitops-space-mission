@@ -10,6 +10,7 @@ import { instruments, orbitOptions } from './domain/catalog'
 import { missionResources } from './data/sources'
 import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts, mergePdsMembers } from './data/pds'
 import { lolaPixelToLatLon } from './data/lolaProjection'
+import { apiUrl } from './data/api'
 import { MissionBrief } from './components/MissionBrief'
 import { LaltLabelInspector } from './components/LaltLabelInspector'
 
@@ -265,7 +266,7 @@ function App() {
     setPdsSearchResponse(null)
     try {
       const params = new URLSearchParams({ keywords, limit: '10' })
-      const response = await fetch('/api/v1/pds/search?' + params.toString(), { signal: controller.signal })
+      const response = await fetch(apiUrl('/api/v1/pds/search?' + params.toString()), { signal: controller.signal })
       const payload = await readApiResponse<PdsSearchResponse>(response, 'PDS search')
       if (pdsSearchControllerRef.current === controller) setPdsSearchResponse(payload)
     } catch (error) {
@@ -294,7 +295,7 @@ function App() {
     setPdsLookupError('')
     setPdsLookupResponse(null)
     try {
-      const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier))
+      const response = await fetch(apiUrl('/api/v1/pds/products/' + encodeURIComponent(identifier)))
       const payload = await readApiResponse<PdsLookupResponse>(response, 'PDS product lookup')
       setPdsIdentifier(identifier)
       setPdsLookupResponse(payload)
@@ -326,7 +327,7 @@ function App() {
     try {
       const params = new URLSearchParams({ depth: String(depth), limit: '100' })
       if (searchAfter) params.set('search_after', searchAfter)
-      const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier) + '/members?' + params.toString())
+      const response = await fetch(apiUrl('/api/v1/pds/products/' + encodeURIComponent(identifier) + '/members?' + params.toString()))
       const payload = await readApiResponse<PdsMembersResponse>(response, 'PDS hierarchy request')
       const parsedMembers = extractPdsMembers(payload.response)
       setPdsMembersStructured(parsedMembers !== null)
@@ -355,7 +356,7 @@ function App() {
     setLolaProfileResponse(null)
     setLolaProfileError('')
     try {
-      const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/label')
+      const response = await fetch(apiUrl('/api/v1/pds3/lola/gdr/ldem-85s-40m/label'))
       const payload = await readApiResponse<Pds3LabelResponse>(response, 'LOLA label request')
       setPdsLabelResponse(payload)
     } catch (error) {
@@ -376,7 +377,7 @@ function App() {
     setLolaPixelResponse(null)
     try {
       const params = new URLSearchParams({ line_index: lolaLineIndex, sample_index: lolaSampleIndex })
-      const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel?' + params.toString())
+      const response = await fetch(apiUrl('/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel?' + params.toString()))
       const payload = await readApiResponse<LolaPixelResponse>(response, 'LOLA source pixel request')
       setLolaPixelResponse(payload)
     } catch (error) {
@@ -414,7 +415,7 @@ function App() {
         start_sample_index: String(startSample),
         sample_count: String(count),
       })
-      const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/profile?' + params.toString())
+      const response = await fetch(apiUrl('/api/v1/pds3/lola/gdr/ldem-85s-40m/profile?' + params.toString()))
       const payload = await readApiResponse<LolaProfileResponse>(response, 'LOLA source profile request')
       setLolaProfileResponse(payload)
     } catch (error) {
