@@ -163,6 +163,9 @@ function App() {
   const [pdsSearchResponse, setPdsSearchResponse] = useState<PdsSearchResponse | null>(null)
   const [pdsSearchError, setPdsSearchError] = useState('')
   const [pdsSearchLoading, setPdsSearchLoading] = useState(false)
+  const pdsSearchControllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => () => pdsSearchControllerRef.current?.abort(), [])
   const [pdsIdentifier, setPdsIdentifier] = useState('')
   const [pdsLookupResponse, setPdsLookupResponse] = useState<PdsLookupResponse | null>(null)
   const [pdsLookupError, setPdsLookupError] = useState('')
@@ -254,18 +257,27 @@ function App() {
       return
     }
 
+    pdsSearchControllerRef.current?.abort()
+    const controller = new AbortController()
+    pdsSearchControllerRef.current = controller
     setPdsSearchLoading(true)
     setPdsSearchError('')
     setPdsSearchResponse(null)
     try {
       const params = new URLSearchParams({ keywords, limit: '10' })
-      const response = await fetch('/api/v1/pds/search?' + params.toString())
+      const response = await fetch('/api/v1/pds/search?' + params.toString(), { signal: controller.signal })
       const payload = await readApiResponse<PdsSearchResponse>(response, 'PDS search')
-      setPdsSearchResponse(payload)
+      if (pdsSearchControllerRef.current === controller) setPdsSearchResponse(payload)
     } catch (error) {
-      setPdsSearchError(error instanceof Error ? error.message : 'Unable to retrieve NASA PDS results.')
+      if (error instanceof Error && error.name === 'AbortError') return
+      if (pdsSearchControllerRef.current === controller) {
+        setPdsSearchError(error instanceof Error ? error.message : 'Unable to retrieve NASA PDS results.')
+      }
     } finally {
-      setPdsSearchLoading(false)
+      if (pdsSearchControllerRef.current === controller) {
+        pdsSearchControllerRef.current = null
+        setPdsSearchLoading(false)
+      }
     }
   }
 
@@ -554,7 +566,7 @@ function App() {
             <span className="section-note">SOURCE CATALOGUE · NOT INGESTED DATA</span>
           </div>
           <p className="resources-intro">Open the original archives and technical references. ORBITOPS does not fabricate measurements or imply that these external datasets have already been downloaded, processed, or synchronized.</p>
-          <div className="panel pds-search-panel">
+          <div className="panel pds-search-panel" aria-busy={pdsSearchLoading}>
             <div className="pds-search-heading"><div><strong>Search the NASA PDS archive</strong><span>Live read-only request to the official PDS Search API</span></div><span className="resource-kind">LIVE SOURCE QUERY</span></div>
             <form className="pds-search-controls" role="search" aria-label="Search NASA Planetary Data System" onSubmit={(event) => { event.preventDefault(); void searchPds() }}>
               <label className="pds-search-label" htmlFor="pds-keywords">Product keywords</label>
