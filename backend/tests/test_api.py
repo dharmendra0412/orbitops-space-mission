@@ -224,3 +224,67 @@ def test_lola_pds3_label_endpoint_reports_malformed_upstream_label(monkeypatch):
     response = client.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/label")
 
     assert response.status_code == 502
+
+
+def test_lola_pixel_endpoint_returns_source_dn_height_radius_and_coordinates(monkeypatch):
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "lola_ldem_85s_40m.lbl"
+    label_text = fixture.read_text(encoding="ascii")
+
+    class PixelClient:
+        async def fetch_lola_gdr_sample_label(self):
+            return ("https://pds-geosciences.wustl.edu/sample.lbl", label_text)
+
+        async def fetch_lola_gdr_sample_dn(self, *, line_index: int, sample_index: int):
+            assert (line_index, sample_index) == (3791, 3791)
+            return (
+                "https://pds-geosciences.wustl.edu/sample.img",
+                -11002,
+                (57_509_102, 57_509_103),
+            )
+
+    monkeypatch.setattr(api, "pds_client", PixelClient())
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel",
+        params={"line_index": 3791, "sample_index": 3791},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["raw_dn"] == -11002
+    assert payload["height_m"] == -5501.0
+    assert payload["planetary_radius_m"] == 1_731_899.0
+    assert payload["planetocentric_latitude_degrees"] < -89.99
+    assert payload["east_longitude_degrees"] == 315.0
+    assert payload["byte_range_inclusive"] == {"start": 57_509_102, "end": 57_509_103}
+    assert payload["source_url"].endswith("ldem_85s_40m.img")
+    assert "not a terrain tile" in payload["validation_scope"]
+
+
+def test_lola_pixel_endpoint_rejects_out_of_bounds_indices():
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel",
+        params={"line_index": 7584, "sample_index": 0},
+    )
+    assert response.status_code == 422
+
+
+def test_lola_pixel_endpoint_rejects_wrong_source_label(monkeypatch):
+    class WrongLabelClient:
+        async def fetch_lola_gdr_sample_label(self):
+            return (
+                "https://pds-geosciences.wustl.edu/wrong.lbl",
+                'PDS_VERSION_ID = "PDS3"\\nFILE_NAME = "OTHER.IMG"\\nEND\\n',
+            )
+
+    monkeypatch.setattr(api, "pds_client", WrongLabelClient())
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel",
+        params={"line_index": 0, "sample_index": 0},
+    )
+    assert response.status_code == 502
+    assert "unsupported label" in response.json()["detail"]
