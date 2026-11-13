@@ -18,3 +18,7 @@ __pycache__/
 /data/raw/
 /backend/data/raw/
 *.part
+
+# Browser test output
+/playwright-report/
+/test-results/
