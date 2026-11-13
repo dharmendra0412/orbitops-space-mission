@@ -124,6 +124,9 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
                 f"LALT range label field {key} expected {expected!r}, got {label.get(key)!r}"
             )
 
+    physical_records = table_bytes.splitlines(keepends=True)
+    if len(physical_records) != 12_003 or any(len(record) != 162 for record in physical_records):
+        raise LaltRangeValidationError("LALT range table does not contain 12003 exact 162-byte physical records")
     lines = table_text.splitlines()
     if len(lines) != 12_003:
         raise LaltRangeValidationError(
