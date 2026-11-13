@@ -45,6 +45,8 @@ describe('mission resource catalogue', () => {
     const kaguyaSpice = missionResources.find((resource) => resource.id === 'kaguya-spice-kernels')
     expect(lalt?.url).toContain('/LALT/Calibrated_Data.htm')
     expect(lalt?.description).toMatch(/orbit provenance/i)
+    expect(lalt?.description).toMatch(/internal spacecraft-clock TI tags/i)
+    expect(lalt?.description).toMatch(/do not contain latitude\/longitude/i)
     expect(lalt?.description).toContain('SLN-L-LALT-3-RANGE-V1.0')
     expect(laltDarts?.url).toContain('sln-l-lalt-3-range-v1.0')
     expect(lgtTimeseries?.url).toContain('sln-l-lalt-4-topo-lgt-ts-v2.0')
