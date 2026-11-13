@@ -6,7 +6,7 @@ import {
   SlidersHorizontal, Target, Telescope, Users, X, ExternalLink
 } from 'lucide-react'
 
-import { instruments, orbitOptions } from './domain/mission'
+import { instruments, orbitOptions } from './domain/catalog'
 import { missionResources } from './data/sources'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
@@ -27,7 +27,6 @@ function App() {
   const [mobileMenu, setMobileMenu] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
-    setRunState('idle')
   }
 
   const navItems = ['Mission overview', 'Spacecraft designer', 'Constraint checks', 'NASA data sources', 'Engineering guide']
@@ -120,7 +119,7 @@ function App() {
 
             <div className="panel options-panel">
               <div className="panel-header"><div className="panel-title-icon orbit-icon"><Satellite size={17}/></div><div><strong>Orbit selection</strong><span>Choose an orbit concept for polar observations</span></div></div>
-              <div className="orbit-options">{orbitOptions.map(item => <button key={item.id} className={orbit === item.id ? 'orbit-option chosen' : 'orbit-option'} onClick={() => { setOrbit(item.id); setRunState('idle') }}>
+              <div className="orbit-options">{orbitOptions.map(item => <button key={item.id} className={orbit === item.id ? 'orbit-option chosen' : 'orbit-option'} onClick={() => setOrbit(item.id)}>
                 <span className="orbit-radio">{orbit === item.id && <i/>}</span><span className="orbit-option-copy"><strong>{item.name}</strong><small>{item.coverage}</small></span>
               </button>)}</div>
               <div className="panel-footnote"><CircleHelp size={14}/> Architecture labels only. No altitude, ephemeris, trajectory, or contact-window value is provided.</div>
