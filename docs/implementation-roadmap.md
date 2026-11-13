@@ -17,7 +17,7 @@ Every numerical source-derived value must carry its source product, source URL, 
 - Eight-point PROJ transformation cross-check against the PDS DSMAP_POLAR pixel-center equations.
 - Fixed-source HTTP Range pixel reads and bounded row-profile reads, both using the same PdsClient methods as the live API.
 - Live UI for source-label-derived coordinates, actual raw DN/height/radius lookup, and un-interpolated row-profile plots.
-- A user-authored mission brief builder with browser-local autosave and JSON export; required fields are explicit, and the UI does not score feasibility or invent assumptions.
+- A user-authored mission brief builder with browser-local autosave, JSON export, and a requirement matrix for statements, target/units, source URLs, and evidence notes. Source links are explicitly marked as not independently validated.
 - API and web tests, dependency audits, typechecks, production builds, and data-provenance documentation.
 
 The source-validation workflow passed in [run #43416474484](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484); retained evidence is in [artifact #14031861899](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484/artifacts/14031861899).
@@ -43,7 +43,7 @@ The source-validation workflow passed in [run #43416474484](https://github.com/d
 
 - Initial user-authored mission brief builder is implemented: objective, target, duration, orbit concept, payload needs, spacecraft constraints, operations concept, and evidence/assumptions.
 - Drafts autosave in the current browser and can be exported as JSON; no mission data is silently pre-filled or uploaded.
-- Add a source-backed requirement matrix and traceability from each requirement to its evidence.
+- Add automated source resolution and verification for requirement evidence; the current matrix stores user-entered URLs but does not fetch or validate them.
 - Add explicit distinction between verified inputs, user assumptions, and unresolved values throughout the mission brief.
 - Do not calculate orbital trajectories, spacecraft performance, cost, power, or data volume without validated inputs and a reviewed method.
 - Do not add fictional telemetry, spacecraft models, or mission results to make the interface appear complete.
