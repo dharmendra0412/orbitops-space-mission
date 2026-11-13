@@ -120,7 +120,7 @@ A Docker Compose deployment is provided in [deploy/README.md](deploy/README.md).
 
 ## Vercel deployment
 
-The primary hosting target is Vercel. The root `pyproject.toml` points Vercel's Python runtime at the existing FastAPI app, and its build script builds the Vite frontend first. When `dist/` exists, FastAPI serves the website at `/` while preserving the read-only API routes under `/api/`. This keeps the browser and API on one origin; leave `VITE_API_BASE_URL` empty and do not enable cross-origin access for the standard deployment. Follow [deploy/README.md](deploy/README.md) for the Vercel import and Preview verification steps.
+The primary hosting target is Vercel. The root `index.py` entrypoint exposes the existing FastAPI app to Vercel; `pyproject.toml` configures that entrypoint and builds the Vite frontend first. When `dist/` exists, FastAPI serves the website at `/` while preserving the read-only API routes under `/api/`. This keeps the browser and API on one origin; leave `VITE_API_BASE_URL` empty and do not enable cross-origin access for the standard deployment. Follow [deploy/README.md](deploy/README.md) for the Vercel import and Preview verification steps.
 
 ## Separate-host deployment configuration
 
