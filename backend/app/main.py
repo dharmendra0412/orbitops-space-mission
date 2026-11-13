@@ -11,6 +11,7 @@ from app.services.lola_gdr import (
     LolaRasterError,
     lola_dn_to_height_m,
     lola_dn_to_planetary_radius_m,
+    lola_map_scale_m_per_pixel,
     lola_polar_pixel_to_latlon,
     validate_lola_gdr_label,
 )
@@ -188,6 +189,7 @@ async def get_lola_gdr_row_profile(
             start_sample_index=start_sample_index,
             sample_count=sample_count,
         )
+        sample_spacing_m = lola_map_scale_m_per_pixel(metadata)
         points = []
         for offset, dn in enumerate(raw_samples):
             sample_index = start_sample_index + offset
@@ -218,6 +220,8 @@ async def get_lola_gdr_row_profile(
         "line_index": line_index,
         "start_sample_index": start_sample_index,
         "sample_count": len(points),
+        "sample_spacing_m": sample_spacing_m,
+        "profile_span_m": (len(points) - 1) * sample_spacing_m,
         "byte_range_inclusive": {"start": byte_range[0], "end": byte_range[1]},
         "coordinate_reference": metadata["COORDINATE_SYSTEM_NAME"],
         "units": {"raw_dn": "signed 16-bit integer", "height": "m", "planetary_radius": "m"},
