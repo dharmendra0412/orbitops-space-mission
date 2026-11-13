@@ -41,7 +41,7 @@ describe('mission resource catalogue', () => {
     const usgs = missionResources.find((resource) => resource.id === 'usgs-lroc-south-pole-vv')
     const laltFormat = missionResources.find((resource) => resource.id === 'kaguya-lalt-pds3-format')
     expect(lalt?.url).toContain('/LALT/Calibrated_Data.htm')
-    expect(lalt?.description).toMatch(/orbit solution/i)
+    expect(lalt?.description).toMatch(/orbit provenance/i)
     expect(lalt?.description).toContain('SLN-L-LALT-3-RANGE-V1.0')
     expect(laltDarts?.url).toContain('sln-l-lalt-3-range-v1.0')
     expect(southPole?.description).toMatch(/void cells encoded as -99/)
