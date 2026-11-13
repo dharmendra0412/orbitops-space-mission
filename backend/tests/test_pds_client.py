@@ -140,6 +140,26 @@ def test_extract_next_search_after_does_not_invent_cursor_when_missing():
 
     assert extract_next_search_after([{"id": "urn:nasa:pds:example:item::1.0"}]) is None
 
+    
+def test_extract_next_search_after_stops_when_pds_returns_a_short_page():
+    from app.services.pds_client import extract_next_search_after
+
+    payload = [
+        {"id": "urn:nasa:pds:example:item-1::1.0", "ops:Harvest_Info.ops:harvest_date_time": ["2026-10-16T10:00:00Z"]},
+        {"id": "urn:nasa:pds:example:item-2::1.0", "ops:Harvest_Info.ops:harvest_date_time": ["2026-10-17T10:00:00Z"]},
+    ]
+    assert extract_next_search_after(payload, page_limit=3) is None
+
+
+def test_extract_next_search_after_keeps_cursor_for_a_full_page():
+    from app.services.pds_client import extract_next_search_after
+
+    payload = [
+        {"id": "urn:nasa:pds:example:item-1::1.0", "ops:Harvest_Info.ops:harvest_date_time": ["2026-10-16T10:00:00Z"]},
+        {"id": "urn:nasa:pds:example:item-2::1.0", "ops:Harvest_Info.ops:harvest_date_time": ["2026-10-17T10:00:00Z"]},
+    ]
+    assert extract_next_search_after(payload, page_limit=2) == "2026-10-17T10:00:00Z"
+
 
 
 def test_extract_next_search_after_supports_nested_harvest_info_shape():
