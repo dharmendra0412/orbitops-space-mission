@@ -36,7 +36,7 @@ From the `backend/` directory, run:
 python scripts/fetch_lola_gdr_sample.py --output data/raw/lola/ldem_85s_40m.img
 ```
 
-The downloader uses one fixed HTTPS archive URL, refuses redirects, requires the directory-listed 115,034,112-byte length, streams to a temporary file, and atomically writes the raster plus a JSON provenance manifest. It computes a local SHA-256 fingerprint but explicitly records that no upstream checksum was published in the inspected directory listing; byte-count verification must not be described as cryptographic source verification. Downloaded rasters under `data/raw/` are git-ignored. The downloader is not automatically run by the web application or CI.
+The downloader tries two fixed HTTPS sources in order: the PDS Geosciences archive, then the LOLA Data Node at MIT if the first source has a transport failure or a server-side 5xx response. The NASA PDS LOLA page directs users to that Data Node for the latest holdings, and its polar IMG directory lists the same `LDEM_85S_40M.IMG` filename and 115,034,112-byte size. The downloader refuses redirects, rejects unexpected response lengths, streams to a temporary file, and atomically writes the raster plus a JSON provenance manifest. The manifest records the endpoint that actually supplied the file and the fixed source attempts. It computes a local SHA-256 fingerprint but explicitly records that no upstream checksum was published in the inspected directory listings; byte-count verification must not be described as cryptographic source verification. Downloaded rasters under `data/raw/` are git-ignored. The downloader is not automatically run by the web application or CI.
 
 ## Tests
 
