@@ -167,7 +167,7 @@ export function MissionBrief() {
                 <div className="mission-requirement-topline">
                   <strong>{row.id}</strong>
                   <span className={row.sourceUrl.trim() ? 'mission-source-linked' : 'mission-source-missing'}>
-                    {row.sourceUrl.trim() ? 'Source link added · not independently validated' : 'No source linked'}
+                    {row.sourceUrl.trim() ? 'URL entered · not fetched or validated' : 'No source linked'}
                   </span>
                   <button type="button" onClick={() => removeRequirement(row.id)} aria-label={'Remove ' + row.id}>Remove</button>
                 </div>
