@@ -253,6 +253,8 @@ function App() {
     setPdsLabelLoading(true)
     setPdsLabelError('')
     setPdsLabelResponse(null)
+    setLolaPixelResponse(null)
+    setLolaPixelError('')
     try {
       const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/label')
       const payload = await readApiResponse<Pds3LabelResponse>(response, 'LOLA label request')
@@ -546,10 +548,10 @@ function App() {
                 <div className="pds-results-count">PDS polar-grid coordinate lookup · zero-based pixel indices</div>
                 <div className="lola-coordinate-fields">
                   <label>Line index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" disabled={lolaPixelLoading} value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
                   </label>
                   <label>Sample index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" disabled={lolaPixelLoading} value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError('') }} />
                   </label>
                 </div>
                 {lolaPixelLocation ? <div className="lola-coordinate-result" aria-live="polite">
