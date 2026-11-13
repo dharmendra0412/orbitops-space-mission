@@ -169,17 +169,20 @@ class PdsClient:
 
         return str(response.url), payload
 
-def extract_next_search_after(payload: Any) -> str | None:
-    """Read the final record's documented harvest-time sort value, if supplied.
+def extract_next_search_after(payload: Any, *, page_limit: int | None = None) -> str | None:
+    """Read the final record's harvest-time cursor when another page may exist.
 
-    PDS responses may expose the registry field as a flattened dotted key or
-    as a nested Harvest_Info object. Only a source-provided string is returned;
-    a missing or malformed value deliberately disables further-page navigation.
+    PDS pagination guidance says to stop once a response contains fewer records
+    than the requested limit. Responses may expose records as a top-level list
+    or under data, and the harvest-time value as a flattened dotted key or a
+    nested Harvest_Info object. Only source-provided strings are returned.
     """
     rows = payload if isinstance(payload, list) else (
         payload.get("data") if isinstance(payload, dict) and isinstance(payload.get("data"), list) else None
     )
     if not rows:
+        return None
+    if page_limit is not None and len(rows) < page_limit:
         return None
 
     last = rows[-1]
