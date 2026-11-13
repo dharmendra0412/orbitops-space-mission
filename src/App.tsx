@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  Activity, ArrowUpRight, Atom, BatteryCharging, Check,
+  Activity, ArrowUpRight, Atom, BatteryCharging, BookOpen, Check, ClipboardList,
   ChevronDown, CircleHelp, Compass, Database, Globe2, Layers3,
   Menu, Radio, Rocket, Satellite, Settings2, ShieldCheck,
   SlidersHorizontal, Target, Telescope, Users, X, ExternalLink
@@ -453,6 +453,30 @@ function App() {
             <button className="hero-link" onClick={() => goTo('NASA data sources')}>Browse NASA data sources <ArrowUpRight size={15}/></button>
           </div>
           <div className="hero-footer"><span>WORKSPACE <strong>RESEARCH ONLY</strong></span><span>DATA STATUS <strong>NO PRODUCTS INGESTED</strong></span><span>MISSION CONFIG <strong>NOT CONFIGURED</strong></span></div>
+        </section>
+
+        <section className="quick-access" aria-labelledby="quick-access-title">
+          <div className="quick-access-heading">
+            <div><div className="section-eyebrow">EXPLORE THE WORKSPACE</div><h3 id="quick-access-title">Where would you like to start?</h3></div>
+            <span>THREE WORKING RESEARCH PATHS</span>
+          </div>
+          <div className="quick-access-grid">
+            <button type="button" className="quick-access-card" onClick={() => goTo('Research categories')}>
+              <span className="quick-access-icon"><BookOpen size={18}/></span>
+              <span className="quick-access-copy"><strong>Explore lunar research</strong><small>Choose science topics and orbit research areas.</small></span>
+              <ArrowUpRight size={16}/>
+            </button>
+            <button type="button" className="quick-access-card" onClick={() => goTo('Mission brief')}>
+              <span className="quick-access-icon"><ClipboardList size={18}/></span>
+              <span className="quick-access-copy"><strong>Create a mission brief</strong><small>Record a mission concept and traceable requirements.</small></span>
+              <ArrowUpRight size={16}/>
+            </button>
+            <button type="button" className="quick-access-card" onClick={() => goTo('NASA data sources')}>
+              <span className="quick-access-icon"><Database size={18}/></span>
+              <span className="quick-access-copy"><strong>Search NASA data</strong><small>Discover source records and inspect available products.</small></span>
+              <ArrowUpRight size={16}/>
+            </button>
+          </div>
         </section>
 
         <section className="section-block">
