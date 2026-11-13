@@ -162,6 +162,36 @@ def test_lola_polar_projection_distinguishes_all_four_quadrants(lola_metadata):
         assert longitude == pytest.approx(expected_longitude)
 
 
+@pytest.mark.parametrize(
+    ("line_index", "sample_index"),
+    [(3791.5, 3791), (3791, 3791.5), (True, 3791)],
+)
+def test_lola_polar_projection_rejects_non_integer_pixel_indices(
+    lola_metadata, line_index, sample_index
+):
+    with pytest.raises(LolaRasterError, match="Pixel indices must be integers"):
+        lola_polar_pixel_to_latlon(
+            lola_metadata, line_index=line_index, sample_index=sample_index
+        )
+
+
+@pytest.mark.parametrize("map_scale", ["0 <m/pix>", "-40 <m/pix>"])
+def test_lola_polar_projection_rejects_non_positive_map_scale(lola_metadata, map_scale):
+    metadata = dict(lola_metadata)
+    metadata["MAP_SCALE"] = map_scale
+
+    with pytest.raises(LolaRasterError, match="map scale must be positive"):
+        lola_polar_pixel_to_latlon(metadata, line_index=3791, sample_index=3791)
+
+
+def test_lola_polar_projection_rejects_non_finite_map_scale(lola_metadata):
+    metadata = dict(lola_metadata)
+    metadata["MAP_SCALE"] = "1e999 <m/pix>"
+
+    with pytest.raises(LolaRasterError, match="must be finite"):
+        lola_polar_pixel_to_latlon(metadata, line_index=3791, sample_index=3791)
+
+
 def test_lola_polar_projection_rejects_out_of_bounds_pixels(lola_metadata):
     with pytest.raises(LolaRasterError, match="outside the image bounds"):
         lola_polar_pixel_to_latlon(lola_metadata, line_index=7584, sample_index=0)
