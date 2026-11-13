@@ -19,8 +19,10 @@ export type MissionBriefDraft = {
   requirements: MissionRequirement[]
 }
 
+export type MissionBriefTextKey = Exclude<keyof MissionBriefDraft, 'requirements'>
+
 export type MissionBriefField = {
-  key: keyof MissionBriefDraft
+  key: MissionBriefTextKey
   label: string
   hint: string
   placeholder: string
@@ -130,7 +132,6 @@ export function parseMissionBriefDraft(raw: string | null): MissionBriefDraft {
     const source = record.brief && typeof record.brief === 'object' && !Array.isArray(record.brief)
       ? record.brief as Record<string, unknown>
       : record
-    const empty = createEmptyMissionBrief()
     const parsedFields = Object.fromEntries(
       missionBriefFields.map((field) => [
         field.key,
