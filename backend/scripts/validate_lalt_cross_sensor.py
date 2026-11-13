@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import hashlib
 import json
 import math
@@ -14,6 +15,7 @@ import numpy as np
 import rasterio
 from pyproj import CRS, Transformer
 
+from app.services.lalt_client import LaltClient
 from app.services.lalt_pds3 import (
     LALT_GT_SP_DUMMY_KM,
     LALT_GT_SP_EASTERNMOST_LONGITUDE,
@@ -298,6 +300,23 @@ def compare_lalt_grid_to_lola(
     }
 
 
+async def _verify_live_label_client_matches_downloaded_label(label_path: Path) -> dict[str, Any]:
+    client = LaltClient()
+    source_url, source_label = await client.fetch_gt_sp_label()
+    local_bytes = label_path.read_bytes()
+    source_bytes = source_label.encode("ascii")
+    if source_url != LALT_GT_SP_LABEL_URL:
+        raise RuntimeError("Live LALT label client returned an unexpected source URL")
+    if source_bytes != local_bytes:
+        raise RuntimeError("Live LALT label client differs from the detached label downloaded for validation")
+    return {
+        "source_url": source_url,
+        "bytes_checked": len(source_bytes),
+        "sha256": hashlib.sha256(source_bytes).hexdigest(),
+        "matches_downloaded_validation_label": True,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate Kaguya LALT PDS3 south-polar grid and compare with LOLA.")
     parser.add_argument("--lola-image", type=Path, required=True)
@@ -318,6 +337,7 @@ def main() -> None:
     )
     label_text = label_path.read_text(encoding="ascii")
     lalt_metadata = parse_and_validate_lalt_gt_sp_label(label_text)
+    live_label_validation = asyncio.run(_verify_live_label_client_matches_downloaded_label(label_path))
     image_bytes, image_sha256 = _download_fixed_source(
         LALT_GT_SP_IMAGE_URL,
         image_path,
@@ -340,6 +360,7 @@ def main() -> None:
             "image_bytes": image_bytes,
             "image_sha256": image_sha256,
             "image_validation": image_validation,
+            "live_api_label_client_validation": live_label_validation,
             "metadata": {
                 key: value
                 for key, value in lalt_metadata.items()
