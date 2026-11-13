@@ -4,8 +4,8 @@ import re
 
 
 # Keep the parser deliberately narrow: these are scalar fields needed to
-# describe the selected LOLA GDR image and its map reference. Complex PDS3
-# objects and multiline descriptions remain in the original label fixture.
+# validate selected LOLA and Kaguya LALT products. Complex PDS3 objects and
+# multiline descriptions remain in the original source labels.
 _LABEL_FIELDS = {
     "PDS_VERSION_ID", "PRODUCT_VERSION_ID", "DATA_SET_ID",
     "INSTRUMENT_HOST_NAME", "INSTRUMENT_NAME", "INSTRUMENT_ID", "TARGET_NAME",
@@ -16,6 +16,11 @@ _LABEL_FIELDS = {
     "POSITIVE_LONGITUDE_DIRECTION", "CENTER_LATITUDE", "CENTER_LONGITUDE",
     "MAP_SCALE", "MAP_PROJECTION_ROTATION", "LINE_PROJECTION_OFFSET", "SAMPLE_PROJECTION_OFFSET", "LINE_FIRST_PIXEL", "SAMPLE_FIRST_PIXEL", "MAXIMUM_LATITUDE", "MINIMUM_LATITUDE",
     "COORDINATE_SYSTEM_TYPE", "COORDINATE_SYSTEM_NAME",
+    "DATA_SET_ID", "PRODUCT_ID", "PRODUCT_SET_ID", "BANDS", "DUMMY_DATA",
+    "INVALID_CONSTANT", "STRETCHED_FLAG", "MAP_RESOLUTION_LATITUDE",
+    "MAP_RESOLUTION_LONGITUDE", "WESTERNMOST_LONGITUDE", "EASTERNMOST_LONGITUDE",
+    "LINE_LAST_PIXEL", "SAMPLE_LAST_PIXEL", "BAND_STORAGE_TYPE", "SAMPLE_BIT_MASK",
+    "DATA_TYPE", "PROJECTION_LATITUDE_TYPE", "MAP_PROJECTION_TYPE",
 }
 _ASSIGNMENT = re.compile(r"^\s*(\^?[A-Z][A-Z0-9_]*)\s*=\s*(.*?)\s*$")
 
