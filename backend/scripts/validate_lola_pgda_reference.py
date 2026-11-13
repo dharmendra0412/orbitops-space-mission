@@ -166,11 +166,13 @@ def validate_against_pgda(
                 "as read from the GeoTIFF WKT"
             ),
             "frame_reconciliation_status": (
-                "The product page declares MOON_ME / DE421, while the embedded WKT "
-                "names the IAU 30100 Moon (2015) spherical CRS. This workflow records "
-                "both declarations but does not independently establish their frame "
-                "equivalence; treat residual statistics as exploratory pending a "
-                "documented frame transformation/reconciliation."
+                "The NASA PGDA product documentation explicitly declares the COG "
+                "coordinates to be MOON_ME in the JPL DE421 ephemeris frame. The "
+                "embedded WKT describes the lunar spherical body datum and polar "
+                "stereographic projection (IAU 30100), but does not encode an "
+                "ephemeris identifier. These declarations are not contradictory; "
+                "the product-level MOON_ME/DE421 declaration is retained as the "
+                "horizontal frame authority."
             ),
             "interpretation": (
                 "Separately adjusted and processed LOLA reference DEM. This is a "
@@ -199,7 +201,7 @@ def validate_against_pgda(
         "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
         "limitations": [
             "The PGDA product is a separately adjusted LOLA DEM, not an independent instrument dataset.",
-            "The product page declares MOON_ME / DE421, but the embedded GeoTIFF WKT names IAU 30100 Moon (2015); explicit frame equivalence remains to be reconciled.",
+            "The NASA PGDA product page declares MOON_ME / DE421; the GeoTIFF WKT describes the lunar body datum and projection but does not encode ephemeris identity. The product-level frame declaration is authoritative.",
             "The comparison samples four bounded 512x512 windows rather than the full source raster.",
             "The PGDA COG is read by HTTP range requests; the full 685 MB file is not downloaded.",
             "Bilinear resampling is used to align the reference DEM to the PDS source grid.",
