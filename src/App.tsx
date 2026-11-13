@@ -61,7 +61,7 @@ type Pds3LabelResponse = {
 
 
 function App() {
-  const [activeNav, setActiveNav] = useState('Mission overview')
+  const [activeNav, setActiveNav] = useState('Research overview')
   const [selected, setSelected] = useState<string[]>([])
   const [orbit, setOrbit] = useState('low')
   const [showAll, setShowAll] = useState(false)
@@ -211,23 +211,23 @@ function App() {
     }
   }
 
-  const navItems = ['Mission overview', 'Research categories', 'Constraint checks', 'NASA data sources', 'Engineering guide']
+  const navItems = ['Research overview', 'Research categories', 'Input readiness', 'NASA data sources', 'Engineering guide']
   const goTo = (item: string) => {
     setActiveNav(item)
     setMobileMenu(false)
     if (item === 'Research categories') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
-    else if (item === 'Mission overview') window.scrollTo({ top: 0, behavior: 'smooth' })
+    else if (item === 'Research overview') window.scrollTo({ top: 0, behavior: 'smooth' })
     else if (item === 'Engineering guide') setShowAll(true)
     else if (item === 'NASA data sources') document.getElementById('data-sources')?.scrollIntoView({ behavior: 'smooth' })
-    else document.getElementById('mission-output')?.scrollIntoView({ behavior: 'smooth' })
+    else document.getElementById('input-readiness')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return <div className="app-shell">
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
-      <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>MISSION ENGINEERING</span></div><button className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close menu"><X size={18}/></button></div>
+      <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>SPACE SCIENCE WORKSPACE</span></div><button className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close menu"><X size={18}/></button></div>
       <div className="workspace-label">WORKSPACE</div>
       <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
-      <div className="nav-label">MISSION</div>
+      <div className="nav-label">RESEARCH</div>
       <nav className="side-nav">{navItems.map((item, index) => {
         const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
         const Icon = icons[index]
@@ -290,11 +290,11 @@ function App() {
                   
                 </button>
               })}</div>
-              <div className="panel-footnote"><CircleHelp size={14}/> These are research categories, not a verified flight-hardware catalogue. Mass, power, cost, and performance remain unavailable until sourced.</div>
+              <div className="panel-footnote"><CircleHelp size={14}/> These are research topics, not a verified flight-hardware catalogue. Mass, power, cost, and performance remain unavailable until sourced.</div>
             </div>
 
             <div className="panel options-panel">
-              <div className="panel-header"><div className="panel-title-icon orbit-icon"><Satellite size={17}/></div><div><strong>Orbit architecture categories</strong><span>Choose a category for research; no orbital parameters are assumed</span></div></div>
+              <div className="panel-header"><div className="panel-title-icon orbit-icon"><Satellite size={17}/></div><div><strong>Orbit research topics</strong><span>Choose a topic for research; no orbital parameters are assumed</span></div></div>
               <div className="orbit-options">{orbitOptions.map(item => <button key={item.id} className={orbit === item.id ? 'orbit-option chosen' : 'orbit-option'} onClick={() => setOrbit(item.id)}>
                 <span className="orbit-radio">{orbit === item.id && <i/>}</span><span className="orbit-option-copy"><strong>{item.name}</strong><small>{item.coverage}</small></span>
               </button>)}</div>
@@ -303,7 +303,7 @@ function App() {
           </div>
 
           <aside className="designer-side">
-            <div className="panel verification-panel" id="mission-output">
+            <div className="panel verification-panel" id="input-readiness">
               <div className="verify-heading"><div><div className="section-eyebrow">ENGINEERING VERIFICATION</div><strong>Input readiness</strong></div><span className="warn-label">NOT READY</span></div>
               <div className="check-list">
                 <div className="check-row"><span className="check-status fail"><X size={11}/></span><span>Mass properties</span><b>Not sourced</b></div>
