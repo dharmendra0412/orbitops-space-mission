@@ -123,6 +123,15 @@ def validate_lola_gdr_file(path: str | Path, metadata: dict[str, str]) -> dict[s
     }
 
 
+def lola_map_scale_m_per_pixel(metadata: dict[str, str]) -> float:
+    """Return the validated source-label map scale in metres per pixel."""
+    validate_lola_gdr_label(metadata)
+    scale = _number(metadata, "MAP_SCALE", unit="m/pix")
+    if scale <= 0:
+        raise LolaRasterError("LOLA map scale must be positive")
+    return scale
+
+
 def lola_dn_to_height_m(dn: int, metadata: dict[str, str]) -> float:
     """Convert one raw DN to GDR height using the GDR SIS formula (DN * scale)."""
     if not isinstance(dn, int) or isinstance(dn, bool):
