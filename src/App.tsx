@@ -179,13 +179,18 @@ function App() {
       { id: 'mission-brief', label: 'Mission brief' },
       { id: 'data-sources', label: 'NASA data sources' },
     ]
+    let frame = 0
     const updateActiveSection = () => {
-      let current = sections[0].label
-      for (const section of sections) {
-        const element = document.getElementById(section.id)
-        if (element && element.getBoundingClientRect().top <= 180) current = section.label
-      }
-      setActiveNav(current)
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        let current = sections[0].label
+        for (const section of sections) {
+          const element = document.getElementById(section.id)
+          if (element && element.getBoundingClientRect().top <= 180) current = section.label
+        }
+        setActiveNav(current)
+      })
     }
     updateActiveSection()
     window.addEventListener('scroll', updateActiveSection, { passive: true })
@@ -193,6 +198,7 @@ function App() {
     return () => {
       window.removeEventListener('scroll', updateActiveSection)
       window.removeEventListener('resize', updateActiveSection)
+      if (frame) window.cancelAnimationFrame(frame)
     }
   }, [])
   const toggleInstrument = (id: string) => {
@@ -411,7 +417,7 @@ function App() {
       <div className="workspace-label">WORKSPACE</div>
       <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">RESEARCH</div>
-      <nav className="side-nav">{navItems.map((item, index) => {
+      <nav className="side-nav" aria-label="Research sections">{navItems.map((item, index) => {
         const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
         const Icon = icons[index]
         return <button key={item} type="button" className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)} aria-current={activeNav === item ? 'page' : undefined}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
