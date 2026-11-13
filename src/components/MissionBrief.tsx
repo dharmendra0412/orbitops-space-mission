@@ -88,8 +88,11 @@ export function MissionBrief() {
     const anchor = document.createElement('a')
     anchor.href = objectUrl
     anchor.download = filename + '.json'
+    document.body.appendChild(anchor)
     anchor.click()
-    URL.revokeObjectURL(objectUrl)
+    anchor.remove()
+    // Keep the object URL alive briefly so browsers can finish starting the download.
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
   }
 
   const importDraft = async (event: ChangeEvent<HTMLInputElement>) => {
