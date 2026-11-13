@@ -26,21 +26,22 @@ app = FastAPI(
     description="Read-only discovery proxy for authoritative planetary-science archives.",
 )
 
+def configure_cors(application: FastAPI, origins: list[str]) -> None:
+    """Allow read-only browser requests from explicitly configured frontend origins."""
+    normalized_origins = [origin.strip() for origin in origins if origin.strip()]
+    if normalized_origins:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=normalized_origins,
+            allow_credentials=False,
+            allow_methods=["GET"],
+            allow_headers=["*"],
+        )
+
+
 # Keep the API same-origin by default. Configure exact browser origins only when
 # the frontend and API are deployed on separate hosts.
-cors_origins = [
-    origin.strip()
-    for origin in os.getenv("ORBITOPS_CORS_ORIGINS", "").split(",")
-    if origin.strip()
-]
-if cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=False,
-        allow_methods=["GET"],
-        allow_headers=["*"],
-    )
+configure_cors(app, os.getenv("ORBITOPS_CORS_ORIGINS", "").split(","))
 
 pds_client = PdsClient()
 lalt_client = LaltClient()
