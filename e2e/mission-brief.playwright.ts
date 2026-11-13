@@ -317,3 +317,22 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
   await expect(page.getByText('LOLA 75S 40M image')).toBeVisible()
   await expect(page.getByText('LOLA 80S 40M image')).toHaveCount(1)
 })
+
+
+test('NASA PDS upstream failures remain visible and do not create fallback records', async ({ page }) => {
+  await page.route('**/api/v1/pds/search*', async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ detail: 'NASA PDS Search API is temporarily unavailable. Retry later or consult the mission archive index.' }),
+    })
+  })
+
+  await page.goto('/')
+  await page.locator('.side-nav').getByRole('button', { name: 'NASA data sources' }).click()
+  await page.getByLabel('Product keywords').fill('LOLA')
+  await page.getByRole('button', { name: 'Search PDS' }).click()
+  await expect(page.getByRole('alert')).toContainText('NASA PDS Search API is temporarily unavailable.')
+  await expect(page.getByText('Returned 0 product records')).toHaveCount(0)
+  await expect(page.locator('.pds-product-card')).toHaveCount(0)
+})
