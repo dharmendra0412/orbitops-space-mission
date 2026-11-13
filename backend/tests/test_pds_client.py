@@ -226,7 +226,7 @@ async def test_fetch_lola_sample_label_rejects_oversized_and_non_ascii_content()
         await client.fetch_lola_gdr_sample_label()
 
     non_ascii_client = PdsClient(transport=httpx.MockTransport(
-        lambda request: httpx.Response(200, content=b"\\xff")
+        lambda request: httpx.Response(200, content=bytes([255]))
     ))
     with pytest.raises(PdsApiError, match="ASCII"):
         await non_ascii_client.fetch_lola_gdr_sample_label()
