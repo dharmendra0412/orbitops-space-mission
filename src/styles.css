@@ -156,3 +156,21 @@
 :where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid #8bdcf7;outline-offset:3px}
 #main-content:focus{outline:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Visitor quick-access paths */
+.quick-access{margin:0 0 34px;padding:20px;border:1px solid #23364b;border-radius:10px;background:linear-gradient(135deg,#101d2c,#0d1725)}
+.quick-access-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:15px}
+.quick-access-heading h3{margin:5px 0 0;font-size:17px;letter-spacing:-.35px;color:#e6f0fa}
+.quick-access-heading>span{font:8px 'DM Mono',monospace;letter-spacing:1px;color:#7890a8}
+.quick-access-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.quick-access-card{display:flex;align-items:center;gap:11px;min-width:0;min-height:82px;padding:13px;border:1px solid #2b4056;border-radius:7px;background:#111f30;color:#dceafa;text-align:left;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.quick-access-card:hover{border-color:#5aaaca;background:#14283b;transform:translateY(-2px)}
+.quick-access-card>svg{flex:0 0 auto;color:#8bdcf7;margin-left:auto}
+.quick-access-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border:1px solid #2d5268;border-radius:7px;background:#102b3d;color:#8bdcf7}
+.quick-access-copy{display:grid;gap:5px;min-width:0}
+.quick-access-copy strong{font-size:10px;line-height:1.35}
+.quick-access-copy small{font-size:9px;line-height:1.5;color:#91a4b9}
+@media(max-width:900px){.quick-access-grid{grid-template-columns:1fr}.quick-access-card{min-height:68px}}
+@media(max-width:600px){.quick-access{padding:15px;margin-bottom:26px}.quick-access-heading{align-items:flex-start;flex-direction:column;gap:7px}.quick-access-heading h3{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.quick-access-card:hover{transform:none}}
