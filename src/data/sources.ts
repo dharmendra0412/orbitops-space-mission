@@ -89,6 +89,14 @@ export const missionResources: MissionResource[] = [
     url: 'https://www.kaguya.jaxa.jp/en/science/LALT/The_lunar_topographic_data_e.htm',
   },
   {
+    id: 'kaguya-lalt-pds3-dataset',
+    title: 'SELENE LALT south-polar topographic image — DARTS',
+    owner: 'JAXA / DARTS ISAS',
+    kind: 'DATA ARCHIVE',
+    description: 'Official DARTS landing page for SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0. The page describes this south-polar topographic image as interpolated from LALT global topographic time-series elevation data; it is not a raw laser-shot dataset.',
+    url: 'https://darts.isas.jaxa.jp/en/datasets/darts:sln-l-lalt-5-topo-gt-sp-img-v2.0',
+  },
+  {
     id: 'kaguya-lalt-pds3-format',
     title: 'Kaguya LALT PDS3 product format specification',
     owner: 'JAXA / DARTS ISAS',
