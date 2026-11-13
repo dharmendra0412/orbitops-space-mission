@@ -44,9 +44,9 @@ The FastAPI service exposes:
 
 - `GET /api/v1/pds/search?keywords=LOLA&limit=10` — forwards a keyword query to the NASA PDS Search API.
 - `GET /api/v1/pds/products/{identifier}` — resolves a PDS product LID/LIDVID.
-- `GET /api/v1/pds/products/{identifier}/members?depth=1|2` — browses child collections/products or two levels of a bundle hierarchy.
+- `GET /api/v1/pds/products/{identifier}/members?depth=1|2&limit=100&search_after=...` — browses a page of child collections/products and supports source-defined cursor pagination.
 
-The search request asks for the `application/kvp+json` representation and the documented summary fields `lidvid` and `title`. The search endpoint returns the upstream JSON unchanged under `response`, plus the exact request URL, search parameters, and retrieval timestamp. Product resolution requests `application/vnd.nasa.pds.pds4+json` so the response can include the full PDS4 label translation and registry metadata (including file references and checksums when supplied by PDS). Hierarchy browsing uses `application/json` and preserves the returned child-product records. It does not download the linked product files, invent a result when the API returns none, or claim that all PDS archives are indexed. A successful metadata search is discovery only, not dataset ingestion.
+The search request asks for the `application/kvp+json` representation and the documented summary fields `lidvid` and `title`. Hierarchy pages are limited to 100 records per request and sorted by the PDS harvest timestamp; the next-page cursor is exposed only when the last returned source record supplies that field. The search endpoint returns the upstream JSON unchanged under `response`, plus the exact request URL, search parameters, and retrieval timestamp. Product resolution requests `application/vnd.nasa.pds.pds4+json` so the response can include the full PDS4 label translation and registry metadata (including file references and checksums when supplied by PDS). Hierarchy browsing uses `application/json` and preserves the returned child-product records. It does not download the linked product files, invent a result when the API returns none, or claim that all PDS archives are indexed. A successful metadata search is discovery only, not dataset ingestion.
 
 ## Integration requirements
 
