@@ -67,8 +67,8 @@ def _validate_projection_against_pds_pixel_centers(
         # Y=(J-N/2-0.5)*scale*NS, with NS=-1 in the south.
         sample_coordinate = column + 1
         line_coordinate = row + 1
-        pds_x = (sample_coordinate - 3792.0) * 40.0
-        pds_y = (line_coordinate - 3792.0) * 40.0 * -1.0
+        pds_x = (sample_coordinate - 3792.5) * 40.0
+        pds_y = (line_coordinate - 3792.5) * 40.0 * -1.0
         radial_distance = math.hypot(pds_x, pds_y)
         expected_lat = -90.0 + math.degrees(
             2.0 * math.atan(radial_distance / (2.0 * LUNAR_REFERENCE_RADIUS_M))
