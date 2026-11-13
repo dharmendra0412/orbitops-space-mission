@@ -67,3 +67,42 @@ async def test_product_not_found_keeps_upstream_404_status():
         await client.resolve_product(identifier="urn:nasa:pds:missing")
 
     assert error.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_members_requests_the_official_hierarchy_endpoint():
+    expected_payload = [
+        {"id": "urn:nasa:pds:lro_lola_rdr:data_gridded:map_1::1.0", "title": "Example LOLA grid"},
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("/urn:nasa:pds:lro_lola_rdr:data_gridded::1.0/members")
+        assert request.headers["accept"] == "application/json"
+        return httpx.Response(200, json=expected_payload)
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    request_url, payload = await client.list_members(
+        identifier="urn:nasa:pds:lro_lola_rdr:data_gridded::1.0",
+        depth=1,
+    )
+
+    assert request_url.startswith(PDS_SEARCH_BASE_URL)
+    assert payload == expected_payload
+
+
+@pytest.mark.asyncio
+async def test_list_members_supports_two_levels_for_bundle_observations():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("/urn:nasa:pds:example::1.0/members/members")
+        return httpx.Response(200, json=[])
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    _, payload = await client.list_members(identifier="urn:nasa:pds:example::1.0", depth=2)
+    assert payload == []
+
+
+@pytest.mark.asyncio
+async def test_list_members_rejects_unsupported_depth():
+    client = PdsClient(transport=httpx.MockTransport(lambda request: httpx.Response(200, json=[])))
+    with pytest.raises(ValueError, match="depth must be 1 or 2"):
+        await client.list_members(identifier="urn:nasa:pds:example::1.0", depth=3)
