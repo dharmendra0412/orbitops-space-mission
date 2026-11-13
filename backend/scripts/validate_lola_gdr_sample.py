@@ -9,7 +9,7 @@ from app.services.pds3_label import PdsLabelError, parse_pds3_label
 
 
 DEFAULT_IMAGE = Path("data/raw/lola/ldem_85s_40m.img")
-DEFAULT_LABEL = Path("tests/fixtures/lola_ldem_85s_40m.lbl")
+DEFAULT_LABEL = Path("data/raw/lola/ldem_85s_40m.lbl")
 
 
 def main() -> None:
@@ -21,7 +21,7 @@ def main() -> None:
         "--label",
         type=Path,
         default=DEFAULT_LABEL,
-        help="PDS3 label path (defaults to the repository's source-derived label fixture)",
+        help="PDS3 label path (defaults to the companion label downloaded from the same archive host as the IMG)",
     )
     args = parser.parse_args()
 
