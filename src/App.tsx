@@ -302,7 +302,7 @@ function App() {
                   : pdsProducts.products.map((product) => <article className="pds-product-card" key={product.lidvid}>
                       <strong>{product.title ?? 'Title not supplied by source'}</strong>
                       <span>NASA PDS product identifier</span>
-                      <code>{product.lidvid}</code>}
+                      <code>{product.lidvid}</code>
                       <button type="button" onClick={() => void resolvePdsProduct(product.lidvid)}>Resolve source metadata <ArrowUpRight size={12}/></button>
                     </article>)}
               </div> : <pre>{JSON.stringify(pdsSearchResponse.response, null, 2)}</pre>}
