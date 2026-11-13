@@ -163,3 +163,37 @@ def test_extract_next_search_after_rejects_empty_or_non_string_cursor():
     assert extract_next_search_after([{"ops:Harvest_Info.ops:harvest_date_time": []}]) is None
     assert extract_next_search_after([{"ops:Harvest_Info.ops:harvest_date_time": 123}]) is None
     assert extract_next_search_after({"data": []}) is None
+
+
+def test_parse_real_lola_pds3_label_preserves_source_units_and_reference_frame():
+    from pathlib import Path
+
+    from app.services.pds3_label import parse_pds3_label
+
+    fixture = Path(__file__).parent / "fixtures" / "lola_ldem_85s_40m.lbl"
+    metadata = parse_pds3_label(fixture.read_text(encoding="utf-8"))
+
+    assert metadata["PDS_VERSION_ID"] == "PDS3"
+    assert metadata["PRODUCT_VERSION_ID"] == "V2.0"
+    assert metadata["DATA_SET_ID"] == "LRO-L-LOLA-4-GDR-V1.0"
+    assert metadata["FILE_NAME"] == "LDEM_85S_40M.IMG"
+    assert metadata["SAMPLE_TYPE"] == "LSB_INTEGER"
+    assert metadata["SAMPLE_BITS"] == "16"
+    assert metadata["UNIT"] == "METER"
+    assert metadata["SCALING_FACTOR"] == "0.5"
+    assert metadata["OFFSET"] == "1737400."
+    assert metadata["MAP_PROJECTION_TYPE"] == "POLAR STEREOGRAPHIC"
+    assert metadata["MAP_SCALE"] == "40 <m/pix>"
+    assert metadata["CENTER_LATITUDE"] == "-90 <deg>"
+    assert metadata["MINIMUM_LATITUDE"] == "-90 <deg>"
+    assert metadata["MAXIMUM_LATITUDE"] == "-85 <deg>"
+    assert metadata["COORDINATE_SYSTEM_NAME"] == "MEAN EARTH/POLAR AXIS OF DE421"
+
+
+def test_pds3_label_parser_rejects_wrong_format_and_oversized_input():
+    from app.services.pds3_label import PdsLabelError, parse_pds3_label
+
+    with pytest.raises(PdsLabelError, match="PDS_VERSION_ID"):
+        parse_pds3_label('PDS_VERSION_ID = "PDS4"\\nFILE_NAME = "data.img"')
+    with pytest.raises(PdsLabelError, match="size limit"):
+        parse_pds3_label('PDS_VERSION_ID = "PDS3"\\nFILE_NAME = "data.img"', max_characters=10)
