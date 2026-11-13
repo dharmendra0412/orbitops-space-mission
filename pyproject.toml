@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [tool.vercel]
-entrypoint = "backend.app.main:app"
+entrypoint = "index:app"
 
 [tool.vercel.scripts]
 build = "npm install && npm run build"
