@@ -13,3 +13,8 @@ coverage/
 __pycache__/
 .pytest_cache/
 *.py[cod]
+
+# Downloaded scientific source products stay out of Git history
+/data/raw/
+/backend/data/raw/
+*.part
