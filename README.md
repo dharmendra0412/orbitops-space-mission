@@ -24,6 +24,7 @@ The current feature branch includes:
 - A documented source-provenance and data-ingestion plan.
 - A read-only FastAPI proxy for live PDS keyword search, product resolution, and archive hierarchy browsing.
 - PDS metadata parsing for original label/data-file references, sizes, MIME types, and checksums when supplied by the source.
+- A bounded live metadata endpoint for one verified LOLA PDS3 south-polar GDR label, with a conservative parser and source-derived test fixture.
 - Automated frontend and backend tests, dependency audits, and production builds.
 
 The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline. The PDS API integration currently retrieves metadata and archive hierarchy records only; no observation files are downloaded, processed, cached, or synchronized.
@@ -49,7 +50,7 @@ npm install
 npm run dev
 ```
 
-The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index. Available endpoints are `GET /api/v1/pds/search`, `GET /api/v1/pds/products/{identifier}`, and `GET /api/v1/pds/products/{identifier}/members?depth=1|2`.
+The frontend proxies `/api` requests to the local FastAPI service. The PDS Search API is not a complete mirror of all archive holdings, so missing search results must be cross-checked against the mission-specific archive index. Available endpoints are `GET /api/v1/pds/search`, `GET /api/v1/pds/products/{identifier}`, `GET /api/v1/pds/products/{identifier}/members?depth=1|2`, and `GET /api/v1/pds3/lola/gdr/ldem-85s-40m/label`. The last endpoint retrieves only a small, fixed PDS3 label; it does not download or decode the associated raster.
 
 ## Data resources and provenance
 
