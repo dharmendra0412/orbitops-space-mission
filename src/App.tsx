@@ -8,7 +8,7 @@ import {
 
 import { instruments, orbitOptions } from './domain/catalog'
 import { missionResources } from './data/sources'
-import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts } from './data/pds'
+import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts, mergePdsMembers } from './data/pds'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -175,11 +175,9 @@ function App() {
       const parsedMembers = extractPdsMembers((payload as PdsMembersResponse).response)
       setPdsMembersStructured(parsedMembers !== null)
       if (parsedMembers) {
-        setPdsMembersRecords((current) => {
-          if (!searchAfter) return parsedMembers
-          const known = new Set(current.map((member) => member.id))
-          return [...current, ...parsedMembers.filter((member) => !known.has(member.id))]
-        })
+        setPdsMembersRecords((current) => searchAfter
+          ? mergePdsMembers(current, parsedMembers)
+          : mergePdsMembers([], parsedMembers))
       } else if (!searchAfter) {
         setPdsMembersRecords([])
       }
