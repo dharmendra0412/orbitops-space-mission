@@ -85,7 +85,7 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya LALT south-pole topographic grid',
     owner: 'JAXA Kaguya Mission',
     kind: 'DATASET GUIDE',
-    description: 'JAXA-published south-pole topographic grid (PDS3 dataset SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0) and readme downloads. The source documents void cells encoded as -99; inspect the readme, datum, projection, and orbit-processing history before any cross-product comparison.',
+    description: 'JAXA-published south-pole topographic grid (above 85°S, 1/64° grid) from LALT observations dated 2007-12-30 to 2008-03-31. PDS3 dataset SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0; void cells are encoded as -99. Its coarse grid and orbit/frame provenance must be checked before comparison with LOLA.',
     url: 'https://www.kaguya.jaxa.jp/en/science/LALT/The_lunar_topographic_data_e.htm',
   },
   {
