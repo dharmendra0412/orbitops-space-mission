@@ -121,7 +121,6 @@ def validate_lalt_rd_day(
         "RECORD_TYPE": "FIXED_LENGTH",
         "RECORD_BYTES": "162",
         "PRODUCT_NAME": "LALT_RD",
-        "ROWS": "12002",
         "COLUMNS": "11",
         "ROW_BYTES": "162",
         "INTERCHANGE_FORMAT": "ASCII",
