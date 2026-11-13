@@ -69,7 +69,7 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya SELENE LALT calibrated range archive',
     owner: 'NASA PDS Geosciences Node / JAXA',
     kind: 'DATA ARCHIVE',
-    description: 'Separate-mission laser-altimeter range and time-series products. PDS3 dataset IDs include SLN-L-LALT-3-RANGE-V1.0 and SLN-L-LALT-4-TOPO-LGT-TS-V2.0. The range archive reports 1 Hz measurements and ±5 m range precision; verify the selected product label, orbit solution, time system, and frame before deriving or comparing elevations.',
+    description: 'Separate-mission laser-altimeter range and time-series products. PDS3 dataset IDs include SLN-L-LALT-3-RANGE-V1.0 and SLN-L-LALT-4-TOPO-LGT-TS-V2.0. The LALT_LGT_TS format includes geolocated longitude, latitude, elevation, ancillary spacecraft state, and a DE421/Mean Earth-Polar Axis reference sphere of 1737.4 km; the format example names an SGM100g / NAOJ_RISE orbit file. Verify the exact selected product label and orbit provenance before comparison.',
     url: 'https://ode.rsl.wustl.edu/moon2/pagehelp/Content/Missions_Instruments/KAGUYA%20%28SELENE%29/LALT/Calibrated_Data.htm',
   },
   {
@@ -85,8 +85,16 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya LALT south-pole topographic grid',
     owner: 'JAXA Kaguya Mission',
     kind: 'DATASET GUIDE',
-    description: 'JAXA-published south-pole topographic grid (above 85°S, 1/64° grid) from LALT observations dated 2007-12-30 to 2008-03-31. PDS3 dataset SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0; void cells are encoded as -99. Its coarse grid and orbit/frame provenance must be checked before comparison with LOLA.',
+    description: 'JAXA-published LALT_SP south-pole grid above 85°S on a 1/64° grid, using observations from 2007-12-30 to 2008-03-31. Void cells are encoded as -99. This JAXA text grid is distinct from the separate PDS3 LALT_GT_SP_NUM/IMG products; inspect each product readme and orbit/frame provenance before comparison with LOLA.',
     url: 'https://www.kaguya.jaxa.jp/en/science/LALT/The_lunar_topographic_data_e.htm',
+  },
+  {
+    id: 'kaguya-lalt-pds3-format',
+    title: 'Kaguya LALT PDS3 product format specification',
+    owner: 'JAXA / DARTS ISAS',
+    kind: 'TECHNICAL DOCUMENT',
+    description: 'Format specification for LALT_RD, LALT_LGT_TS, and south-polar grid products. The south-polar PDS3 grid product is documented over 80°S–90°S with 1/128° latitude and 1/32° longitude spacing, elevation in km on a 1737.4 km sphere, Mean Earth/Polar Axis body-fixed coordinates, and a 99.999 dummy value. Do not confuse it with the separate JAXA LALT_SP.txt 1/64° grid.',
+    url: 'https://data.darts.isas.jaxa.jp/pub/pds3/sln-l-lalt-5-topo-gt-sp-img-v2.0/document/LALT_Format_en_V01.pdf',
   },
   {
     id: 'usgs-lroc-south-pole-vv',
