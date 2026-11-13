@@ -44,37 +44,37 @@ async def validate_source_range(
     if client is None:
         client = PdsClient(timeout_seconds=30.0)
     samples: list[dict[str, Any]] = []
-    try:
-        with image_path.open("rb") as image:
-            for line_index, sample_index in SAMPLE_POINTS:
-                byte_start = line_index * PDS_LOLA_GDR_RECORD_BYTES + sample_index * 2
-                byte_end = byte_start + 1
-                image.seek(byte_start)
-                local_bytes = image.read(2)
-                if len(local_bytes) != 2:
-                    raise RuntimeError("Local validated IMG ended before a requested sample offset")
+    with image_path.open("rb") as image:
+        for line_index, sample_index in SAMPLE_POINTS:
+            byte_start = line_index * PDS_LOLA_GDR_RECORD_BYTES + sample_index * 2
+            byte_end = byte_start + 1
+            image.seek(byte_start)
+            local_bytes = image.read(2)
+            if len(local_bytes) != 2:
+                raise RuntimeError("Local validated IMG ended before a requested sample offset")
 
-                source_url, dn, byte_range = await client.fetch_lola_gdr_sample_dn(
-                    line_index=line_index,
-                    sample_index=sample_index,
+            source_url, dn, byte_range = await client.fetch_lola_gdr_sample_dn(
+                line_index=line_index,
+                sample_index=sample_index,
+            )
+            if source_url != PDS_LOLA_GDR_SAMPLE_IMG_URL:
+                raise RuntimeError("LOLA API client returned an unexpected source URL")
+            if byte_range != (byte_start, byte_end):
+                raise RuntimeError("LOLA API client returned an unexpected byte range")
+            remote_bytes = struct.pack("<h", dn)
+            if remote_bytes != local_bytes:
+                raise RuntimeError(
+                    f"Remote LOLA sample does not match the validated IMG at "
+                    f"line={line_index}, sample={sample_index}"
                 )
-                if source_url != PDS_LOLA_GDR_SAMPLE_IMG_URL:
-                    raise RuntimeError("LOLA API client returned an unexpected source URL")
-                if byte_range != (byte_start, byte_end):
-                    raise RuntimeError("LOLA API client returned an unexpected byte range")
-                remote_bytes = struct.pack("<h", dn)
-                if remote_bytes != local_bytes:
-                    raise RuntimeError(
-                        f"Remote LOLA sample does not match the validated IMG at "
-                        f"line={line_index}, sample={sample_index}"
-                    )
-                samples.append({
-                    "line_index": line_index,
-                    "sample_index": sample_index,
-                    "byte_range_inclusive": {"start": byte_start, "end": byte_end},
-                    "raw_dn": dn,
-                    "matches_validated_local_img": True,
-                })
+            samples.append({
+                "line_index": line_index,
+                "sample_index": sample_index,
+                "byte_range_inclusive": {"start": byte_start, "end": byte_end},
+                "raw_dn": dn,
+                "matches_validated_local_img": True,
+            })
+
     return {
         "source_url": PDS_LOLA_GDR_SAMPLE_IMG_URL,
         "samples_checked": len(samples),
