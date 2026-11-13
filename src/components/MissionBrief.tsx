@@ -92,7 +92,8 @@ export function MissionBrief() {
   }
 
   const importDraft = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const input = event.currentTarget
+    const file = input.files?.[0]
     if (!file) return
     try {
       if (file.size > 1_000_000) throw new Error('Mission brief JSON must be smaller than 1 MB.')
@@ -102,7 +103,7 @@ export function MissionBrief() {
         throw new Error('The selected file is not a mission brief export.')
       }
       const record = parsed as Record<string, unknown>
-      if (record.schema_version !== 1 || !record.brief || typeof record.brief !== 'object') {
+      if (record.schema_version !== 1 || !record.brief || typeof record.brief !== 'object' || Array.isArray(record.brief)) {
         throw new Error('Unsupported mission brief export format.')
       }
       setDraft(parseMissionBriefDraft(raw))
@@ -110,7 +111,7 @@ export function MissionBrief() {
     } catch (error) {
       setSaveStatus(error instanceof Error ? error.message : 'Unable to import this mission brief.')
     } finally {
-      event.target.value = ''
+      input.value = ''
     }
   }
 
