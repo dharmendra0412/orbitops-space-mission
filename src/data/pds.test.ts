@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts } from './pds'
+import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts, mergePdsMembers } from './pds'
 
 describe('NASA PDS response adapters', () => {
   it('reads the documented KVP search response without inventing missing fields', () => {
@@ -23,6 +23,15 @@ describe('NASA PDS response adapters', () => {
     ])).toEqual([
       { id: 'urn:nasa:pds:example:item::1.0', title: 'Source title', type: 'Product_Observational', start_date_time: undefined, stop_date_time: undefined },
     ])
+  })
+
+
+  it('deduplicates repeated PDS member identifiers while preserving first-seen order', () => {
+    const first = { id: 'urn:nasa:pds:example:item-1::1.0', title: 'First page title' }
+    const second = { id: 'urn:nasa:pds:example:item-2::1.0', title: 'Second page title' }
+    const repeated = { id: first.id, title: 'Repeated page title' }
+
+    expect(mergePdsMembers([first], [repeated, second, second])).toEqual([first, second])
   })
 
   it('reads file references and checksums from the documented PDS registry metadata', () => {
