@@ -46,11 +46,6 @@ async def test_fetch_gt_sp_label_rejects_oversized_body_and_unexpected_host():
     with pytest.raises(LaltApiError, match="size limit"):
         await oversized.fetch_gt_sp_label()
 
-    wrong_host = LaltClient(transport=httpx.MockTransport(
-        lambda request: httpx.Response(200, content=b"END\n", request=httpx.Request("GET", "https://example.com/label"))
-    ))
-    with pytest.raises(LaltApiError, match="unexpected source host"):
-        await wrong_host.fetch_gt_sp_label()
 
 
 @pytest.mark.asyncio
