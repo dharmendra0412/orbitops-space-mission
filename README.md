@@ -60,7 +60,7 @@ See [docs/data-provenance.md](docs/data-provenance.md) for the source list, arch
 ## Planned architecture
 
 - **Web client:** React, TypeScript, Vite.
-- **API:** Python and FastAPI read-only PDS discovery proxy; bulk ingestion and user workflows remain future work.
+- **API:** Python and FastAPI read-only PDS discovery proxy; bulk ingestion and server-backed mission workflows remain future work. The current mission brief is saved locally in the user's browser.
 - **Persistence:** PostgreSQL after data contracts, authorization, and audit requirements are defined.
 - **Data pipeline:** source-specific ingestion, immutable raw products, metadata validation, and traceable derived products.
 - **Engineering:** only deterministic, documented calculations using sourced inputs and independent verification cases. Mission simulation is excluded.
