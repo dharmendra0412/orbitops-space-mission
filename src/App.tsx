@@ -55,7 +55,7 @@ function extractPdsProducts(response: unknown): { hits?: number; products: PdsPr
     if (!item || typeof item !== 'object' || !('lidvid' in item) || typeof item.lidvid !== 'string') return []
     const row = item as Record<string, unknown>
     return [{
-      lidvid: row.lidvid,
+      lidvid: item.lidvid,
       title: typeof row.title === 'string' ? row.title : undefined,
       product_class: typeof row.product_class === 'string' ? row.product_class : undefined,
       start_date_time: typeof row.start_date_time === 'string' ? row.start_date_time : undefined,
