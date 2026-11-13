@@ -102,7 +102,7 @@ async def test_refuses_companion_label_with_wrong_product_dimensions(tmp_path: P
     _, manifest_path, _, label_bytes = prepare_download(tmp_path)
     bad_label = label_bytes.replace(b"RECORD_BYTES              = 4", b"RECORD_BYTES              = 6")
 
-    async def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, content=bad_label)
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
@@ -120,7 +120,7 @@ async def test_uses_label_from_the_same_mit_archive_host_as_fallback_img(tmp_pat
     manifest["source_url"] = FALLBACK_SOURCE_URL
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-    async def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx.Request) -> httpx.Response:
         assert str(request.url) == LABEL_URLS[FALLBACK_SOURCE_URL]
         return httpx.Response(200, content=label_bytes)
 
@@ -135,7 +135,7 @@ async def test_uses_label_from_the_same_mit_archive_host_as_fallback_img(tmp_pat
 async def test_rejects_label_content_length_over_limit_before_reading(tmp_path: Path):
     _, manifest_path, _, _ = prepare_download(tmp_path)
 
-    async def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, headers={"content-length": "1000001"})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
@@ -149,7 +149,7 @@ async def test_rejects_label_content_length_over_limit_before_reading(tmp_path: 
 async def test_refuses_label_redirect(tmp_path: Path):
     _, manifest_path, _, _ = prepare_download(tmp_path)
 
-    async def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(302, headers={"location": "https://example.com/label"})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
