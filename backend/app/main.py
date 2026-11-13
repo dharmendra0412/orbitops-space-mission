@@ -170,6 +170,67 @@ async def get_lola_gdr_sample_pixel(
     }
 
 
+@app.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/profile")
+async def get_lola_gdr_row_profile(
+    line_index: Annotated[int, Query(ge=0, le=7_583)],
+    start_sample_index: Annotated[int, Query(ge=0, le=7_583)] = 0,
+    sample_count: Annotated[int, Query(ge=1, le=512)] = 128,
+) -> dict[str, Any]:
+    """Return a bounded, source-backed height profile from one LOLA image row."""
+    try:
+        label_url, label_text = await pds_client.fetch_lola_gdr_sample_label()
+        metadata = parse_pds3_label(label_text)
+        lines, samples, _ = validate_lola_gdr_label(metadata)
+        if lines != 7_584 or samples != 7_584:
+            raise LolaRasterError("The selected LOLA source label does not match the validated 7584 x 7584 product")
+        raster_url, raw_samples, byte_range = await pds_client.fetch_lola_gdr_row_segment(
+            line_index=line_index,
+            start_sample_index=start_sample_index,
+            sample_count=sample_count,
+        )
+        points = []
+        for offset, dn in enumerate(raw_samples):
+            sample_index = start_sample_index + offset
+            latitude, longitude = lola_polar_pixel_to_latlon(
+                metadata,
+                line_index=line_index,
+                sample_index=sample_index,
+            )
+            points.append({
+                "sample_index": sample_index,
+                "raw_dn": dn,
+                "height_m": lola_dn_to_height_m(dn, metadata),
+                "planetary_radius_m": lola_dn_to_planetary_radius_m(dn, metadata),
+                "planetocentric_latitude_degrees": latitude,
+                "east_longitude_degrees": longitude,
+            })
+    except PdsApiError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except (PdsLabelError, LolaRasterError) as exc:
+        raise HTTPException(status_code=502, detail=f"NASA LOLA source metadata failed validation: {exc}") from exc
+
+    return {
+        "source": "NASA PDS Geosciences Node",
+        "source_url": raster_url,
+        "label_source_url": label_url,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "product_file": metadata["FILE_NAME"],
+        "line_index": line_index,
+        "start_sample_index": start_sample_index,
+        "sample_count": len(points),
+        "byte_range_inclusive": {"start": byte_range[0], "end": byte_range[1]},
+        "coordinate_reference": metadata["COORDINATE_SYSTEM_NAME"],
+        "units": {"raw_dn": "signed 16-bit integer", "height": "m", "planetary_radius": "m"},
+        "points": points,
+        "validation_scope": (
+            "A bounded contiguous row segment retrieved using an exact HTTP 206 Range response. "
+            "Height and radius use the LOLA GDR SIS scaling and offset; coordinates use the PDS "
+            "DSMAP_POLAR equations. This is a source-backed profile, not a complete raster "
+            "integrity check or independent geodetic ground truth."
+        ),
+    }
+
+
 @app.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/label")
 async def get_lola_gdr_sample_label() -> dict[str, Any]:
     """Retrieve and parse the fixed, source-verified LOLA PDS3 sample label."""
