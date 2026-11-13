@@ -18,7 +18,7 @@ test('mission brief autosaves user input and requirement traceability locally', 
   await page.getByRole('button', { name: /Add requirement/ }).click()
   await page.getByLabel('Requirement statement').fill('Preserve traceability for every scientific measurement.')
   await page.getByLabel('Target / threshold and units').fill('TBD — source not selected')
-  await page.getByLabel('Source URL').fill('https://pds.nasa.gov/')
+  await page.locator('.mission-requirement-row').getByLabel('Source URL').fill('https://pds.nasa.gov/')
   await expect(page.getByText('URL entered · not fetched or validated')).toBeVisible()
 
   await expect.poll(() => page.evaluate(() => localStorage.getItem('orbitops.mission-brief.v1'))).toContain('Lunar South Pole Survey')
@@ -105,7 +105,7 @@ test('Kaguya LALT UI labels the interpolated source and does not claim live pixe
   })
 
   await page.goto('/')
-  await page.getByRole('button', { name: /NASA data sources/ }).click()
+  await page.locator('.side-nav').getByRole('button', { name: 'NASA data sources' }).click()
   await expect(page.getByText('Kaguya SELENE LALT south-polar grid')).toBeVisible()
   await page.getByRole('button', { name: /Fetch original Kaguya LALT label/ }).click()
   await expect(page.getByText('SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0')).toBeVisible()
@@ -206,7 +206,7 @@ test('LOLA browser workflow uses source label, bounded pixel, and row-profile AP
   })
 
   await page.goto('/')
-  await page.getByRole('button', { name: /NASA data sources/ }).click()
+  await page.locator('.side-nav').getByRole('button', { name: 'NASA data sources' }).click()
   await page.getByRole('button', { name: /Fetch original LOLA label metadata/ }).click()
   await expect(page.getByText('LDEM_85S_40M.IMG')).toBeVisible()
   await page.getByRole('button', { name: /Fetch actual NASA LOLA pixel/ }).click()
