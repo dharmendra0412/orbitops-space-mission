@@ -60,6 +60,20 @@ export function extractPdsMembers(response: unknown): PdsMemberRecord[] | null {
   })
 }
 
+export function mergePdsMembers(
+  existing: PdsMemberRecord[],
+  incoming: PdsMemberRecord[],
+): PdsMemberRecord[] {
+  const seen = new Set<string>()
+  const merged: PdsMemberRecord[] = []
+  for (const member of [...existing, ...incoming]) {
+    if (seen.has(member.id)) continue
+    seen.add(member.id)
+    merged.push(member)
+  }
+  return merged
+}
+
 export function extractPdsFileManifest(response: unknown): PdsFileRecord[] {
   if (!response || typeof response !== 'object' || !('meta' in response) || !response.meta || typeof response.meta !== 'object') return []
   const meta = response.meta as Record<string, unknown>
