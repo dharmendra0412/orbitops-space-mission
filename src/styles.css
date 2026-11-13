@@ -51,3 +51,10 @@
 .pds-hierarchy-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
 .pds-hierarchy-actions button{display:inline-flex;align-items:center;gap:5px;background:#102238;border:1px solid #30465e;border-radius:4px;padding:7px 9px;color:#9bdcf4;font:8px 'Manrope',sans-serif;cursor:pointer}
 .pds-hierarchy-actions button:disabled{opacity:.55;cursor:wait}
+
+.pds-file-manifest{display:grid;gap:7px;margin-top:12px;padding-top:11px;border-top:1px solid #293b50}
+.pds-file-row{display:grid;gap:4px;padding:9px;background:#0a1524;border:1px solid #293c52;border-radius:5px}
+.pds-file-row>div{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pds-file-row strong{font-size:9px;color:#e0e9f4;overflow-wrap:anywhere}
+.pds-file-row span,.pds-file-row small{font-size:8px;color:#90a2b8}
+.pds-file-row code{font-size:8px;color:#8bd5ef;overflow-wrap:anywhere}
