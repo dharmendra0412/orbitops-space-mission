@@ -524,7 +524,10 @@ async def test_lola_row_segment_rejects_truncated_and_oversized_bodies():
         lambda request: httpx.Response(
             206,
             content=bytes(9),
-            headers={"Content-Range": f"bytes 0-7/{PDS_LOLA_GDR_IMAGE_BYTES}"},
+            headers={
+                "Content-Range": f"bytes 0-7/{PDS_LOLA_GDR_IMAGE_BYTES}",
+                "Content-Length": "8",
+            },
         )
     ))
     with pytest.raises(PdsApiError, match="more bytes than the requested"):
