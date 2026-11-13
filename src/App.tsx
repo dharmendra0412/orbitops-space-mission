@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import {
   Activity, ArrowDownRight, ArrowUpRight, Atom, BatteryCharging, Check,
-  ChevronDown, CircleHelp, Compass, Cpu, Database, Gauge, Globe2, Layers3,
-  Menu, MessageSquare, Radio, Rocket, Satellite, Settings2, ShieldCheck,
+  ChevronDown, CircleHelp, Compass, Database, Gauge, Globe2, Layers3,
+  Menu, Radio, Rocket, Satellite, Settings2, ShieldCheck,
   SlidersHorizontal, Sparkles, Target, Telescope, Users, X, Zap
 } from 'lucide-react'
 
@@ -206,7 +207,7 @@ function App() {
         </section>
 
         <section className="bottom-grid">
-          <div className="panel score-panel"><div className="bottom-panel-heading"><div><div className="section-eyebrow">MISSION PERFORMANCE</div><h3>Concept score</h3></div><span className="score-tag">PREVIEW MODEL</span></div><div className="score-content"><div className="score-ring" style={{ '--score': `${design.score * 3.6}deg` } as React.CSSProperties}><div><strong>{design.score}</strong><small>/ 100</small></div></div><div className="score-copy"><strong>{design.score >= 75 ? 'Promising configuration' : design.score >= 50 ? 'Room to optimize' : 'Needs redesign'}</strong><p>A relative learning score based on selected payload science points and the four visible constraint checks.</p><span><ArrowDownRight size={13}/> Not a NASA mission rating</span></div></div></div>
+          <div className="panel score-panel"><div className="bottom-panel-heading"><div><div className="section-eyebrow">MISSION PERFORMANCE</div><h3>Concept score</h3></div><span className="score-tag">PREVIEW MODEL</span></div><div className="score-content"><div className="score-ring" style={{ '--score': `${design.score * 3.6}deg` } as CSSProperties}><div><strong>{design.score}</strong><small>/ 100</small></div></div><div className="score-copy"><strong>{design.score >= 75 ? 'Promising configuration' : design.score >= 50 ? 'Room to optimize' : 'Needs redesign'}</strong><p>A relative learning score based on selected payload science points and the four visible constraint checks.</p><span><ArrowDownRight size={13}/> Not a NASA mission rating</span></div></div></div>
           <div className="panel next-panel"><div className="bottom-panel-heading"><div><div className="section-eyebrow">UP NEXT</div><h3>Mission milestones</h3></div><span className="milestone-count">02 / 05</span></div><div className="milestone-list"><div className="milestone done"><span><Check size={12}/></span><div><strong>Define science objectives</strong><small>Mission concept established</small></div><b>DONE</b></div><div className="milestone current"><span>02</span><div><strong>Configure spacecraft</strong><small>Payload and resource trade-offs</small></div><b>IN PROGRESS</b></div><div className="milestone"><span>03</span><div><strong>Verify mission architecture</strong><small>Requirements and interfaces</small></div><b>LOCKED</b></div></div></div>
         </section>
 
