@@ -47,8 +47,10 @@ jobs:
       - name: Retrieve and cross-check JPEG2000 counterpart
         run: python -m scripts.validate_lola_jp2_reference
       - name: Compare against NASA PGDA adjusted LOLA reference DEM
+        timeout-minutes: 5
         run: python -m scripts.validate_lola_pgda_reference
       - name: Compare against NASA PGDA high-resolution Haworth 5 m DEM
+        timeout-minutes: 5
         run: python -m scripts.validate_lola_haworth_reference
       - name: Preserve retrieved source and provenance as workflow artifact
         uses: actions/upload-artifact@v6
