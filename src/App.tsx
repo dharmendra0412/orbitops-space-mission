@@ -386,7 +386,7 @@ function App() {
       <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">RESEARCH</div>
       <nav className="side-nav">{navItems.map((item, index) => {
-        const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
+        const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3, Telescope]
         const Icon = icons[index]
         return <button key={item} className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
       })}</nav>
