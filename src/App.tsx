@@ -60,6 +60,39 @@ type Pds3LabelResponse = {
 }
 
 
+
+async function readApiResponse<T>(response: Response, operation: string): Promise<T> {
+  const body = await response.text()
+  let payload: unknown = null
+
+  if (body.trim()) {
+    try {
+      payload = JSON.parse(body)
+    } catch {
+      const format = response.headers.get('content-type') ?? 'unknown content type'
+      throw new Error(
+        response.ok
+          ? operation + ' returned an invalid response (' + format + ').'
+          : operation + ' failed (HTTP ' + response.status + '); the server returned a non-JSON response.'
+      )
+    }
+  } else if (response.ok) {
+    throw new Error(operation + ' returned an empty response.')
+  }
+
+  if (!response.ok) {
+    const detail = payload && typeof payload === 'object' && 'detail' in payload
+      ? (payload as { detail?: unknown }).detail
+      : undefined
+    const message = typeof detail === 'string' && detail.trim()
+      ? detail
+      : operation + ' failed (HTTP ' + response.status + ').'
+    throw new Error(message)
+  }
+
+  return payload as T
+}
+
 function App() {
   const [activeNav, setActiveNav] = useState('Research overview')
   const [selected, setSelected] = useState<string[]>([])
@@ -104,12 +137,8 @@ function App() {
     try {
       const params = new URLSearchParams({ keywords, limit: '10' })
       const response = await fetch('/api/v1/pds/search?' + params.toString())
-      const payload = await response.json() as PdsSearchResponse | { detail?: string }
-      if (!response.ok) {
-        const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS search failed (HTTP ' + response.status + ')'
-        throw new Error(message)
-      }
-      setPdsSearchResponse(payload as PdsSearchResponse)
+      const payload = await readApiResponse<PdsSearchResponse>(response, 'PDS search')
+      setPdsSearchResponse(payload)
     } catch (error) {
       setPdsSearchError(error instanceof Error ? error.message : 'Unable to retrieve NASA PDS results.')
     } finally {
@@ -131,13 +160,9 @@ function App() {
     setPdsLookupResponse(null)
     try {
       const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier))
-      const payload = await response.json() as PdsLookupResponse | { detail?: string }
-      if (!response.ok) {
-        const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS product lookup failed (HTTP ' + response.status + ')'
-        throw new Error(message)
-      }
+      const payload = await readApiResponse<PdsLookupResponse>(response, 'PDS product lookup')
       setPdsIdentifier(identifier)
-      setPdsLookupResponse(payload as PdsLookupResponse)
+      setPdsLookupResponse(payload)
     } catch (error) {
       setPdsLookupError(error instanceof Error ? error.message : 'Unable to resolve the PDS product identifier.')
     } finally {
@@ -167,12 +192,8 @@ function App() {
       const params = new URLSearchParams({ depth: String(depth), limit: '100' })
       if (searchAfter) params.set('search_after', searchAfter)
       const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier) + '/members?' + params.toString())
-      const payload = await response.json() as PdsMembersResponse | { detail?: string }
-      if (!response.ok) {
-        const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS hierarchy request failed (HTTP ' + response.status + ')'
-        throw new Error(message)
-      }
-      const parsedMembers = extractPdsMembers((payload as PdsMembersResponse).response)
+      const payload = await readApiResponse<PdsMembersResponse>(response, 'PDS hierarchy request')
+      const parsedMembers = extractPdsMembers(payload.response)
       setPdsMembersStructured(parsedMembers !== null)
       if (parsedMembers) {
         setPdsMembersRecords((current) => searchAfter
@@ -182,7 +203,7 @@ function App() {
         setPdsMembersRecords([])
       }
       setPdsIdentifier(identifier)
-      setPdsMembersResponse(payload as PdsMembersResponse)
+      setPdsMembersResponse(payload)
     } catch (error) {
       setPdsMembersError(error instanceof Error ? error.message : 'Unable to retrieve PDS child products.')
     } finally {
@@ -196,12 +217,8 @@ function App() {
     setPdsLabelResponse(null)
     try {
       const response = await fetch('/api/v1/pds3/lola/gdr/ldem-85s-40m/label')
-      const payload = await response.json() as Pds3LabelResponse | { detail?: string }
-      if (!response.ok) {
-        const message = 'detail' in payload && payload.detail ? payload.detail : 'LOLA label request failed (HTTP ' + response.status + ')'
-        throw new Error(message)
-      }
-      setPdsLabelResponse(payload as Pds3LabelResponse)
+      const payload = await readApiResponse<Pds3LabelResponse>(response, 'LOLA label request')
+      setPdsLabelResponse(payload)
     } catch (error) {
       setPdsLabelError(error instanceof Error ? error.message : 'Unable to retrieve the original LOLA label.')
     } finally {
