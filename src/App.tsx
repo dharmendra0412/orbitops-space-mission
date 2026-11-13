@@ -8,6 +8,7 @@ import {
 
 import { instruments, orbitOptions } from './domain/catalog'
 import { missionResources } from './data/sources'
+import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts } from './data/pds'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -37,68 +38,6 @@ type PdsLookupResponse = {
   response: unknown
 }
 
-type PdsMembersResponse = {
-  source: string
-  source_url: string
-  api_documentation: string
-  retrieved_at: string
-  identifier: string
-  depth: number
-  response: unknown
-}
-
-type PdsMemberRecord = {
-  id: string
-  title?: string
-  type?: string
-  start_date_time?: string
-  stop_date_time?: string
-}
-
-function extractPdsMembers(response: unknown): PdsMemberRecord[] | null {
-  const rows = Array.isArray(response)
-    ? response
-    : response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)
-      ? response.data
-      : null
-  if (!rows) return null
-
-  return rows.flatMap((item): PdsMemberRecord[] => {
-    if (!item || typeof item !== 'object') return []
-    const row = item as Record<string, unknown>
-    const id = typeof row.id === 'string' ? row.id : typeof row.lidvid === 'string' ? row.lidvid : null
-    if (!id) return []
-    return [{
-      id,
-      title: typeof row.title === 'string' ? row.title : undefined,
-      type: typeof row.type === 'string' ? row.type : undefined,
-      start_date_time: typeof row.start_date_time === 'string' ? row.start_date_time : undefined,
-      stop_date_time: typeof row.stop_date_time === 'string' ? row.stop_date_time : undefined,
-    }]
-  })
-}
-
-type PdsProductSummary = {
-  lidvid: string
-  title?: string
-}
-
-function extractPdsProducts(response: unknown): { hits?: number; products: PdsProductSummary[] } | null {
-  if (Array.isArray(response) && response.length === 0) return { hits: 0, products: [] }
-  if (!response || typeof response !== 'object' || !('data' in response) || !Array.isArray(response.data)) return null
-  const summary = 'summary' in response && response.summary && typeof response.summary === 'object'
-    ? response.summary as Record<string, unknown>
-    : {}
-  const products = response.data.flatMap((item): PdsProductSummary[] => {
-    if (!item || typeof item !== 'object' || !('lidvid' in item) || typeof item.lidvid !== 'string') return []
-    const row = item as Record<string, unknown>
-    return [{
-      lidvid: item.lidvid,
-      title: typeof row.title === 'string' ? row.title : undefined,
-    }]
-  })
-  return { hits: typeof summary.hits === 'number' ? summary.hits : undefined, products }
-}
 
 function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
@@ -123,6 +62,7 @@ function App() {
 
 
   const pdsProducts = pdsSearchResponse ? extractPdsProducts(pdsSearchResponse.response) : null
+  const pdsFiles = pdsLookupResponse ? extractPdsFileManifest(pdsLookupResponse.response) : []
 
   const searchPds = async () => {
     const keywords = pdsKeywords.trim()
@@ -385,6 +325,16 @@ function App() {
             {pdsLookupResponse && <div className="pds-results">
               <div className="pds-results-meta"><span>{pdsLookupResponse.source}</span><span>Retrieved {new Date(pdsLookupResponse.retrieved_at).toLocaleString()}</span></div>
               <a href={pdsLookupResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream product metadata <ExternalLink size={12}/></a>
+              <div className="pds-file-manifest">
+                <div className="pds-results-count">Source file inventory · supplied by NASA PDS metadata</div>
+                {pdsFiles.length === 0
+                  ? <p className="pds-empty">This response contains no file inventory fields. No download location or checksum is inferred.</p>
+                  : pdsFiles.map((file) => <article className="pds-file-row" key={file.role + ':' + file.fileName + ':' + file.fileReference}>
+                      <div><strong>{file.fileName || 'Filename not supplied'}</strong><span>{file.role === 'label' ? 'PDS label file' : 'Data file'}{file.mimeType ? ' · ' + file.mimeType : ''}</span></div>
+                      {file.fileReference && <code>{file.fileReference}</code>}
+                      <small>{file.sizeBytes ? file.sizeBytes + ' bytes' : 'Size not supplied'}{file.md5 ? ' · MD5 ' + file.md5 : ''}</small>
+                    </article>)}
+              </div>
               <div className="pds-hierarchy-actions">
                 <button type="button" onClick={() => void browsePdsMembers(pdsLookupResponse.identifier, 1)} disabled={pdsMembersLoading}>
                   {pdsMembersLoading ? 'Loading archive…' : 'Browse direct children'} <ArrowUpRight size={12}/>
