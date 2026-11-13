@@ -28,7 +28,10 @@ def _number(metadata: dict[str, str], key: str, *, unit: str | None = None) -> f
     value, actual_unit = match.groups()
     if unit is not None and actual_unit != unit:
         raise LolaRasterError(f"PDS label field {key} must use {unit}")
-    return float(value)
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise LolaRasterError(f"PDS label field {key} must be finite")
+    return parsed
 
 
 def _positive_int(metadata: dict[str, str], key: str) -> int:
@@ -182,6 +185,13 @@ def lola_polar_pixel_to_latlon(
     reference radius, and the positive-Y direction used below.
     """
     lines, samples, _ = validate_lola_gdr_label(metadata)
+    if (
+        not isinstance(line_index, int)
+        or isinstance(line_index, bool)
+        or not isinstance(sample_index, int)
+        or isinstance(sample_index, bool)
+    ):
+        raise LolaRasterError("Pixel indices must be integers")
     if not 0 <= line_index < lines or not 0 <= sample_index < samples:
         raise LolaRasterError("Pixel index is outside the image bounds")
 
@@ -207,6 +217,8 @@ def lola_polar_pixel_to_latlon(
         raise LolaRasterError("LOLA projection axes do not match the catalog's 1737.4 km sphere")
 
     map_scale = _number(metadata, "MAP_SCALE", unit="m/pix")
+    if map_scale <= 0:
+        raise LolaRasterError("LOLA map scale must be positive")
     line_offset = _number(metadata, "LINE_PROJECTION_OFFSET", unit="pix")
     sample_offset = _number(metadata, "SAMPLE_PROJECTION_OFFSET", unit="pix")
     expected_offset = lines / 2.0 - 0.5
