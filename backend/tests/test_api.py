@@ -364,3 +364,32 @@ def test_kaguya_lalt_label_endpoint_returns_validated_source_metadata(monkeypatc
     assert payload["metadata"]["dataset_id"] == "SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0"
     assert payload["metadata"]["image_bytes"] == 64_880_640
     assert "not raw laser-shot data" in payload["validation_scope"]
+
+
+def test_kaguya_lalt_label_endpoint_integrates_fixed_client_and_pds3_parser(monkeypatch):
+    import httpx
+    from pathlib import Path
+
+    from app.services.lalt_client import LaltClient
+    from app.services.lalt_pds3 import LALT_GT_SP_LABEL_URL
+
+    fixture = Path(__file__).parent / "fixtures" / "lalt_gt_sp_img.lbl"
+    label_bytes = fixture.read_bytes()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == LALT_GT_SP_LABEL_URL
+        return httpx.Response(200, content=label_bytes)
+
+    monkeypatch.setattr(
+        api,
+        "lalt_client",
+        LaltClient(transport=httpx.MockTransport(handler)),
+    )
+    response = TestClient(api.app).get("/api/v1/pds3/kaguya/lalt/gt-sp/label")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["product_file"] == "LALT_GT_SP_IMG.IMG"
+    assert payload["metadata"]["sample_type"] == "PC_REAL"
+    assert payload["metadata"]["image_bytes"] == 64_880_640
+    assert payload["metadata"]["coordinate_system"] == "MEAN EARTH/POLAR AXIS OF DE421"
