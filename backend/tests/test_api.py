@@ -239,7 +239,7 @@ def test_lola_pixel_endpoint_returns_source_dn_height_radius_and_coordinates(mon
         async def fetch_lola_gdr_sample_dn(self, *, line_index: int, sample_index: int):
             assert (line_index, sample_index) == (3791, 3791)
             return (
-                "https://pds-geosciences.wustl.edu/sample.img",
+                "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.img",
                 -11002,
                 (57_509_470, 57_509_471),
             )
