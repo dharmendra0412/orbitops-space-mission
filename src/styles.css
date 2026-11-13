@@ -148,3 +148,11 @@
 .mission-requirement-row input:focus,.mission-requirement-row textarea:focus{outline:1px solid #67c9ed;border-color:#67c9ed}
 .mission-requirement-row input::placeholder,.mission-requirement-row textarea::placeholder{color:#60758d}
 @media(max-width:640px){.mission-requirement-row{grid-template-columns:minmax(0,1fr)}.mission-requirement-topline{grid-column:auto}.mission-requirement-row label:nth-of-type(1),.mission-requirement-row label:nth-of-type(4){grid-column:auto}}
+
+
+/* Keyboard access and motion preferences */
+.skip-link{position:fixed;top:10px;left:10px;z-index:1000;transform:translateY(-160%);padding:10px 14px;border:1px solid #77d5f5;border-radius:6px;background:#101827;color:#e9f0fb;font-size:12px;font-weight:700;text-decoration:none;box-shadow:0 8px 24px #0008}
+.skip-link:focus{transform:translateY(0);outline:2px solid #d8f5ff;outline-offset:3px}
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid #8bdcf7;outline-offset:3px}
+#main-content:focus{outline:none}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
