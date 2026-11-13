@@ -81,19 +81,23 @@ def _validate_reference(dataset: rasterio.DatasetReader) -> str:
     if dataset.crs is None:
         raise RuntimeError("Haworth DEM does not declare a CRS")
     wkt = dataset.crs.to_wkt()
-    normalized = wkt.lower()
     crs_parameters = dataset.crs.to_dict()
-    # GDAL may serialize the PGDA lunar CRS using different WKT dialects.
-    # Accept only an explicit lunar datum/name plus a polar-stereographic
-    # projection declaration; include full metadata in failures for auditability.
-    lunar_declared = "moon" in normalized or "moon" in dataset.crs.name.lower()
-    projection_declared = (
-        "stereographic" in normalized
-        or crs_parameters.get("proj") == "stere"
+    # GDAL may serialize a planetary CRS without preserving the body name in
+    # its WKT. Validate the numeric projection/body parameters instead. The
+    # PGDA Product 78 page is the authority for MOON_ME / JPL DE421; the raster
+    # must independently declare south-polar stereographic geometry on the
+    # 1,737,400 m lunar reference sphere.
+    projection_declared = crs_parameters.get("proj") == "stere"
+    south_polar = math.isclose(
+        float(crs_parameters.get("lat_0", math.nan)), -90.0, abs_tol=1e-8
     )
-    if not lunar_declared or not projection_declared:
+    lunar_radius = math.isclose(
+        float(crs_parameters.get("a", math.nan)), 1_737_400.0, abs_tol=1e-3
+    )
+    if not (projection_declared and south_polar and lunar_radius):
         raise RuntimeError(
-            "Haworth DEM CRS is not recognized as lunar stereographic; "
+            "Haworth DEM CRS does not match the required lunar south-polar "
+            "stereographic geometry on a 1,737,400 m sphere; "
             f"name={dataset.crs.name!r}, parameters={crs_parameters!r}, WKT={wkt}"
         )
     if not math.isclose(abs(dataset.transform.a), 5.0, abs_tol=1e-6):
