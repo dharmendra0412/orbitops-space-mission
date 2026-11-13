@@ -72,7 +72,6 @@ def validate_lalt_gt_sp_label(metadata: dict[str, str]) -> dict[str, Any]:
         "COORDINATE_SYSTEM_TYPE": "BODY-FIXED ROTATING",
         "MAP_PROJECTION_TYPE": "N/A",
         "POSITIVE_LONGITUDE_DIRECTION": "EAST",
-        "TARGET_NAME": "MOON",
         "INSTRUMENT_ID": "LALT",
         "FILE_NAME": "LALT_GT_SP_IMG.IMG",
         "PRODUCT_VERSION_ID": "2.0",
