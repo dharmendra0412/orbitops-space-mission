@@ -28,6 +28,15 @@ type PdsSearchResponse = {
   response: unknown
 }
 
+type PdsLookupResponse = {
+  source: string
+  source_url: string
+  api_documentation: string
+  retrieved_at: string
+  identifier: string
+  response: unknown
+}
+
 function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
   const [selected, setSelected] = useState<string[]>([])
@@ -38,6 +47,10 @@ function App() {
   const [pdsSearchResponse, setPdsSearchResponse] = useState<PdsSearchResponse | null>(null)
   const [pdsSearchError, setPdsSearchError] = useState('')
   const [pdsSearchLoading, setPdsSearchLoading] = useState(false)
+  const [pdsIdentifier, setPdsIdentifier] = useState('')
+  const [pdsLookupResponse, setPdsLookupResponse] = useState<PdsLookupResponse | null>(null)
+  const [pdsLookupError, setPdsLookupError] = useState('')
+  const [pdsLookupLoading, setPdsLookupLoading] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -67,6 +80,33 @@ function App() {
       setPdsSearchError(error instanceof Error ? error.message : 'Unable to retrieve NASA PDS results.')
     } finally {
       setPdsSearchLoading(false)
+    }
+  }
+
+
+  const resolvePdsProduct = async () => {
+    const identifier = pdsIdentifier.trim()
+    if (identifier.length < 5) {
+      setPdsLookupError('Enter a PDS product LID or LIDVID.')
+      setPdsLookupResponse(null)
+      return
+    }
+
+    setPdsLookupLoading(true)
+    setPdsLookupError('')
+    setPdsLookupResponse(null)
+    try {
+      const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier))
+      const payload = await response.json() as PdsLookupResponse | { detail?: string }
+      if (!response.ok) {
+        const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS product lookup failed (HTTP ' + response.status + ')'
+        throw new Error(message)
+      }
+      setPdsLookupResponse(payload as PdsLookupResponse)
+    } catch (error) {
+      setPdsLookupError(error instanceof Error ? error.message : 'Unable to resolve the PDS product identifier.')
+    } finally {
+      setPdsLookupLoading(false)
     }
   }
 
@@ -220,6 +260,24 @@ function App() {
                 </a>
               </article>
             ))}
+          </div>
+          <div className="panel pds-search-panel">
+            <div className="pds-search-heading"><div><strong>Resolve a PDS product identifier</strong><span>Retrieve metadata for a known product LID or LIDVID</span></div><span className="resource-kind">PRODUCT LOOKUP</span></div>
+            <div className="pds-search-controls">
+              <label className="pds-search-label" htmlFor="pds-identifier">PDS product identifier</label>
+              <div className="pds-search-input-row">
+                <input id="pds-identifier" value={pdsIdentifier} onChange={(event) => setPdsIdentifier(event.target.value)} placeholder="urn:nasa:pds:..." maxLength={512}/>
+                <button className="run-button" type="button" onClick={() => void resolvePdsProduct()} disabled={pdsLookupLoading || pdsIdentifier.trim().length < 5}>
+                  <Database size={15}/>{pdsLookupLoading ? 'Resolving…' : 'Resolve product'}
+                </button>
+              </div>
+            </div>
+            {pdsLookupError && <p className="pds-search-error" role="alert">{pdsLookupError}</p>}
+            {pdsLookupResponse && <div className="pds-results">
+              <div className="pds-results-meta"><span>{pdsLookupResponse.source}</span><span>Retrieved {new Date(pdsLookupResponse.retrieved_at).toLocaleString()}</span></div>
+              <a href={pdsLookupResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream product metadata <ExternalLink size={12}/></a>
+              <pre>{JSON.stringify(pdsLookupResponse.response, null, 2)}</pre>
+            </div>}
           </div>
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
         </section>
