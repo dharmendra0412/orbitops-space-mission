@@ -26,15 +26,15 @@ LALT_RANGE_MAX_TABLE_BYTES = 16 * 1024 * 1024
 LALT_RANGE_COLUMNS = (
     "TI",
     "ALTITUDE",
-    "LALT_DETECT_PEAK",
-    "LALT_OUTPUT_POWER",
-    "LALT_HV_MON_APD",
-    "LALT_TEMP_MON_4",
-    "LALT_TEMP_MON_6",
-    "LALT_TEMP_MON_8",
-    "LALT_ALTERNATIVE_PPS",
-    "LALT_START_MODE",
-    "LALT_THRESHOLD_LEVEL",
+    "DETECT_PEAK",
+    "OUTPUT_POWER",
+    "HV_MON_APD",
+    "TEMP_MON_4",
+    "TEMP_MON_6",
+    "TEMP_MON_8",
+    "ALTERNATIVE_PPS",
+    "START_MODE",
+    "THRESHOLD_LEVEL",
 )
 LALT_RANGE_FORMAT_URL = (
     "https://darts.isas.jaxa.jp/app/pdap/selene/help/en/LALT_Format_en_V01.pdf"
@@ -190,6 +190,7 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
         "file_records_including_header": 12_003,
         "data_rows": row_count,
         "column_names": list(LALT_RANGE_COLUMNS),
+        "range_label_column_name": "LALT_ALTITUDE",
         "ti_first": first_ti,
         "ti_last": last_ti,
         "ti_missing_integer_ticks_between_rows": ti_gaps,
