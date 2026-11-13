@@ -11,7 +11,7 @@ class StubPdsClient:
             {"products": [{"lid": "urn:nasa:pds:example"}]},
         )
 
-    async def list_members(self, *, identifier: str, depth: int = 1):
+    async def list_members(self, *, identifier: str, depth: int = 1, limit: int = 100, search_after: str | None = None):
         return (
             f"https://pds.nasa.gov/api/search/1/products/{identifier}/members",
             [{"id": "urn:nasa:pds:example:collection:item::1.0", "title": "Source child product"}],
@@ -82,12 +82,14 @@ def test_members_endpoint_returns_original_hierarchy_records_and_provenance(monk
     client = TestClient(api.app)
 
     identifier = "urn:nasa:pds:example::1.0"
-    response = client.get("/api/v1/pds/products/" + identifier + "/members?depth=1")
+    response = client.get("/api/v1/pds/products/" + identifier + "/members?depth=1&limit=100")
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["identifier"] == identifier
     assert payload["depth"] == 1
+    assert payload["page"]["limit"] == 100
+    assert payload["next_search_after"] is None
     assert payload["response"][0]["id"] == "urn:nasa:pds:example:collection:item::1.0"
     assert payload["retrieved_at"]
 
