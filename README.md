@@ -55,7 +55,7 @@ The frontend proxies `/api` requests to the local FastAPI service. The PDS Searc
 
 ## Data resources and provenance
 
-See [docs/data-provenance.md](docs/data-provenance.md) for the source list, archive descriptions, and required provenance fields. The initial science-data candidates are LRO products such as LOLA topography, LROC imagery, and Diviner thermal observations, discovered through NASA's Planetary Data System.
+See [docs/data-provenance.md](docs/data-provenance.md) for the source list, archive descriptions, and required provenance fields, and [docs/implementation-roadmap.md](docs/implementation-roadmap.md) for the completion gates and current release decision. The initial science-data candidates are LRO products such as LOLA topography, LROC imagery, and Diviner thermal observations, with Kaguya LALT listed as a separately qualified cross-sensor source.
 
 ## Planned architecture
 
