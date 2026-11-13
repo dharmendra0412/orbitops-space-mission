@@ -157,6 +157,23 @@ export function parseMissionBriefDraft(raw: string | null): MissionBriefDraft {
   }
 }
 
+export function parseMissionBriefExport(raw: string): MissionBriefDraft {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new Error('The selected file is not valid JSON.')
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('The selected file is not a mission brief export.')
+  }
+  const record = parsed as Record<string, unknown>
+  if (record.schema_version !== 1 || !record.brief || typeof record.brief !== 'object' || Array.isArray(record.brief)) {
+    throw new Error('Unsupported mission brief export format.')
+  }
+  return parseMissionBriefDraft(raw)
+}
+
 export function serializeMissionBriefDraft(draft: MissionBriefDraft, savedAt: string): string {
   return JSON.stringify({
     schema_version: 1,
