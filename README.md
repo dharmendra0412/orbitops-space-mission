@@ -42,9 +42,29 @@ The first release focuses on a lunar polar exploration mission and should delive
 - No secrets committed to the repository.
 - No merge to the default branch without maintainer approval.
 
-## Status
+## Run the web preview locally
 
-Repository bootstrap. The initial implementation will be delivered through reviewable feature branches and pull requests. Features are not considered complete until their acceptance criteria and tests pass.
+Requirements: Node.js 20 or later and npm.
+
+```bash
+npm install
+npm run dev
+```
+
+Create a production build with:
+
+```bash
+npm run build
+npm run preview
+```
+
+## Current implementation status
+
+The first web foundation includes a responsive mission workspace, interactive payload selection, conceptual orbit and launch-class presets, a live resource estimate, visible constraint checks, and a preview mission score. The current calculation assumptions and limitations are documented in [docs/preview-model.md](docs/preview-model.md).
+
+This is an initial frontend vertical slice. It does not yet include a backend API, user authentication, persistent mission storage, multiplayer synchronization, NASA data ingestion, validated trajectory propagation, or detailed subsystem simulation.
+
+Changes are developed on feature branches and reviewed through pull requests. Features are not considered complete until their acceptance criteria and tests pass.
 
 ## Disclaimer
 
