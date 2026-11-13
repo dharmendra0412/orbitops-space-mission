@@ -35,4 +35,4 @@ pip install -r requirements.txt
 pytest
 ```
 
-The PDS3 label parser is validated against `tests/fixtures/lola_ldem_85s_40m.lbl`, a source-derived fixture for the public `LDEM_85S_40M.IMG` sample. The parser preserves raw field strings and units; it performs no scaling or coordinate conversion.
+The PDS3 label parser is validated against `tests/fixtures/lola_ldem_85s_40m.lbl`, a source-derived fixture for the public `LDEM_85S_40M.IMG` sample. The `lola_gdr` module adds a strict fixed-length signed-16-bit little-endian row iterator, the GDR SIS height/radius conversion helpers, and the DSMAP_POLAR.CAT pixel-to-latitude/longitude transform. These functions validate the selected product's label fields and are unit-tested against small synthetic byte buffers and the published equations. They are not exposed as a public raster endpoint and are not connected to a terrain UI: the 115 MB IMG has not been retrieved, checksum-verified, decoded, or independently compared. The decoder returns raw DN rows and does not silently apply scaling.
