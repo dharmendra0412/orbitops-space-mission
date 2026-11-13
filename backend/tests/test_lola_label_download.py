@@ -146,6 +146,24 @@ async def test_rejects_label_content_length_over_limit_before_reading(tmp_path: 
 
 
 @pytest.mark.asyncio
+async def test_rejects_label_content_length_mismatch(tmp_path: Path):
+    _, manifest_path, _, label_bytes = prepare_download(tmp_path)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-length": str(len(label_bytes) + 1)},
+            content=label_bytes,
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+        with pytest.raises(RuntimeError, match="Content-Length mismatch"):
+            await fetch_lola_gdr_label(manifest_path, client=client)
+
+    assert not (tmp_path / "sample.lbl").exists()
+
+
+@pytest.mark.asyncio
 async def test_refuses_label_redirect(tmp_path: Path):
     _, manifest_path, _, _ = prepare_download(tmp_path)
 
