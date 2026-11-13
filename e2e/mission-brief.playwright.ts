@@ -342,3 +342,23 @@ test('NASA PDS upstream failures remain visible and do not create fallback recor
   await expect(page.getByText('Returned 0 product records')).toHaveCount(0)
   await expect(page.locator('.pds-product-card')).toHaveCount(0)
 })
+
+
+test('mobile navigation manages keyboard focus and closes with Escape', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  const openButton = page.getByRole('button', { name: 'Open navigation menu' })
+  await expect(openButton).toBeVisible()
+  await expect(openButton).toHaveAttribute('aria-expanded', 'false')
+  await openButton.click()
+
+  const closeButton = page.getByRole('button', { name: 'Close navigation menu' })
+  await expect(closeButton).toBeFocused()
+  await expect(openButton).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('navigation', { name: 'Research sections' })).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(openButton).toHaveAttribute('aria-expanded', 'false')
+  await expect(openButton).toBeFocused()
+})
