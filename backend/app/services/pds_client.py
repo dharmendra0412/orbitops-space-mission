@@ -70,7 +70,7 @@ class PdsClient:
                 transport=self._transport,
                 follow_redirects=True,
             ) as client:
-                response = await client.get(url, headers={"Accept": "application/json"})
+                response = await client.get(url, headers={"Accept": "application/vnd.nasa.pds.pds4+json"})
                 response.raise_for_status()
                 payload = response.json()
         except httpx.TimeoutException as exc:
