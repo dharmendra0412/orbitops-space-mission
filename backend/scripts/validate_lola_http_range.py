@@ -41,7 +41,6 @@ async def validate_source_range(
     if image_path.stat().st_size != PDS_LOLA_GDR_IMAGE_BYTES:
         raise RuntimeError("Local LOLA IMG does not have the expected validated product size")
 
-    owns_client = client is None
     if client is None:
         client = PdsClient(timeout_seconds=30.0)
     samples: list[dict[str, Any]] = []
@@ -76,10 +75,6 @@ async def validate_source_range(
                     "raw_dn": dn,
                     "matches_validated_local_img": True,
                 })
-    finally:
-        if owns_client:
-            await client.aclose()
-
     return {
         "source_url": PDS_LOLA_GDR_SAMPLE_IMG_URL,
         "samples_checked": len(samples),
