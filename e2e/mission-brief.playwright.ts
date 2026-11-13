@@ -276,6 +276,6 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
   await expect(page.getByText('LOLA Gridded Data')).toBeVisible()
   await expect(page.getByText('urn:nasa:pds:lro_lola_rdr:data_gridded::1.0')).toBeVisible()
   await page.getByRole('button', { name: 'Resolve source metadata' }).click()
-  await expect(page.getByText('LDEM_85S_40M.LBL')).toBeVisible()
-  await expect(page.getByText('115034112 bytes')).toBeVisible()
+  await expect(page.locator('.pds-file-manifest').getByText('LDEM_85S_40M.LBL')).toBeVisible()
+  await expect(page.locator('.pds-file-manifest').getByText('115034112 bytes')).toBeVisible()
 })
