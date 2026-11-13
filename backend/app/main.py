@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path as FilePath
 import os
 from typing import Any, Annotated
 
@@ -311,6 +311,6 @@ async def get_kaguya_lalt_gt_sp_label() -> dict[str, Any]:
 # On Vercel, the Vite build is generated before the Python app is deployed.
 # Mount it after API routes so /api/* and /health continue to resolve to FastAPI.
 # The self-hosted Docker deployment serves the same dist/ directory through Nginx.
-frontend_dist = Path(__file__).resolve().parents[2] / "dist"
+frontend_dist = FilePath(__file__).resolve().parents[2] / "dist"
 if frontend_dist.is_dir():
     app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
