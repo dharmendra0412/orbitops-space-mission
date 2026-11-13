@@ -29,6 +29,7 @@ async def test_resolve_encodes_product_identifier_and_preserves_response():
 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path.endswith("/urn:nasa:pds:example::1.0")
+        assert request.headers["accept"] == "application/vnd.nasa.pds.pds4+json"
         return httpx.Response(200, json=expected_payload)
 
     client = PdsClient(transport=httpx.MockTransport(handler))
