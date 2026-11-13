@@ -147,7 +147,7 @@ function App() {
           <aside className="designer-side">
             <div className="panel launch-panel">
               <div className="panel-header compact"><div className="panel-title-icon launch-icon"><Rocket size={16}/></div><div><strong>Launch vehicle class</strong><span>Conceptual payload capacity</span></div></div>
-              <div className="launch-select-wrap"><select value={launch} onChange={event => { setLaunch(event.target.value); setRunState('idle') }} aria-label="Launch vehicle class"><option value="small">Small · 75 kg to reference orbit</option><option value="medium">Medium · 100 kg to reference orbit</option><option value="large">Heavy · 140 kg to reference orbit</option></select><ChevronDown size={15}/></div>
+              <div className="launch-select-wrap"><select value={launch} onChange={event => { setLaunch(event.target.value as LaunchClass); setRunState('idle') }} aria-label="Launch vehicle class"><option value="small">Small · 75 kg to reference orbit</option><option value="medium">Medium · 100 kg to reference orbit</option><option value="large">Heavy · 140 kg to reference orbit</option></select><ChevronDown size={15}/></div>
               <div className="launch-note">Capacity values are game-design assumptions, not specifications for a named launch vehicle.</div>
             </div>
 
