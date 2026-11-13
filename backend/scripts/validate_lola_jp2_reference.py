@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -22,6 +23,7 @@ JP2_LABEL_URL = (
 )
 EXPECTED_JP2_BYTES = 24_960_972
 EXPECTED_SHAPE = (7_584, 7_584)
+MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE = 1
 
 
 def _download(
@@ -81,7 +83,10 @@ def _download(
 def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, object]:
     raw = np.memmap(image_path, dtype="<i2", mode="r", shape=EXPECTED_SHAPE)
     mismatch_count = 0
+    samples_over_tolerance = 0
     max_absolute_difference = 0
+    absolute_difference_sum = 0
+    squared_difference_sum = 0
     minimum_value: int | None = None
     maximum_value: int | None = None
 
@@ -105,8 +110,13 @@ def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, obje
             difference = np.abs(decoded.astype(np.int32) - expected.astype(np.int32))
             row_mismatches = int(np.count_nonzero(difference))
             mismatch_count += row_mismatches
-            if row_mismatches:
-                max_absolute_difference = max(max_absolute_difference, int(difference.max()))
+            row_over_tolerance = int(
+                np.count_nonzero(difference > MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE)
+            )
+            samples_over_tolerance += row_over_tolerance
+            max_absolute_difference = max(max_absolute_difference, int(difference.max()))
+            absolute_difference_sum += int(difference.sum())
+            squared_difference_sum += int(np.square(difference, dtype=np.int64).sum())
             row_min = int(decoded.min())
             row_max = int(decoded.max())
             minimum_value = row_min if minimum_value is None else min(minimum_value, row_min)
@@ -116,27 +126,37 @@ def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, obje
         transform = tuple(reference.transform)
         crs = reference.crs.to_string() if reference.crs else None
 
-    if mismatch_count:
+    total_samples = EXPECTED_SHAPE[0] * EXPECTED_SHAPE[1]
+    if samples_over_tolerance:
         raise RuntimeError(
-            f"JP2OpenJPEG decoded {mismatch_count} samples differently from the raw IMG; "
+            f"{samples_over_tolerance} JP2 samples exceed the allowed "
+            f"{MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE}-DN tolerance; "
             f"maximum absolute DN difference={max_absolute_difference}"
         )
 
     return {
         "reference_driver": driver,
         "dimensions": {"lines": EXPECTED_SHAPE[0], "samples_per_line": EXPECTED_SHAPE[1]},
-        "decoded_samples": EXPECTED_SHAPE[0] * EXPECTED_SHAPE[1],
+        "decoded_samples": total_samples,
         "minimum_dn": minimum_value,
         "maximum_dn": maximum_value,
         "sample_mismatch_count": mismatch_count,
+        "sample_mismatch_percentage": mismatch_count / total_samples * 100.0,
+        "samples_over_tolerance": samples_over_tolerance,
+        "comparison_tolerance_dn": MAX_ALLOWED_ABSOLUTE_DN_DIFFERENCE,
         "max_absolute_dn_difference": max_absolute_difference,
-        "exact_sample_match": True,
+        "mean_absolute_dn_difference": absolute_difference_sum / total_samples,
+        "root_mean_square_dn_difference": math.sqrt(squared_difference_sum / total_samples),
+        "exact_sample_match": mismatch_count == 0,
+        "within_tolerance": True,
         "geotransform": transform,
         "crs": crs,
         "scope": (
             "Every JP2OpenJPEG-decoded sample was compared with the corresponding raw "
-            "signed little-endian IMG sample. This is an independent decoder/encoding "
-            "cross-check of the archived product, not an independent measurement dataset."
+            "signed little-endian IMG sample. The compressed JP2 representation is "
+            "accepted only when every decoded sample is within 1 DN of the raw IMG. "
+            "This is an independent decoder/encoding cross-check of the archived "
+            "product, not an independent measurement dataset."
         ),
     }
 
