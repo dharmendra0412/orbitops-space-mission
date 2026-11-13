@@ -542,16 +542,16 @@ function App() {
           <p className="resources-intro">Open the original archives and technical references. ORBITOPS does not fabricate measurements or imply that these external datasets have already been downloaded, processed, or synchronized.</p>
           <div className="panel pds-search-panel">
             <div className="pds-search-heading"><div><strong>Search the NASA PDS archive</strong><span>Live read-only request to the official PDS Search API</span></div><span className="resource-kind">LIVE SOURCE QUERY</span></div>
-            <div className="pds-search-controls">
+            <form className="pds-search-controls" role="search" aria-label="Search NASA Planetary Data System" onSubmit={(event) => { event.preventDefault(); void searchPds() }}>
               <label className="pds-search-label" htmlFor="pds-keywords">Product keywords</label>
               <div className="pds-search-input-row">
-                <input id="pds-keywords" value={pdsKeywords} onChange={(event) => setPdsKeywords(event.target.value)} placeholder="e.g. LOLA, Diviner, LROC" maxLength={120}/>
-                <button className="run-button" type="button" onClick={() => void searchPds()} disabled={pdsSearchLoading || pdsKeywords.trim().length < 2}>
+                <input id="pds-keywords" name="keywords" type="search" value={pdsKeywords} onChange={(event) => setPdsKeywords(event.target.value)} placeholder="e.g. LOLA, Diviner, LROC" maxLength={120} minLength={2} autoComplete="off" aria-describedby="pds-search-help"/>
+                <button className="run-button" type="submit" disabled={pdsSearchLoading || pdsKeywords.trim().length < 2}>
                   <Database size={15}/>{pdsSearchLoading ? 'Searching…' : 'Search PDS'}
                 </button>
               </div>
-            </div>
-            <p className="pds-search-note">Results are returned from NASA PDS at request time. The PDS Search API documentation warns that its servers do not yet contain every PDS dataset; an empty response must be checked against the mission archive index.</p>
+            </form>
+            <p className="pds-search-note" id="pds-search-help">Results are returned from NASA PDS at request time. The PDS Search API documentation warns that its servers do not yet contain every PDS dataset; an empty response must be checked against the mission archive index.</p>
             {pdsSearchError && <p className="pds-search-error" role="alert">{pdsSearchError}</p>}
             {pdsSearchResponse && <div className="pds-results">
               <div className="pds-results-meta"><span>{pdsSearchResponse.source}</span><span>Retrieved {new Date(pdsSearchResponse.retrieved_at).toLocaleString()}</span></div>
