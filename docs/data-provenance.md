@@ -116,3 +116,12 @@ Raw source files must remain distinguishable from derived products. Derived valu
 ## Data-use and endorsement
 
 NASA does not endorse ORBITOPS and is not responsible for information on non-U.S. Government websites. External non-U.S. Government resources, including the Canadian Space Agency site, remain subject to their own data-use and reuse parameters. The project must review and comply with each source's terms before copying, transforming, or redistributing any content.
+
+
+### Completed Haworth regional cross-product check (2026-11-13)
+
+The successful workflow run [#43408768275](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43408768275) retrieved NASA GSFC PGDA's `Haworth_final_adj_5mpp_surf.tif` (142,123,767 bytes; SHA-256 `387fd6e99bca266f4982f7256c4c185921105313882b4c2eee5b5ff1ef75016b`). The raster declares south-polar stereographic geometry with `lat_0=-90`, `lon_0=0`, and spherical radius `R=1,737,400 m`; its 5 m pixel spacing and nodata metadata passed validation.
+
+The validator compared two non-overlapping 512×512 source-grid windows (381,440 valid pixel pairs total) after bilinearly resampling the regional DEM onto the PDS 40 m grid. Reference-minus-source results: bias +0.2174 m; median +0.2252 m; MAE 0.7478 m; RMSE 1.0859 m; P95 absolute residual 2.1973 m; P99 3.6312 m; observed range -56.4451 m to +30.3425 m. The two windows were selected from the strongest valid Haworth coverage; this is a bounded regional sample, not a full-scene validation.
+
+Interpretation limits remain important: the Haworth DEM is a separately co-adjusted LOLA product, not independent sensor truth; PGDA reports roughly 90% interpolation in these 5 m DEMs and median RMS Z error around 0.30–0.50 m within ROIs. The 40 m vs 5 m resolution difference, interpolation, local outliers and product processing can contribute to residuals. These statistics establish cross-product consistency only, not absolute vertical accuracy. The source and report are preserved in Actions artifact `lola-ldem-85s-40m-source-and-validation` (artifact ID `14028806316`, 30-day retention), not committed to Git.
