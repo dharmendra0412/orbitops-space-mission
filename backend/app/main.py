@@ -6,6 +6,7 @@ from typing import Any, Annotated
 from fastapi import FastAPI, HTTPException, Path, Query
 
 from app.services.pds_client import PdsApiError, PdsClient, extract_next_search_after
+from app.services.pds3_label import PdsLabelError, parse_pds3_label
 
 app = FastAPI(
     title="ORBITOPS Data API",
@@ -106,4 +107,29 @@ async def resolve_pds_product(
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "identifier": identifier,
         "response": upstream_payload,
+    }
+
+
+
+@app.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/label")
+async def get_lola_gdr_sample_label() -> dict[str, Any]:
+    """Retrieve and parse the fixed, source-verified LOLA PDS3 sample label."""
+    try:
+        source_url, label_text = await pds_client.fetch_lola_gdr_sample_label()
+    except PdsApiError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    try:
+        metadata = parse_pds3_label(label_text)
+    except PdsLabelError as exc:
+        raise HTTPException(status_code=502, detail=f"NASA PDS returned an unsupported label: {exc}") from exc
+
+    return {
+        "source": "NASA PDS Geosciences Node",
+        "source_url": source_url,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "label_format": metadata.get("PDS_VERSION_ID"),
+        "product_file": metadata.get("FILE_NAME"),
+        "metadata": metadata,
+        "note": "Source label metadata only; the IMG data file has not been downloaded or decoded.",
     }
