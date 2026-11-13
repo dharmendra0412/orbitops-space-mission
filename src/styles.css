@@ -126,3 +126,25 @@
   .mission-brief-actions{width:100%}
   .mission-brief-actions button{flex:1;justify-content:center}
 }
+
+
+.mission-requirements{display:grid;gap:10px;padding-top:13px;border-top:1px solid #293d53}
+.mission-requirements-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.mission-requirements-heading>div{display:grid;gap:4px}
+.mission-requirements-heading strong{font-size:10px;color:#dce7f3}
+.mission-requirements-heading small{font-size:8px;color:#8fa3b9}
+.mission-requirements-heading button{padding:7px 10px;border:1px solid #38536c;border-radius:4px;background:#102238;color:#a3e2f8;font:8px 'Manrope',sans-serif;cursor:pointer}
+.mission-requirements-empty{margin:0;padding:12px;border:1px dashed #34495f;border-radius:4px;color:#8fa3b9;font-size:8px;line-height:1.6}
+.mission-requirement-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;background:#0a1523;border:1px solid #2b4057;border-radius:5px}
+.mission-requirement-topline{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mission-requirement-topline strong{font:9px 'DM Mono',monospace;color:#9bdcf4}
+.mission-requirement-topline span{font-size:8px;color:#9aabba}
+.mission-requirement-topline .mission-source-linked{color:#a4d9c0}
+.mission-requirement-topline button{margin-left:auto;padding:4px 7px;border:1px solid #39495c;border-radius:3px;background:#111c2a;color:#aab7c6;font:8px 'Manrope',sans-serif;cursor:pointer}
+.mission-requirement-row label{display:grid;gap:5px;color:#dce7f3;font-size:8px}
+.mission-requirement-row label:nth-of-type(1),.mission-requirement-row label:nth-of-type(4){grid-column:1/-1}
+.mission-requirement-row input,.mission-requirement-row textarea{width:100%;min-width:0;padding:8px 9px;border:1px solid #31465d;border-radius:4px;background:#081321;color:#e4edf8;font:9px 'Manrope',sans-serif;line-height:1.5}
+.mission-requirement-row textarea{min-height:55px;resize:vertical}
+.mission-requirement-row input:focus,.mission-requirement-row textarea:focus{outline:1px solid #67c9ed;border-color:#67c9ed}
+.mission-requirement-row input::placeholder,.mission-requirement-row textarea::placeholder{color:#60758d}
+@media(max-width:640px){.mission-requirement-row{grid-template-columns:minmax(0,1fr)}.mission-requirement-topline{grid-column:auto}.mission-requirement-row label:nth-of-type(1),.mission-requirement-row label:nth-of-type(4){grid-column:auto}}
