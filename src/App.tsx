@@ -461,7 +461,7 @@ function App() {
           </div>
           <div className="panel pds-search-panel">
             <div className="pds-search-heading"><div><strong>Verified LOLA south-polar label</strong><span>Fetch source metadata for one documented PDS3 GDR product</span></div><span className="resource-kind">LIVE LABEL LOOKUP</span></div>
-            <p className="pds-search-note">This endpoint retrieves the detached label only; the 115 MB image has not been downloaded or decoded. The LOLA GDR SIS defines HEIGHT = DN × SCALING_FACTOR and PLANETARY_RADIUS = DN × SCALING_FACTOR + OFFSET. No raster pixels or terrain values are displayed until the source image is verified.</p>
+            <p className="pds-search-note">The original 115 MB image has been downloaded and validated in the separate source-validation workflow. This live endpoint returns the detached label only; raster pixels and terrain values are not yet served or visualized here. The LOLA GDR SIS defines HEIGHT = DN × SCALING_FACTOR and PLANETARY_RADIUS = DN × SCALING_FACTOR + OFFSET.</p>
             <button className="run-button" type="button" onClick={() => void fetchLolaSampleLabel()} disabled={pdsLabelLoading}>
               <Database size={15}/>{pdsLabelLoading ? 'Fetching source label…' : 'Fetch original LOLA label metadata'}
             </button>
