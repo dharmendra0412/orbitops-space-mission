@@ -81,6 +81,14 @@ export const missionResources: MissionResource[] = [
     url: 'https://darts.isas.jaxa.jp/en/datasets/sln-l-lalt-4-topo-lgt-ts-v2.0',
   },
   {
+    id: 'kaguya-spice-kernels',
+    title: 'SELENE SPICE kernel archive',
+    owner: 'JAXA / DARTS ISAS',
+    kind: 'NAVIGATION DATA ARCHIVE',
+    description: 'Official SPICE archive for SELENE/Kaguya, including SPK spacecraft ephemerides, CK attitude, FK frames, IK instrument kernels, SCLK clock correlation, LSK leap seconds, and PCK lunar orientation kernels. The presence of a kernel in this archive does not prove it is the exact orbit solution named by a specific LALT product label; that mapping and coverage must be verified.',
+    url: 'https://darts.isas.jaxa.jp/en/datasets/darts:sln-l-spice-6-v1.0/',
+  },
+  {
     id: 'kaguya-lalt-range-darts',
     title: 'SELENE LALT range dataset on DARTS',
     owner: 'JAXA / DARTS ISAS',
