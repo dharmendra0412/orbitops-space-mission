@@ -4,3 +4,17 @@
 @media(max-width:600px){.topbar{height:58px;padding:0 13px}.breadcrumbs{gap:7px;font-size:8px}.top-actions{gap:9px}.autosave{display:none}.team-button{font-size:0;padding:0 8px}.team-button svg{width:16px}.team-count{font-size:8px}.content{padding:23px 13px}.page-heading{align-items:flex-start;gap:12px;flex-direction:column}.page-heading h1{font-size:25px}.primary-button{height:35px}.mission-hero{min-height:340px}.hero-copy{padding:22px 19px 60px}.hero-copy h2{font-size:32px}.hero-copy>p{max-width:95%;font-size:10px}.moon-scene{inset:105px -35px 30px 32%;opacity:.55}.moon{width:210px;height:210px;right:0;top:15px}.orbit-ring{right:-70px;top:65px}.satellite-art{right:35%;top:95px}.hero-footer{height:35px;padding:0 12px;gap:12px}.hero-footer>span{font-size:6px}.hero-footer strong{display:block;margin:3px 0 0;font-size:7px}.section-heading{align-items:flex-start;gap:10px}.section-note{font-size:7px;margin-top:4px}.metrics-grid{gap:8px}.metric-card{padding:11px}.metric-value{font-size:23px}.metric-detail{font-size:8px}.designer-layout{margin-top:27px}.designer-side{grid-template-columns:1fr}.verification-panel{grid-column:auto}.panel-header{padding:12px}.instrument-row{gap:7px;padding:11px 2px}.instrument-info strong{font-size:9px}.instrument-info small{font-size:7px}.instrument-symbol{width:27px;height:27px}.instrument-specs{width:48px}.instrument-science{width:34px}.bottom-grid{grid-template-columns:1fr}.footer{align-items:flex-start;flex-direction:column}.footer p{margin:0}.footer>div{margin-bottom:2px}.step-pill{font-size:8px}.orbit-option{gap:8px;padding:10px 5px}.orbit-option-copy strong{font-size:9px}.orbit-option-copy small{font-size:7px}.orbit-altitude{font-size:8px}}
 
 .team-button:disabled{cursor:not-allowed;opacity:.62}
+
+.resources-intro{max-width:760px;color:#9aabc0;font-size:11px;line-height:1.7;margin:12px 0 15px}
+.resource-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.resource-card{display:flex;flex-direction:column;min-height:185px;padding:14px;background:#111d2d;border:1px solid #26374c;border-radius:8px}
+.resource-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.resource-kind{font:8px 'DM Mono',monospace;letter-spacing:.6px;color:#8bd5ef;text-transform:uppercase}
+.resource-owner{font:7px 'DM Mono',monospace;color:#8798ad;text-align:right}
+.resource-card h4{font-size:12px;line-height:1.45;margin:14px 0 7px;color:#e0e9f4}
+.resource-card p{font-size:9px;line-height:1.65;color:#91a1b5;margin:0 0 14px}
+.resource-card a{display:flex;align-items:center;gap:6px;margin-top:auto;color:#88d9f4;text-decoration:none;font-size:9px;font-weight:700}
+.resource-card a:hover{text-decoration:underline}
+.resource-disclaimer{font-size:8px;line-height:1.6;color:#7e91a7;margin:12px 0 0}
+@media(max-width:900px){.resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.resource-grid{grid-template-columns:1fr}.resource-card{min-height:0}.resource-card h4{font-size:11px}}
