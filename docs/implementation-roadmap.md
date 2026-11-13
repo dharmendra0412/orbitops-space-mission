@@ -19,6 +19,7 @@ Every numerical source-derived value must carry its source product, source URL, 
 - Live UI for source-label-derived LOLA coordinates, actual raw DN/height/radius lookup, and un-interpolated row-profile plots.
 - Fixed-source JAXA DARTS Kaguya LALT PDS3 label endpoint with strict product-layout validation and an explicit interpolated-grid caveat. A live pixel endpoint is blocked because DARTS did not honor HTTP Range for a four-byte sample request; the UI therefore exposes label metadata only.
 - Fixed-day Kaguya LALT calibrated range ingestion for `LALT_RD_20080105`: exact PDS3 label/table byte and record layout, all 12,002 records, 11-column schema, finite numeric fields, strictly increasing onboard TI tags, and local SHA-256 provenance. TI-to-ET conversion and raw-range geolocation are not yet implemented.
+- Identified the official Kaguya SPICE reconstruction chain (corrected SCLK N0067, January 2008 2-second CK V03, SELENE FK/IK, DE421 lunar ME frame/PCK, and SGMH two-way-tracking SPK candidate). This is provenance research only; no footprint or geolocation is yet claimed.
 - Real-source Kaguya LALT south-polar grid download and 7.37 million-cell cross-product comparison against LOLA; this is a consistency check, not independent geodetic ground truth.
 - A user-authored mission brief builder with browser-local autosave, JSON import/export, and a requirement matrix for statements, target/units, source URLs, and evidence notes. Source links are explicitly marked as not independently validated.
 - API and web tests, Playwright browser tests for mission-brief persistence/import/export, LALT label-only metadata, LOLA label/pixel/profile inspection, NASA PDS search/product resolution, hierarchy browsing with deduplicated pagination, and explicit upstream-failure handling; dependency audits, typechecks, production builds, and data-provenance documentation.
@@ -31,7 +32,8 @@ The source-validation workflow passed in [run #43416474484](https://github.com/d
 
 - Characterize the raw Kaguya LALT calibrated range products, archived orbit solutions, time systems, and reference frames beyond the currently inspected interpolated grid.
 - Find a source-supported bounded access path or a reviewed persistent-cache deployment design before exposing LALT grid pixels; do not download the 64.9 MB image for each user click.
-- Determine whether a range-level LALT comparison can be made without using a LOLA-constrained orbit solution.
+- Convert the LALT `TI` clock tags to ET with the corrected SCLK kernel, verify SPK/CK coverage and frame IDs for every selected record, and reconstruct a bounded sample of raw LALT footprints using the SGMH two-way-tracking orbit candidate.
+- Compare reconstructed footprints/ranges with the published LALT_LGT_TS product and the LOLA source while preserving orbit, attitude, instrument, and measurement uncertainty; do not treat the SGMH solution as independent absolute ground truth.
 - Record coverage, datum, frame, spatial resolution, and uncertainty before comparing elevations.
 - Treat LROC NAC and Kaguya Terrain Camera products tied to LOLA as cross-sensor morphology checks, not independent absolute geodetic control.
 - Do not claim independent ground truth until the orbit/frame provenance is demonstrated.
