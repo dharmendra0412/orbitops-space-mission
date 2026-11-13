@@ -28,6 +28,16 @@ The API returns the original upstream JSON under `response`, together with the a
 
 The PDS Search API documentation warns that its servers are not fully populated with all PDS datasets. A zero-result or missing product response is not proof that a product does not exist. Cross-check against the relevant mission archive and PDS node index.
 
+## Bounded LOLA raster retrieval
+
+From the `backend/` directory, run:
+
+```bash
+python scripts/fetch_lola_gdr_sample.py --output data/raw/lola/ldem_85s_40m.img
+```
+
+The downloader uses one fixed HTTPS archive URL, refuses redirects, requires the directory-listed 115,034,112-byte length, streams to a temporary file, and atomically writes the raster plus a JSON provenance manifest. It computes a local SHA-256 fingerprint but explicitly records that no upstream checksum was published in the inspected directory listing; byte-count verification must not be described as cryptographic source verification. Downloaded rasters under `data/raw/` are git-ignored. The downloader is not automatically run by the web application or CI.
+
 ## Tests
 
 ```bash
