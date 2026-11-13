@@ -627,7 +627,7 @@ function App() {
                     <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" disabled={lolaPixelLoading || lolaProfileLoading} value={lolaLineIndex} onChange={(event) => { setLolaLineIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
                   </label>
                   <label>Sample index
-                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" disabled={lolaPixelLoading} value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" disabled={lolaPixelLoading || lolaProfileLoading} value={lolaSampleIndex} onChange={(event) => { setLolaSampleIndex(event.target.value); setLolaPixelResponse(null); setLolaPixelError(''); setLolaProfileResponse(null); setLolaProfileError('') }} />
                   </label>
                 </div>
                 {lolaPixelLocation ? <div className="lola-coordinate-result" aria-live="polite">
