@@ -207,7 +207,7 @@ def test_lola_pds3_label_endpoint_returns_parsed_source_metadata(monkeypatch):
     assert payload["metadata"]["FILE_RECORDS"] == "7584"
     assert payload["metadata"]["RECORD_BYTES"] == "15168"
     assert payload["metadata"]["MAP_SCALE"] == "40 <m/pix>"
-    assert "downloaded and validated" in payload["note"]
+    assert "fixed-source HTTP Range requests" in payload["note"]
     assert "HEIGHT = DN * SCALING_FACTOR" in payload["note"]
     assert "PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET" in payload["note"]
     assert "downloaded and validated" in payload["note"]
