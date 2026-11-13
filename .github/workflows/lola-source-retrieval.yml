@@ -1,0 +1,51 @@
+name: LOLA Source Retrieval Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feat/**"]
+    paths:
+      - ".github/workflows/lola-source-retrieval.yml"
+      - "backend/scripts/fetch_lola_gdr_sample.py"
+      - "backend/scripts/fetch_lola_gdr_label.py"
+      - "backend/scripts/validate_lola_gdr_sample.py"
+      - "backend/app/services/lola_gdr.py"
+      - "backend/app/services/pds3_label.py"
+
+permissions:
+  contents: read
+
+jobs:
+  retrieve-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install data retrieval dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Retrieve original LOLA IMG
+        run: python -m scripts.fetch_lola_gdr_sample
+      - name: Retrieve matching archive-host label
+        run: python -m scripts.fetch_lola_gdr_label
+      - name: Validate complete raster against downloaded label
+        run: python -m scripts.validate_lola_gdr_sample
+      - name: Preserve retrieved source and provenance as workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: lola-ldem-85s-40m-source-and-validation
+          path: |
+            backend/data/raw/lola/ldem_85s_40m.img
+            backend/data/raw/lola/ldem_85s_40m.lbl
+            backend/data/raw/lola/ldem_85s_40m.img.manifest.json
+          if-no-files-found: error
+          retention-days: 30
