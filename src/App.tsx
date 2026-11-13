@@ -69,7 +69,7 @@ function App() {
 
       <div className="content">
         <section className="page-heading">
-          <div><div className="eyebrow"><span className="eyebrow-line"/> MISSION WORKSPACE <span className="eyebrow-tag">CONCEPT PHASE</span></div><h1>Mission overview<span className="heading-period">.</span></h1><p>Turn a scientific objective into an engineered mission concept.</p></div>
+          <div><div className="eyebrow"><span className="eyebrow-line"/> MISSION WORKSPACE <span className="eyebrow-tag">CONCEPT PHASE</span></div><h1>Mission overview<span className="heading-period">.</span></h1><p>Explore mission requirements using traceable scientific references.</p></div>
           <button className="primary-button" onClick={() => goTo('Spacecraft designer')}><Rocket size={16}/> Configure spacecraft <ArrowUpRight size={15}/></button>
         </section>
 
@@ -102,9 +102,9 @@ function App() {
 
         <section className="designer-layout" id="designer">
           <div className="designer-main">
-            <div className="section-heading designer-heading"><div><div className="section-eyebrow">CONFIGURATION STUDIO</div><h3>Build your spacecraft</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
+            <div className="section-heading designer-heading"><div><div className="section-eyebrow">CONFIGURATION STUDIO</div><h3>Choose research categories</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
             <div className="panel instrument-panel">
-              <div className="panel-header"><div className="panel-title-icon"><Telescope size={17}/></div><div><strong>Scientific payload</strong><span>Select instruments for your mission objectives</span></div><span className="selected-count">{selected.length} SELECTED</span></div>
+              <div className="panel-header"><div className="panel-title-icon"><Telescope size={17}/></div><div><strong>Science investigation areas</strong><span>Select topics to research in the source archives</span></div><span className="selected-count">{selected.length} SELECTED</span></div>
               <div className="instrument-list">{instruments.map(item => {
                 const checked = selected.includes(item.id)
                 return <button key={item.id} className={`instrument-row ${checked ? 'instrument-selected' : ''}`} onClick={() => toggleInstrument(item.id)} aria-pressed={checked}>
@@ -118,7 +118,7 @@ function App() {
             </div>
 
             <div className="panel options-panel">
-              <div className="panel-header"><div className="panel-title-icon orbit-icon"><Satellite size={17}/></div><div><strong>Orbit selection</strong><span>Choose an orbit concept for polar observations</span></div></div>
+              <div className="panel-header"><div className="panel-title-icon orbit-icon"><Satellite size={17}/></div><div><strong>Orbit architecture categories</strong><span>Choose a category for research; no orbital parameters are assumed</span></div></div>
               <div className="orbit-options">{orbitOptions.map(item => <button key={item.id} className={orbit === item.id ? 'orbit-option chosen' : 'orbit-option'} onClick={() => setOrbit(item.id)}>
                 <span className="orbit-radio">{orbit === item.id && <i/>}</span><span className="orbit-option-copy"><strong>{item.name}</strong><small>{item.coverage}</small></span>
               </button>)}</div>
