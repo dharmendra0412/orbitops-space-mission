@@ -52,6 +52,40 @@ async def test_lola_img_downloader_uses_fixed_lola_node_fallback_after_transport
 
 
 @pytest.mark.asyncio
+async def test_lola_img_downloader_uses_fallback_after_server_error(tmp_path: Path):
+    payload = b"LOLA"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == SOURCE_URL:
+            return httpx.Response(503, request=request)
+        assert str(request.url) == FALLBACK_SOURCE_URL
+        return httpx.Response(200, content=payload)
+
+    destination = tmp_path / "lola.img"
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+        manifest = await download_lola_gdr_img(destination, client=client, expected_bytes=len(payload))
+
+    assert destination.read_bytes() == payload
+    assert manifest["source_url"] == FALLBACK_SOURCE_URL
+    assert manifest["source_attempts"] == [SOURCE_URL, FALLBACK_SOURCE_URL]
+
+
+@pytest.mark.asyncio
+async def test_lola_img_downloader_does_not_hide_client_errors_with_fallback(tmp_path: Path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == SOURCE_URL
+        return httpx.Response(404, request=request)
+
+    destination = tmp_path / "lola.img"
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+        with pytest.raises(httpx.HTTPStatusError):
+            await download_lola_gdr_img(destination, client=client, expected_bytes=4)
+
+    assert not destination.exists()
+    assert not (tmp_path / "lola.img.part").exists()
+
+
+@pytest.mark.asyncio
 async def test_lola_img_downloader_rejects_content_length_mismatch(tmp_path: Path):
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, content=b"TOO-LONG")
