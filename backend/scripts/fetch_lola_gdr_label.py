@@ -36,9 +36,20 @@ async def fetch_lola_gdr_label(
     if label_url is None:
         raise ValueError("Manifest source_url is not one of the fixed LOLA IMG archives")
 
-    image_path = manifest_path.name.removesuffix(".manifest.json")
-    label_path = manifest_path.with_name(Path(image_path).stem + ".lbl")
+    image_name = manifest_path.name.removesuffix(".manifest.json")
+    image_path = manifest_path.with_name(image_name)
+    label_path = manifest_path.with_name(Path(image_name).stem + ".lbl")
     temporary_path = label_path.with_name(label_path.name + ".part")
+    if not image_path.is_file():
+        raise FileNotFoundError(f"LOLA IMG referenced by manifest does not exist: {image_path}")
+    if image_path.stat().st_size != manifest.get("actual_bytes_downloaded"):
+        raise RuntimeError("LOLA IMG on-disk size no longer matches its download manifest")
+    image_digest = hashlib.sha256()
+    with image_path.open("rb") as image_file:
+        for chunk in iter(lambda: image_file.read(1024 * 1024), b""):
+            image_digest.update(chunk)
+    if image_digest.hexdigest() != manifest.get("sha256_local"):
+        raise RuntimeError("LOLA IMG SHA-256 no longer matches its download manifest")
     manifest_temporary_path = manifest_path.with_name(manifest_path.name + ".part")
     if label_path.exists():
         raise FileExistsError(f"Refusing to overwrite existing LOLA label: {label_path}")
@@ -81,6 +92,7 @@ async def fetch_lola_gdr_label(
         temporary_path.write_bytes(response.content)
         updated_manifest = {
             **manifest,
+            "image_sha256_rechecked": image_digest.hexdigest(),
             "label_source_url": label_url,
             "label_file_name": label_path.name,
             "label_bytes": len(response.content),
