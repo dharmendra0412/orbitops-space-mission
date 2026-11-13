@@ -39,7 +39,7 @@ class PdsClient:
             async with httpx.AsyncClient(
                 timeout=self._timeout_seconds,
                 transport=self._transport,
-                follow_redirects=True,
+                follow_redirects=False,
             ) as client:
                 response = await client.get(
                     url,
@@ -86,7 +86,7 @@ class PdsClient:
             async with httpx.AsyncClient(
                 timeout=self._timeout_seconds,
                 transport=self._transport,
-                follow_redirects=True,
+                follow_redirects=False,
             ) as client:
                 response = await client.get(url, params=params, headers={"Accept": "application/json"})
                 response.raise_for_status()
@@ -150,7 +150,7 @@ class PdsClient:
             async with httpx.AsyncClient(
                 timeout=self._timeout_seconds,
                 transport=self._transport,
-                follow_redirects=True,
+                follow_redirects=False,
             ) as client:
                 response = await client.get(url, headers={"Accept": "application/vnd.nasa.pds.pds4+json"})
                 response.raise_for_status()
