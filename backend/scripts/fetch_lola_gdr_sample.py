@@ -59,9 +59,11 @@ async def download_lola_gdr_img(
     received = 0
     output_created = False
     downloaded_source: str | None = None
+    attempted_sources: list[str] = []
     last_transport_error: httpx.RequestError | None = None
     try:
         for source_url in SOURCE_URLS:
+            attempted_sources.append(source_url)
             digest = hashlib.sha256()
             received = 0
             try:
@@ -116,7 +118,7 @@ async def download_lola_gdr_img(
 
         manifest = {
             "source_url": downloaded_source,
-            "source_attempts": list(SOURCE_URLS),
+            "source_attempts": attempted_sources,
             "file_name": destination.name,
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "expected_bytes_from_archive_listing": expected_bytes,
