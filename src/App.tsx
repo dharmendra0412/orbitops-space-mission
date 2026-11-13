@@ -1,14 +1,12 @@
-import { useMemo, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { useState } from 'react'
 import {
-  Activity, ArrowDownRight, ArrowUpRight, Atom, BatteryCharging, Check,
-  ChevronDown, CircleHelp, Compass, Database, Gauge, Globe2, Layers3,
+  Activity, ArrowUpRight, Atom, BatteryCharging, Check,
+  ChevronDown, CircleHelp, Compass, Database, Globe2, Layers3,
   Menu, Radio, Rocket, Satellite, Settings2, ShieldCheck,
-  SlidersHorizontal, Sparkles, Target, Telescope, Users, X, Zap, ExternalLink
+  SlidersHorizontal, Target, Telescope, Users, X, ExternalLink
 } from 'lucide-react'
 
-import { calculateMissionDesign, instruments, orbitOptions } from './domain/mission'
-import type { LaunchClass } from './domain/mission'
+import { instruments, orbitOptions } from './domain/mission'
 import { missionResources } from './data/sources'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
@@ -23,19 +21,10 @@ function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
 
 function App() {
   const [activeNav, setActiveNav] = useState('Mission overview')
-  const [selected, setSelected] = useState<string[]>(['camera', 'spectrometer', 'thermal'])
+  const [selected, setSelected] = useState<string[]>([])
   const [orbit, setOrbit] = useState('low')
-  const [launch, setLaunch] = useState<LaunchClass>('medium')
-  const [budget, setBudget] = useState(180)
   const [showAll, setShowAll] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [runState, setRunState] = useState<'idle' | 'complete'>('idle')
-
-  const design = useMemo(
-    () => calculateMissionDesign({ selectedInstrumentIds: selected, orbitId: orbit, launchClass: launch, budgetMillions: budget }),
-    [selected, orbit, launch, budget],
-  )
-
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
     setRunState('idle')
@@ -52,18 +41,11 @@ function App() {
     else document.getElementById('mission-output')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const checks = [
-    { label: 'Launch mass capacity', ok: design.massPass, value: `${design.mass.toFixed(1)} / ${design.capacity} kg` },
-    { label: 'Peak power budget', ok: design.powerPass, value: `${design.power} / ${design.generation} W` },
-    { label: 'Daily data allowance', ok: design.dataPass, value: `${design.data.toFixed(1)} / ${(design.dailyDataAllowance * design.link.comm).toFixed(1)} GB/day` },
-    { label: 'Development budget', ok: design.budgetPass, value: `$ ${budget}M allocated` },
-  ]
-
   return <div className="app-shell">
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
       <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>MISSION ENGINEERING</span></div><button className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close menu"><X size={18}/></button></div>
       <div className="workspace-label">WORKSPACE</div>
-      <div className="workspace-switch"><div className="workspace-avatar">LP</div><div><strong>Lunar Pathfinder</strong><span>Mission workspace</span></div><ChevronDown size={15}/></div>
+      <div className="workspace-switch"><div className="workspace-avatar">LP</div><div><strong>Example workspace</strong><span>Local draft only</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">MISSION</div>
       <nav className="side-nav">{navItems.map((item, index) => {
         const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
@@ -75,7 +57,7 @@ function App() {
       <button className="nav-item" onClick={() => setShowAll(true)}><ShieldCheck size={17}/><span>Model limitations</span></button>
       <div className="sidebar-bottom">
         <div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><strong>Need a hand?</strong><p>Explore the engineering guide to understand mission trade-offs.</p><button onClick={() => setShowAll(!showAll)}>Open learning guide <ArrowUpRight size={13}/></button></div>
-        <div className="profile"><div className="profile-avatar">DK</div><div><strong>Mission designer</strong><span>Individual workspace</span></div><Settings2 size={16}/></div>
+        <div className="profile"><div className="profile-avatar">G</div><div><strong>Guest workspace</strong><span>Not signed in</span></div><Settings2 size={16}/></div>
       </div>
     </aside>
 
@@ -83,7 +65,7 @@ function App() {
     <main className="main-area">
       <header className="topbar">
         <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>MISSIONS</span><span className="crumb-slash">/</span><strong>LUNAR PATHFINDER</strong></div>
-        <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local preview · changes not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">DK</div></div>
+        <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local preview · changes not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
       </header>
 
       <div className="content">
@@ -94,34 +76,34 @@ function App() {
 
         <section className="mission-hero">
           <div className="hero-copy">
-            <div className="hero-kicker"><span className="hero-kicker-dot"/> ACTIVE MISSION CONCEPT <span className="hero-id">OP-LP-001</span></div>
+            <div className="hero-kicker"><span className="hero-kicker-dot"/> EXAMPLE WORKSPACE <span className="hero-id">NOT A REAL MISSION</span></div>
             <h2>Lunar <em>Pathfinder</em></h2>
             <p>Investigate lunar polar terrain, characterize surface conditions, and identify regions of scientific interest for future exploration.</p>
             <div className="hero-tags"><span><Target size={13}/> Lunar science</span><span><Compass size={13}/> South polar region</span><span><Atom size={13}/> Orbiter concept</span></div>
             <button className="hero-link" onClick={() => goTo('Spacecraft designer')}>Continue mission design <ArrowUpRight size={15}/></button>
           </div>
-          <div className="moon-scene" aria-label="Illustration of the Moon and a spacecraft in orbit">
+          <div className="moon-scene" aria-label="Decorative illustration of the Moon and a spacecraft; not mission data">
             <div className="orbit-ring orbit-one"/><div className="orbit-ring orbit-two"/><div className="moon"><div className="moon-crater crater-one"/><div className="moon-crater crater-two"/><div className="moon-crater crater-three"/><div className="moon-crater crater-four"/></div>
             <div className="satellite-art"><div className="sat-body"/><div className="sat-panel left"/><div className="sat-panel right"/><div className="sat-antenna"/></div>
-            <div className="scene-label label-orbit"><span/> POLAR ORBIT</div><div className="scene-label label-altitude">{design.link.altitude} <small>CONCEPT ORBIT</small></div>
+            <div className="scene-label label-orbit"><span/> CONCEPT ARTWORK</div>
             <div className="scene-coordinates">EXAMPLE TARGET <span>/</span> LUNAR SOUTH POLE</div>
           </div>
-          <div className="hero-footer"><span>MISSION STATUS <strong><i/> DESIGN IN PROGRESS</strong></span><span>LAST UPDATED <strong>JUST NOW</strong></span><span>TEAM MODE <strong>NOT CONNECTED</strong></span></div>
+          <div className="hero-footer"><span>WORKSPACE <strong>EXAMPLE ONLY</strong></span><span>DATA STATUS <strong>NO PRODUCTS INGESTED</strong></span><span>TEAM MODE <strong>NOT CONNECTED</strong></span></div>
         </section>
 
         <section className="section-block">
-          <div className="section-heading"><div><div className="section-eyebrow">ENGINEERING SNAPSHOT</div><h3>Mission resources</h3></div><span className="section-note"><span className="status-dot"/> INSTANT DESIGN ESTIMATE</span></div>
+          <div className="section-heading"><div><div className="section-eyebrow">SOURCE-VERIFIED INPUTS</div><h3>Engineering data availability</h3></div><span className="section-note">NO DATA PRODUCTS INGESTED</span></div>
           <div className="metrics-grid">
-            <Metric label="Spacecraft mass" value={design.mass.toFixed(1)} unit="kg" icon={Layers3} detail={`${Math.max(0, design.capacity - design.mass).toFixed(1)} kg capacity margin`} tone="blue"/>
-            <Metric label="Peak power demand" value={String(design.power)} unit="W" icon={Zap} detail={`${design.generation - design.power} W generation margin`} tone="amber"/>
-            <Metric label="Daily data load" value={design.data.toFixed(1)} unit="GB/day" icon={Database} detail={`${Math.max(0, design.dailyDataAllowance * design.link.comm - design.data).toFixed(1)} GB/day allowance remaining`} tone="violet"/>
-            <Metric label="Science potential" value={String(design.chosen.reduce((sum, item) => sum + item.science, 0))} unit="pts" icon={Sparkles} detail="Relative concept-level index" tone="green"/>
+            <Metric label="Spacecraft mass" value="N/A" icon={Layers3} detail="No verified spacecraft configuration source" tone="blue"/>
+            <Metric label="Power budget" value="N/A" icon={Activity} detail="No verified power-system source" tone="amber"/>
+            <Metric label="Data volume" value="N/A" icon={Database} detail="No instrument product or telemetry source" tone="violet"/>
+            <Metric label="Mission cost" value="N/A" icon={Target} detail="No cost model or approved estimate source" tone="green"/>
           </div>
         </section>
 
         <section className="designer-layout" id="designer">
           <div className="designer-main">
-            <div className="section-heading designer-heading"><div><div className="section-eyebrow">CONFIGURATION STUDIO</div><h3>Build your spacecraft</h3><p>Every payload choice changes the engineering budget.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
+            <div className="section-heading designer-heading"><div><div className="section-eyebrow">CONFIGURATION STUDIO</div><h3>Build your spacecraft</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
             <div className="panel instrument-panel">
               <div className="panel-header"><div className="panel-title-icon"><Telescope size={17}/></div><div><strong>Scientific payload</strong><span>Select instruments for your mission objectives</span></div><span className="selected-count">{selected.length} SELECTED</span></div>
               <div className="instrument-list">{instruments.map(item => {
@@ -130,44 +112,34 @@ function App() {
                   <span className={`instrument-check ${checked ? 'checked' : ''}` }>{checked && <Check size={13}/>}</span>
                   <span className="instrument-symbol"><InstrumentSymbol id={item.id}/></span>
                   <span className="instrument-info"><strong>{item.name}</strong><small>{item.purpose}</small></span>
-                  <span className="instrument-specs"><b>{item.mass} kg</b><small>{item.power} W</small></span>
-                  <span className="instrument-science">+{item.science}<small>SCI</small></span>
+                  
                 </button>
               })}</div>
-              <div className="panel-footnote"><CircleHelp size={14}/> Payload characteristics are illustrative planning assumptions, not verified specifications of flight hardware.</div>
+              <div className="panel-footnote"><CircleHelp size={14}/> These are research categories, not a verified flight-hardware catalogue. Mass, power, cost, and performance remain unavailable until sourced.</div>
             </div>
 
             <div className="panel options-panel">
               <div className="panel-header"><div className="panel-title-icon orbit-icon"><Satellite size={17}/></div><div><strong>Orbit selection</strong><span>Choose an orbit concept for polar observations</span></div></div>
               <div className="orbit-options">{orbitOptions.map(item => <button key={item.id} className={orbit === item.id ? 'orbit-option chosen' : 'orbit-option'} onClick={() => { setOrbit(item.id); setRunState('idle') }}>
-                <span className="orbit-radio">{orbit === item.id && <i/>}</span><span className="orbit-option-copy"><strong>{item.name}</strong><small>{item.coverage}</small></span><span className="orbit-altitude">{item.altitude}</span>
+                <span className="orbit-radio">{orbit === item.id && <i/>}</span><span className="orbit-option-copy"><strong>{item.name}</strong><small>{item.coverage}</small></span>
               </button>)}</div>
-              <div className="panel-footnote"><CircleHelp size={14}/> Orbit options are conceptual presets. No trajectory propagation or contact-window computation is performed in this preview.</div>
+              <div className="panel-footnote"><CircleHelp size={14}/> Architecture labels only. No altitude, ephemeris, trajectory, or contact-window value is provided.</div>
             </div>
           </div>
 
           <aside className="designer-side">
-            <div className="panel launch-panel">
-              <div className="panel-header compact"><div className="panel-title-icon launch-icon"><Rocket size={16}/></div><div><strong>Launch vehicle class</strong><span>Conceptual payload capacity</span></div></div>
-              <div className="launch-select-wrap"><select value={launch} onChange={event => { setLaunch(event.target.value as LaunchClass); setRunState('idle') }} aria-label="Launch vehicle class"><option value="small">Small · 75 kg to reference orbit</option><option value="medium">Medium · 100 kg to reference orbit</option><option value="large">Heavy · 140 kg to reference orbit</option></select><ChevronDown size={15}/></div>
-              <div className="launch-note">Capacity values are game-design assumptions, not specifications for a named launch vehicle.</div>
-            </div>
-
-            <div className="panel budget-panel">
-              <div className="panel-header compact"><div className="panel-title-icon budget-icon"><Gauge size={16}/></div><div><strong>Mission budget</strong><span>Development allocation</span></div></div>
-              <div className="budget-number"><strong>$ {budget}M</strong><span>USD · CONCEPT ESTIMATE</span></div>
-              <input className="budget-slider" type="range" min="100" max="300" step="5" value={budget} onChange={event => { setBudget(Number(event.target.value)); setRunState('idle') }} aria-label="Mission budget in millions of dollars"/>
-              <div className="slider-labels"><span>$100M</span><span>$300M</span></div>
-              <div className="budget-warning"><Activity size={14}/> Budget feasibility uses a simplified planning rule.</div>
-            </div>
-
             <div className="panel verification-panel" id="mission-output">
-              <div className="verify-heading"><div><div className="section-eyebrow">DESIGN VALIDATION</div><strong>Constraint checks</strong></div><span className={checks.every(item => item.ok) ? 'pass-label' : 'warn-label'}>{checks.filter(item => item.ok).length}/{checks.length} PASS</span></div>
-              <div className="check-list">{checks.map(item => <div className="check-row" key={item.label}><span className={item.ok ? 'check-status ok' : 'check-status fail'}>{item.ok ? <Check size={11}/> : <X size={11}/>}</span><span>{item.label}</span><b>{item.value}</b></div>)}</div>
+              <div className="verify-heading"><div><div className="section-eyebrow">ENGINEERING VERIFICATION</div><strong>Input readiness</strong></div><span className="warn-label">NOT READY</span></div>
+              <div className="check-list">
+                <div className="check-row"><span className="check-status fail"><X size={11}/></span><span>Mass properties</span><b>Not sourced</b></div>
+                <div className="check-row"><span className="check-status fail"><X size={11}/></span><span>Power-system budget</span><b>Not sourced</b></div>
+                <div className="check-row"><span className="check-status fail"><X size={11}/></span><span>Instrument data volume</span><b>Not sourced</b></div>
+                <div className="check-row"><span className="check-status fail"><X size={11}/></span><span>Mission cost basis</span><b>Not sourced</b></div>
+              </div>
               <div className="validation-divider"/>
-              <div className="readiness"><span>DESIGN READINESS</span><strong>{checks.every(item => item.ok) ? 'Within preview limits' : 'Needs attention'}</strong></div>
-              <button className="run-button" onClick={() => { setRunState('complete'); setActiveNav('Constraint checks') }}><Activity size={16}/> Run design assessment <ArrowUpRight size={15}/></button>
-              {runState === 'complete' && <div className="run-result"><Check size={14}/> Assessment completed using the visible concept rules. This is not a flight-readiness review.</div>}
+              <div className="readiness"><span>ASSESSMENT STATUS</span><strong>Blocked pending traceable inputs</strong></div>
+              <p className="resources-intro">ORBITOPS will not calculate a pass/fail result until the required source data, units, and applicable constraints are available.</p>
+              <button className="run-button" onClick={() => goTo('NASA data sources')}><Database size={16}/> Review source catalogue <ArrowUpRight size={15}/></button>
             </div>
           </aside>
         </section>
@@ -193,15 +165,16 @@ function App() {
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
         </section>
 
-        <section className="bottom-grid">
-          <div className="panel score-panel"><div className="bottom-panel-heading"><div><div className="section-eyebrow">MISSION PERFORMANCE</div><h3>Concept score</h3></div><span className="score-tag">PREVIEW MODEL</span></div><div className="score-content"><div className="score-ring" style={{ '--score': `${design.score * 3.6}deg` } as CSSProperties}><div><strong>{design.score}</strong><small>/ 100</small></div></div><div className="score-copy"><strong>{design.score >= 75 ? 'Promising configuration' : design.score >= 50 ? 'Room to optimize' : 'Needs redesign'}</strong><p>A relative learning score based on selected payload science points and the four visible constraint checks.</p><span><ArrowDownRight size={13}/> Not a NASA mission rating</span></div></div></div>
-          <div className="panel next-panel"><div className="bottom-panel-heading"><div><div className="section-eyebrow">UP NEXT</div><h3>Mission milestones</h3></div><span className="milestone-count">02 / 05</span></div><div className="milestone-list"><div className="milestone done"><span><Check size={12}/></span><div><strong>Define science objectives</strong><small>Mission concept established</small></div><b>DONE</b></div><div className="milestone current"><span>02</span><div><strong>Configure spacecraft</strong><small>Payload and resource trade-offs</small></div><b>IN PROGRESS</b></div><div className="milestone"><span>03</span><div><strong>Verify mission architecture</strong><small>Requirements and interfaces</small></div><b>LOCKED</b></div></div></div>
+        <section className="section-block readiness-note">
+          <div className="section-heading"><div><div className="section-eyebrow">NEXT ENGINEERING GATE</div><h3>Source validation before calculations</h3></div><span className="section-note">REQUIREMENT GATE 01</span></div>
+          <p className="resources-intro">The next step is to select specific NASA/PDS products, preserve their original labels and metadata, and verify units and coordinate references. Until then, numerical mission outputs remain unavailable by design.</p>
+          <button className="primary-button" onClick={() => goTo('NASA data sources')}><Database size={16}/> Browse authoritative sources <ArrowUpRight size={15}/></button>
         </section>
 
-        <footer className="footer"><div><span className="footer-mark"><OrbitMark/></span><strong>ORBITOPS</strong><span>EDUCATIONAL MISSION DESIGN ENVIRONMENT</span></div><p>Independent educational project · Not affiliated with or endorsed by NASA.</p><p>Concept values shown are illustrative and are not flight-qualified engineering data.</p></footer>
+        <footer className="footer"><div><span className="footer-mark"><OrbitMark/></span><strong>ORBITOPS</strong><span>EDUCATIONAL MISSION PLANNING WORKSPACE</span></div><p>Independent educational project · Not affiliated with or endorsed by NASA.</p><p>Unverified engineering values are intentionally not displayed.</p></footer>
       </div>
     </main>
-    {showAll && <div className="guide-popover"><button className="guide-close" onClick={() => setShowAll(false)} aria-label="Close guide"><X size={16}/></button><div className="section-eyebrow">ENGINEERING NOTES</div><h3>How to read this workspace</h3><p><strong>Mass</strong> compares the platform and selected payload against the chosen illustrative launch-class capacity.</p><p><strong>Power</strong> compares a simple peak-load estimate with an assumed generation value. It is not an orbital eclipse or battery simulation.</p><p><strong>Data</strong> compares daily instrument output assumptions against a simplified daily downlink allowance adjusted by a conceptual orbit preset.</p><p><strong>Science points</strong> are relative game-design weights, not scientific measurement units.</p><p className="guide-source">This first website slice intentionally exposes its assumptions. NASA dataset ingestion, validated orbital propagation and detailed subsystem models are future engineering work.</p></div>}
+    {showAll && <div className="guide-popover"><button className="guide-close" onClick={() => setShowAll(false)} aria-label="Close guide"><X size={16}/></button><div className="section-eyebrow">ENGINEERING NOTES</div><h3>How to read this workspace</h3><p><strong>Source catalogue</strong> links to original NASA/PDS/JPL and partner reference pages. A link does not mean the dataset has been downloaded or processed.</p><p><strong>Engineering values</strong> remain unavailable until a specific source product and its metadata are ingested and validated.</p><p><strong>Architecture choices</strong> are labels only. ORBITOPS does not calculate or simulate trajectories, spacecraft performance, illumination, or communications.</p><p className="guide-source">The project will show missing data as unavailable instead of filling gaps with invented assumptions. See the data provenance plan for the ingestion requirements.</p></div>}
   </div>
 }
 
