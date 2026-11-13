@@ -133,7 +133,7 @@ function App() {
             <h2>Lunar <em>Pathfinder</em></h2>
             <p>Investigate lunar polar terrain, characterize surface conditions, and identify regions of scientific interest for future exploration.</p>
             <div className="hero-tags"><span><Target size={13}/> Lunar science</span><span><Compass size={13}/> South polar region</span><span><Atom size={13}/> Orbiter concept</span></div>
-            <button className="hero-link" onClick={() => goTo('Mission designer')}>Continue mission design <ArrowUpRight size={15}/></button>
+            <button className="hero-link" onClick={() => goTo('Spacecraft designer')}>Continue mission design <ArrowUpRight size={15}/></button>
           </div>
           <div className="moon-scene" aria-label="Illustration of the Moon and a spacecraft in orbit">
             <div className="orbit-ring orbit-one"/><div className="orbit-ring orbit-two"/><div className="moon"><div className="moon-crater crater-one"/><div className="moon-crater crater-two"/><div className="moon-crater crater-three"/><div className="moon-crater crater-four"/></div>
@@ -201,7 +201,7 @@ function App() {
               <div className="check-list">{checks.map(item => <div className="check-row" key={item.label}><span className={item.ok ? 'check-status ok' : 'check-status fail'}>{item.ok ? <Check size={11}/> : <X size={11}/>}</span><span>{item.label}</span><b>{item.value}</b></div>)}</div>
               <div className="validation-divider"/>
               <div className="readiness"><span>DESIGN READINESS</span><strong>{checks.every(item => item.ok) ? 'Within preview limits' : 'Needs attention'}</strong></div>
-              <button className="run-button" onClick={() => { setRunState('complete'); setActiveNav('Mission report') }}><Activity size={16}/> Run design assessment <ArrowUpRight size={15}/></button>
+              <button className="run-button" onClick={() => { setRunState('complete'); setActiveNav('Constraint checks') }}><Activity size={16}/> Run design assessment <ArrowUpRight size={15}/></button>
               {runState === 'complete' && <div className="run-result"><Check size={14}/> Assessment completed using the visible concept rules. This is not a flight-readiness review.</div>}
             </div>
           </aside>
