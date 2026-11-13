@@ -48,6 +48,33 @@ async def search_pds_products(
     }
 
 
+@app.get("/api/v1/pds/products/{identifier}/members")
+async def list_pds_product_members(
+    identifier: Annotated[str, Path(min_length=5, max_length=512)],
+    depth: Annotated[int, Query(ge=1, le=2)] = 1,
+) -> dict[str, Any]:
+    """Browse one or two levels down the official PDS product hierarchy."""
+    try:
+        request_url, upstream_payload = await pds_client.list_members(
+            identifier=identifier,
+            depth=depth,
+        )
+    except PdsApiError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return {
+        "source": "NASA Planetary Data System Search API",
+        "source_url": request_url,
+        "api_documentation": "https://nasa-pds.github.io/pds-api/",
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "identifier": identifier,
+        "depth": depth,
+        "response": upstream_payload,
+    }
+
+
 @app.get("/api/v1/pds/products/{identifier}")
 async def resolve_pds_product(
     identifier: Annotated[str, Path(min_length=5, max_length=512)],
