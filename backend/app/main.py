@@ -27,14 +27,16 @@ async def search_pds_products(
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> dict[str, Any]:
     """Return the unmodified JSON payload returned by NASA's PDS Search API."""
+    if len(keywords.strip()) < 2:
+        raise HTTPException(status_code=422, detail="Enter at least two non-whitespace characters.")
+
     try:
         request_url, upstream_payload = await pds_client.search_products(
             keywords=keywords.strip(),
             limit=limit,
         )
     except PdsApiError as exc:
-        status_code = 504 if "timed out" in str(exc).lower() else 502
-        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     return {
         "source": "NASA Planetary Data System Search API",
