@@ -44,7 +44,7 @@ class PdsClient:
                 response.raise_for_status()
                 payload = response.json()
         except httpx.TimeoutException as exc:
-            raise PdsApiError("NASA PDS Search API request timed out") from exc
+            raise PdsApiError("NASA PDS Search API request timed out", status_code=504) from exc
         except httpx.HTTPStatusError as exc:
             raise PdsApiError(
                 f"NASA PDS Search API returned HTTP {exc.response.status_code}",
@@ -70,10 +70,11 @@ class PdsClient:
                 response.raise_for_status()
                 payload = response.json()
         except httpx.TimeoutException as exc:
-            raise PdsApiError("NASA PDS Search API request timed out") from exc
+            raise PdsApiError("NASA PDS Search API request timed out", status_code=504) from exc
         except httpx.HTTPStatusError as exc:
             raise PdsApiError(
-                f"NASA PDS Search API returned HTTP {exc.response.status_code}"
+                f"NASA PDS Search API returned HTTP {exc.response.status_code}",
+                status_code=404 if exc.response.status_code == 404 else 502,
             ) from exc
         except httpx.HTTPError as exc:
             raise PdsApiError("Could not connect to NASA PDS Search API") from exc
