@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+import re
+
+
+# Keep the parser deliberately narrow: these are scalar fields needed to
+# describe the selected LOLA GDR image and its map reference. Complex PDS3
+# objects and multiline descriptions remain in the original label fixture.
+_LABEL_FIELDS = {
+    "PDS_VERSION_ID", "PRODUCT_VERSION_ID", "DATA_SET_ID",
+    "INSTRUMENT_HOST_NAME", "INSTRUMENT_NAME", "INSTRUMENT_ID", "TARGET_NAME",
+    "START_TIME", "STOP_TIME", "PRODUCT_CREATION_TIME", "FILE_NAME",
+    "FILE_RECORDS", "RECORD_BYTES", "LINES", "LINE_SAMPLES",
+    "SAMPLE_TYPE", "SAMPLE_BITS", "UNIT", "SCALING_FACTOR", "OFFSET",
+    "MAP_PROJECTION_TYPE", "KEYWORD_LATITUDE_TYPE",
+    "POSITIVE_LONGITUDE_DIRECTION", "CENTER_LATITUDE", "CENTER_LONGITUDE",
+    "MAP_SCALE", "MAXIMUM_LATITUDE", "MINIMUM_LATITUDE",
+    "COORDINATE_SYSTEM_TYPE", "COORDINATE_SYSTEM_NAME",
+}
+_ASSIGNMENT = re.compile(r"^\s*([A-Z][A-Z0-9_]*)\s*=\s*(.*?)\s*$")
+
+
+class PdsLabelError(ValueError):
+    """Raised when a source label is not a supported PDS3 text label."""
+
+
+def parse_pds3_label(label_text: str, *, max_characters: int = 1_000_000) -> dict[str, str]:
+    """Extract allowlisted scalar fields from a PDS3 label without unit conversion."""
+    if not isinstance(label_text, str) or not label_text.strip():
+        raise PdsLabelError("PDS3 label is empty")
+    if len(label_text) > max_characters:
+        raise PdsLabelError("PDS3 label exceeds the configured size limit")
+
+    values: dict[str, str] = {}
+    for line in label_text.splitlines():
+        match = _ASSIGNMENT.match(line)
+        if not match:
+            continue
+        key, raw_value = match.groups()
+        if key not in _LABEL_FIELDS:
+            continue
+        value = raw_value.strip()
+        if not value:
+            continue
+        if value.startswith(chr(34)) and value.endswith(chr(34)) and len(value) >= 2:
+            value = value[1:-1]
+        elif value.startswith(chr(39)) and value.endswith(chr(39)) and len(value) >= 2:
+            value = value[1:-1]
+        # A duplicate key may belong to another nested PDS3 object. Keep the
+        # first scalar rather than silently overwriting it without object scope.
+        if key in values:
+            continue
+        values[key] = value
+
+    if values.get("PDS_VERSION_ID") != "PDS3":
+        raise PdsLabelError("Label does not declare PDS_VERSION_ID = PDS3")
+    if not values.get("FILE_NAME"):
+        raise PdsLabelError("PDS3 label does not identify its data FILE_NAME")
+    return values
