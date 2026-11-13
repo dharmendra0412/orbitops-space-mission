@@ -17,6 +17,14 @@ export const missionResources: MissionResource[] = [
     url: 'https://pds-geosciences.wustl.edu/missions/lro/',
   },
   {
+    id: 'lro-release-67',
+    title: 'LRO PDS Release 67 summary',
+    owner: 'NASA Planetary Data System',
+    kind: 'DATASET GUIDE',
+    description: 'Official release summary listing new LOLA and Diviner archive deliveries. Use the release record to verify product version and acquisition coverage.',
+    url: 'https://pds.nasa.gov/datasearch/subscription-service/SS-20260915.shtml',
+  },
+  {
     id: 'lola-rdr-bundle',
     title: 'LRO LOLA Processed (RDR) Data Bundle',
     owner: 'NASA PDS Geosciences Node',
