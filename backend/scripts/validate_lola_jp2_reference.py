@@ -178,7 +178,7 @@ def main() -> None:
         f"{key}={value}"
         for key, value in required_label_fields.items()
         if not re.search(
-            rf"^\\s*{re.escape(key)}\\s*=\\s*{re.escape(value)}\\s*$",
+            rf"^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$",
             label_text,
             re.MULTILINE,
         )
