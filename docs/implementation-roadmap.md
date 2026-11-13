@@ -26,6 +26,13 @@ Every numerical source-derived value must carry its source product, source URL, 
 
 The source-validation workflow passed in [run #43416474484](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484); retained evidence is in [artifact #14031861899](https://github.com/dharmendra0412/orbitops-space-mission/actions/runs/43416474484/artifacts/14031861899).
 
+## 13 November 2026 SPICE archive audit
+
+- Added [Kaguya LALT / SELENE SPICE source audit](./kaguya-lalt-spice-source-audit.md) using the official JAXA/DARTS archive metadata.
+- Confirmed the 2008-01-05 day lies within the published SGMH and SGMI SPK date ranges. The archive says SGMI used LALT crossover observations in January and March 2008, while SGMH used two-way tracking only; SGMH is therefore the preferred candidate for avoiding direct LALT crossover circularity, subject to executable epoch/segment coverage and its documented orbit uncertainty.
+- Flagged the SCLK version discrepancy between existing N0067 notes and the published PDS3 archive's `SEL_M_V01.TSC`; exact kernel identity and compatibility must be resolved before TI conversion.
+- No footprint or terrain visualization is approved by this metadata audit.
+
 ## Remaining milestones
 
 ### 1. Independent geodetic and cross-sensor validation
