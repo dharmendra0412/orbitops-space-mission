@@ -6,6 +6,10 @@ from urllib.parse import quote
 import httpx
 
 PDS_SEARCH_BASE_URL = "https://pds.nasa.gov/api/search/1"
+PDS_LOLA_GDR_SAMPLE_LABEL_URL = (
+    "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/"
+    "lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.lbl"
+)
 
 
 class PdsApiError(RuntimeError):
@@ -99,6 +103,39 @@ class PdsClient:
             raise PdsApiError("NASA PDS Search API returned invalid JSON") from exc
 
         return str(response.url), payload
+
+
+    async def fetch_lola_gdr_sample_label(self) -> tuple[str, str]:
+        """Fetch one fixed, public LOLA PDS3 label; never accepts a caller URL."""
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout_seconds,
+                transport=self._transport,
+                follow_redirects=False,
+            ) as client:
+                response = await client.get(
+                    PDS_LOLA_GDR_SAMPLE_LABEL_URL,
+                    headers={"Accept": "text/plain"},
+                )
+                response.raise_for_status()
+                if len(response.content) > 1_000_000:
+                    raise PdsApiError("NASA PDS label exceeds the configured size limit")
+                label_text = response.content.decode("ascii")
+        except PdsApiError:
+            raise
+        except UnicodeDecodeError as exc:
+            raise PdsApiError("NASA PDS label is not valid ASCII text") from exc
+        except httpx.TimeoutException as exc:
+            raise PdsApiError("NASA PDS label request timed out", status_code=504) from exc
+        except httpx.HTTPStatusError as exc:
+            raise PdsApiError(
+                f"NASA PDS archive returned HTTP {exc.response.status_code}",
+                status_code=404 if exc.response.status_code == 404 else 502,
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise PdsApiError("Could not connect to the NASA PDS archive") from exc
+
+        return str(response.url), label_text
 
     async def resolve_product(self, *, identifier: str) -> tuple[str, Any]:
         encoded_identifier = quote(identifier, safe="")
