@@ -7,6 +7,8 @@ from app.services.lola_gdr import (
     LOLA_MEAN_EARTH_REFERENCE_RADIUS_M,
     LolaRasterError,
     iter_lola_gdr_rows,
+    lola_dn_to_height_m,
+    lola_dn_to_planetary_radius_m,
     lola_polar_pixel_to_latlon,
 )
 from app.services.pds3_label import parse_pds3_label
@@ -85,3 +87,19 @@ def test_lola_polar_projection_rejects_unknown_reference_frame(lola_metadata):
 
     with pytest.raises(LolaRasterError, match="coordinate reference frame"):
         lola_polar_pixel_to_latlon(metadata, line_index=3791, sample_index=3791)
+
+
+
+def test_lola_gdr_height_conversion_uses_scale_without_offset(lola_metadata):
+    assert lola_dn_to_height_m(-2, lola_metadata) == -1.0
+    assert lola_dn_to_height_m(10, lola_metadata) == 5.0
+
+
+def test_lola_gdr_planetary_radius_conversion_adds_reference_radius(lola_metadata):
+    assert lola_dn_to_planetary_radius_m(-2, lola_metadata) == 1_737_399.0
+    assert lola_dn_to_planetary_radius_m(10, lola_metadata) == 1_737_405.0
+
+
+def test_lola_gdr_conversion_rejects_non_integer_dn(lola_metadata):
+    with pytest.raises(LolaRasterError, match="integer sample"):
+        lola_dn_to_height_m(1.5, lola_metadata)
