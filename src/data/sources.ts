@@ -85,7 +85,7 @@ export const missionResources: MissionResource[] = [
     title: 'SELENE SPICE kernel archive',
     owner: 'JAXA / DARTS ISAS',
     kind: 'DATA ARCHIVE',
-    description: 'Official SPICE archive for SELENE/Kaguya, including SPK spacecraft ephemerides, CK attitude, FK frames, IK instrument kernels, SCLK clock correlation, LSK leap seconds, and PCK lunar orientation kernels. The SPK information file documents the SGMI orbit as using LALT crossovers in January and March 2008, while the SGMH orbit solution uses two-way tracking only (with 4-way tracking contributing to its gravity model). Neither is automatically the exact SGM100g orbit named in the example LALT_LGT_TS label; inspect the per-product orbit reference and kernel coverage before any reconstruction.',
+    description: 'Official SPICE archive for SELENE/Kaguya. Includes SPK orbit ephemerides (SGMH and SGMI), monthly telemetry-derived CK attitude files, spacecraft FK, LALT IK, SCLK, LSK, and lunar PCK/FK resources. For the 2008-01-05 raw LALT range sample, the relevant files include corrected SCLK SEL_M_V01.TSC (N0067), SEL_M_200801_D_V03.BC (2-second attitude), SEL_V01.TF, SEL_LALT_V01.TI, and the DE421 MOON_ME frame/PCK chain. SGMH is a two-way-tracking orbit candidate; SGMI includes LALT crossover constraints in January/March 2008. The exact SGM100g orbit named by the LGT example is not the same as these archived SPKs, and no footprint is exposed until coverage and frame checks pass.',
     url: 'https://darts.isas.jaxa.jp/en/datasets/darts:sln-l-spice-6-v1.0/',
   },
   {
