@@ -91,6 +91,8 @@ export function LaltPixelInspector() {
       </button>
       {error && <p className="pds-search-error" role="alert">{error}</p>}
       {result && <div className="lola-coordinate-result lola-pixel-result" aria-live="polite">
+        <div><span>PDS3 dataset / product</span><strong>{result.dataset_id} · {result.product_id}</strong></div>
+        <div><span>Grid node</span><strong>Line {result.line_index}, sample {result.sample_index}</strong></div>
         <div><span>Grid elevation</span><strong>{result.is_dummy ? 'No data (source dummy)' : result.elevation_km?.toFixed(3) + ' km'}</strong></div>
         <div><span>Elevation converted</span><strong>{result.is_dummy ? 'Unavailable' : result.elevation_m?.toFixed(1) + ' m'}</strong></div>
         <div><span>Planetocentric latitude</span><strong>{result.planetocentric_latitude_degrees.toFixed(8)}°</strong></div>
@@ -100,6 +102,7 @@ export function LaltPixelInspector() {
         <div className="lola-pixel-provenance">
           <span>Retrieved {new Date(result.retrieved_at).toLocaleString()} · {result.coordinate_reference}</span>
           <a href={result.source_url} target="_blank" rel="noopener noreferrer">Original JAXA DARTS raster <ExternalLink size={11}/></a>
+          <a href={result.label_source_url} target="_blank" rel="noopener noreferrer">Detached PDS3 label <ExternalLink size={11}/></a>
           <small>{result.validation_scope}</small>
         </div>
       </div>}
