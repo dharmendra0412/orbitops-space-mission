@@ -367,7 +367,7 @@ function App() {
     }
   }
 
-  const navItems = ['Research overview', 'Research categories', 'Input readiness', 'Mission brief', 'NASA data sources', 'Engineering guide']
+  const navItems = ['Research overview', 'Research categories', 'Input readiness', 'Mission brief', 'NASA data sources']
   const goTo = (item: string) => {
     setActiveNav(item)
     setMobileMenu(false)
@@ -386,13 +386,13 @@ function App() {
       <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">RESEARCH</div>
       <nav className="side-nav">{navItems.map((item, index) => {
-        const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3, Telescope]
+        const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
         const Icon = icons[index]
-        return <button key={item} className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
+        return <button key={item} type="button" className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)} aria-current={activeNav === item ? 'page' : undefined}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
       })}</nav>
       <div className="nav-label tools-label">TOOLS</div>
-      <button className="nav-item" onClick={() => setShowAll(!showAll)}><Layers3 size={17}/><span>Engineering guide</span></button>
-      <button className="nav-item" onClick={() => setShowAll(true)}><ShieldCheck size={17}/><span>Model limitations</span></button>
+      <button type="button" className={`nav-item ${showAll ? 'active' : ''}`} onClick={() => setShowAll(!showAll)} aria-expanded={showAll}><Layers3 size={17}/><span>Engineering guide</span></button>
+      <button type="button" className="nav-item" onClick={() => setShowAll(true)} aria-expanded={showAll}><ShieldCheck size={17}/><span>Model limitations</span></button>
       <div className="sidebar-bottom">
         <div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><strong>Need a hand?</strong><p>Explore the engineering guide to understand source and engineering trade-offs.</p><button onClick={() => setShowAll(!showAll)}>Open learning guide <ArrowUpRight size={13}/></button></div>
         <div className="profile"><div className="profile-avatar">R</div><div><strong>Research session</strong><span>Local browser only</span></div><Settings2 size={16}/></div>
@@ -402,7 +402,7 @@ function App() {
     {mobileMenu && <button className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
     <main className="main-area">
       <header className="topbar">
-        <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>RESEARCH</span><span className="crumb-slash">/</span><strong>LUNAR SCIENCE</strong></div>
+        <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
         <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local session · not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
       </header>
 
