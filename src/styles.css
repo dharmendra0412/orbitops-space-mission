@@ -36,3 +36,5 @@
 .pds-results>a{display:inline-flex;align-items:center;gap:5px;color:#8bd5ef;font-size:9px;text-decoration:none}
 .pds-results pre{max-height:360px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border:1px solid #26374c;border-radius:5px;padding:10px;color:#b7c8d9;font:8px/1.6 'DM Mono',monospace;margin:9px 0 0}
 @media(max-width:600px){.pds-search-input-row{flex-direction:column}.pds-search-input-row .run-button{width:100%}.pds-search-heading{flex-direction:column}}
+
+.pds-search-panel+.pds-search-panel{margin-top:-3px}
