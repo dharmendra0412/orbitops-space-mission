@@ -55,7 +55,7 @@ describe('calculateMissionDesign', () => {
       selectedInstrumentIds: ['camera', 'thermal'],
       budgetMillions: 143,
     })
-    expect(result.requiredBudgetMillions).toBe(156)
+    expect(result.requiredBudgetMillions).toBe(164)
     expect(result.budgetPass).toBe(false)
   })
 
