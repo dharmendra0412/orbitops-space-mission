@@ -330,3 +330,89 @@ async def test_pds_json_response_over_size_limit_is_rejected():
 
     with pytest.raises(PdsApiError, match="exceeds the configured size limit"):
         await client.search_products(keywords="LOLA", limit=1)
+
+
+@pytest.mark.asyncio
+async def test_lola_pixel_fetch_requests_exact_two_byte_range_and_decodes_signed_dn():
+    import struct
+    from app.services.pds_client import (
+        PDS_LOLA_GDR_IMAGE_BYTES,
+        PDS_LOLA_GDR_RECORD_BYTES,
+        PDS_LOLA_GDR_SAMPLE_IMG_URL,
+    )
+
+    line_index, sample_index = 3791, 3792
+    byte_start = line_index * PDS_LOLA_GDR_RECORD_BYTES + sample_index * 2
+    byte_end = byte_start + 1
+    expected_dn = -11002
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == PDS_LOLA_GDR_SAMPLE_IMG_URL
+        assert request.headers["range"] == f"bytes={byte_start}-{byte_end}"
+        assert request.headers["accept-encoding"] == "identity"
+        return httpx.Response(
+            206,
+            content=struct.pack("<h", expected_dn),
+            headers={
+                "Content-Range": f"bytes {byte_start}-{byte_end}/{PDS_LOLA_GDR_IMAGE_BYTES}",
+                "Content-Length": "2",
+            },
+        )
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    source_url, dn, byte_range = await client.fetch_lola_gdr_sample_dn(
+        line_index=line_index,
+        sample_index=sample_index,
+    )
+
+    assert source_url == PDS_LOLA_GDR_SAMPLE_IMG_URL
+    assert dn == expected_dn
+    assert byte_range == (byte_start, byte_end)
+
+
+@pytest.mark.asyncio
+async def test_lola_pixel_fetch_refuses_server_that_ignores_range():
+    client = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"not downloading a full raster")
+    ))
+    with pytest.raises(PdsApiError, match="did not honor the two-byte Range"):
+        await client.fetch_lola_gdr_sample_dn(line_index=0, sample_index=0)
+
+
+@pytest.mark.asyncio
+async def test_lola_pixel_fetch_rejects_wrong_content_range_and_incomplete_body():
+    from app.services.pds_client import PDS_LOLA_GDR_IMAGE_BYTES
+
+    wrong_range = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(
+            206,
+            content=b"\\x01\\x00",
+            headers={"Content-Range": f"bytes 2-3/{PDS_LOLA_GDR_IMAGE_BYTES}"},
+        )
+    ))
+    with pytest.raises(PdsApiError, match="unexpected Content-Range"):
+        await wrong_range.fetch_lola_gdr_sample_dn(line_index=0, sample_index=0)
+
+    short_body = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(
+            206,
+            content=b"\\x01",
+            headers={"Content-Range": f"bytes 0-1/{PDS_LOLA_GDR_IMAGE_BYTES}"},
+        )
+    ))
+    with pytest.raises(PdsApiError, match="incomplete two-byte"):
+        await short_body.fetch_lola_gdr_sample_dn(line_index=0, sample_index=0)
+
+
+@pytest.mark.asyncio
+async def test_lola_pixel_fetch_rejects_out_of_bounds_indices_before_network_request():
+    requests_seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests_seen.append(request)
+        return httpx.Response(500)
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    with pytest.raises(PdsApiError, match="outside the image bounds"):
+        await client.fetch_lola_gdr_sample_dn(line_index=7584, sample_index=0)
+    assert requests_seen == []
