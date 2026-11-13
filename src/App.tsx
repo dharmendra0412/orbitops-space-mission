@@ -226,7 +226,7 @@ function App() {
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
       <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>MISSION ENGINEERING</span></div><button className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close menu"><X size={18}/></button></div>
       <div className="workspace-label">WORKSPACE</div>
-      <div className="workspace-switch"><div className="workspace-avatar">LP</div><div><strong>Example workspace</strong><span>Local draft only</span></div><ChevronDown size={15}/></div>
+      <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">MISSION</div>
       <nav className="side-nav">{navItems.map((item, index) => {
         const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
@@ -238,38 +238,32 @@ function App() {
       <button className="nav-item" onClick={() => setShowAll(true)}><ShieldCheck size={17}/><span>Model limitations</span></button>
       <div className="sidebar-bottom">
         <div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><strong>Need a hand?</strong><p>Explore the engineering guide to understand mission trade-offs.</p><button onClick={() => setShowAll(!showAll)}>Open learning guide <ArrowUpRight size={13}/></button></div>
-        <div className="profile"><div className="profile-avatar">G</div><div><strong>Guest workspace</strong><span>Not signed in</span></div><Settings2 size={16}/></div>
+        <div className="profile"><div className="profile-avatar">R</div><div><strong>Research session</strong><span>Local browser only</span></div><Settings2 size={16}/></div>
       </div>
     </aside>
 
     {mobileMenu && <button className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
     <main className="main-area">
       <header className="topbar">
-        <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>MISSIONS</span><span className="crumb-slash">/</span><strong>LUNAR PATHFINDER</strong></div>
-        <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local preview · changes not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
+        <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>RESEARCH</span><span className="crumb-slash">/</span><strong>LUNAR SCIENCE</strong></div>
+        <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local session · not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
       </header>
 
       <div className="content">
         <section className="page-heading">
-          <div><div className="eyebrow"><span className="eyebrow-line"/> MISSION WORKSPACE <span className="eyebrow-tag">CONCEPT PHASE</span></div><h1>Mission overview<span className="heading-period">.</span></h1><p>Explore mission requirements using traceable scientific references.</p></div>
+          <div><div className="eyebrow"><span className="eyebrow-line"/> SCIENCE RESEARCH WORKSPACE</div><h1>Research overview<span className="heading-period">.</span></h1><p>Explore authoritative lunar science data and technical documentation.</p></div>
           <button className="primary-button" onClick={() => goTo('Research categories')}><Rocket size={16}/> Explore research areas <ArrowUpRight size={15}/></button>
         </section>
 
         <section className="mission-hero">
           <div className="hero-copy">
-            <div className="hero-kicker"><span className="hero-kicker-dot"/> EXAMPLE WORKSPACE <span className="hero-id">NOT A REAL MISSION</span></div>
-            <h2>Lunar <em>Pathfinder</em></h2>
-            <p>Investigate lunar polar terrain, characterize surface conditions, and identify regions of scientific interest for future exploration.</p>
-            <div className="hero-tags"><span><Target size={13}/> Lunar science</span><span><Compass size={13}/> South polar region</span><span><Atom size={13}/> Orbiter concept</span></div>
-            <button className="hero-link" onClick={() => goTo('Research categories')}>Explore research categories <ArrowUpRight size={15}/></button>
+            <div className="hero-kicker"><span className="hero-kicker-dot"/> RESEARCH AREA <span className="hero-id">NO MISSION CONFIGURED</span></div>
+            <h2>Lunar <em>science</em></h2>
+            <p>Review original lunar polar science products and their documentation. No spacecraft, trajectory, mission scenario, or scientific result is assumed in this workspace.</p>
+            <div className="hero-tags"><span><Target size={13}/> Lunar science</span><span><Compass size={13}/> South-polar data</span><span><Database size={13}/> Source-first research</span></div>
+            <button className="hero-link" onClick={() => goTo('NASA data sources')}>Browse NASA data sources <ArrowUpRight size={15}/></button>
           </div>
-          <div className="moon-scene" aria-label="Decorative illustration of the Moon and a spacecraft; not mission data">
-            <div className="orbit-ring orbit-one"/><div className="orbit-ring orbit-two"/><div className="moon"><div className="moon-crater crater-one"/><div className="moon-crater crater-two"/><div className="moon-crater crater-three"/><div className="moon-crater crater-four"/></div>
-            <div className="satellite-art"><div className="sat-body"/><div className="sat-panel left"/><div className="sat-panel right"/><div className="sat-antenna"/></div>
-            <div className="scene-label label-orbit"><span/> CONCEPT ARTWORK</div>
-            <div className="scene-coordinates">EXAMPLE TARGET <span>/</span> LUNAR SOUTH POLE</div>
-          </div>
-          <div className="hero-footer"><span>WORKSPACE <strong>EXAMPLE ONLY</strong></span><span>DATA STATUS <strong>NO PRODUCTS INGESTED</strong></span><span>TEAM MODE <strong>NOT CONNECTED</strong></span></div>
+          <div className="hero-footer"><span>WORKSPACE <strong>RESEARCH ONLY</strong></span><span>DATA STATUS <strong>NO PRODUCTS INGESTED</strong></span><span>MISSION CONFIG <strong>NOT CONFIGURED</strong></span></div>
         </section>
 
         <section className="section-block">
@@ -284,7 +278,7 @@ function App() {
 
         <section className="designer-layout" id="designer">
           <div className="designer-main">
-            <div className="section-heading designer-heading"><div><div className="section-eyebrow">RESEARCH CATEGORIES</div><h3>Choose research categories</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
+            <div className="section-heading designer-heading"><div><div className="section-eyebrow">RESEARCH CATEGORIES</div><h3>Choose research categories</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="section-note">SOURCE-BASED TOPICS</span></div>
             <div className="panel instrument-panel">
               <div className="panel-header"><div className="panel-title-icon"><Telescope size={17}/></div><div><strong>Science investigation areas</strong><span>Select topics to research in the source archives</span></div><span className="selected-count">{selected.length} SELECTED</span></div>
               <div className="instrument-list">{instruments.map(item => {
