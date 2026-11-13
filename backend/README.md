@@ -41,7 +41,7 @@ The downloader tries two fixed HTTPS sources in order: the PDS Geosciences archi
 After retrieval, validate the complete IMG locally:
 
 ```bash
-python scripts/validate_lola_gdr_sample.py --image data/raw/lola/ldem_85s_40m.img --label tests/fixtures/lola_ldem_85s_40m.lbl
+python -m scripts.validate_lola_gdr_sample --image data/raw/lola/ldem_85s_40m.img --label tests/fixtures/lola_ldem_85s_40m.lbl
 ```
 
 The validator memory-maps the raster and checks the full byte count, decoded sample count, signed little-endian DN extrema, and agreement with the PDS label's `DERIVED_MINIMUM`/`DERIVED_MAXIMUM`. The default label is a source-derived repository fixture; pass the detached source `.LBL` path when available. This validation does not substitute for an upstream checksum or independent geodetic comparison.
