@@ -60,7 +60,7 @@ async def download_lola_gdr_img(
     output_created = False
     downloaded_source: str | None = None
     attempted_sources: list[str] = []
-    last_transport_error: httpx.RequestError | None = None
+    last_transport_error: httpx.HTTPError | None = None
     try:
         for source_url in SOURCE_URLS:
             attempted_sources.append(source_url)
@@ -109,11 +109,11 @@ async def download_lola_gdr_img(
                 continue
 
         if downloaded_source is None:
-            raise RuntimeError("All fixed LOLA raster sources failed before a complete response was received") from last_transport_error
+            raise RuntimeError("All fixed LOLA raster sources failed to provide a usable response") from last_transport_error
 
         if received != expected_bytes:
             raise RuntimeError(
-                f"PDS raster byte count mismatch: expected {expected_bytes}, received {received}"
+                f"LOLA raster byte count mismatch: expected {expected_bytes}, received {received}"
             )
 
         manifest = {
