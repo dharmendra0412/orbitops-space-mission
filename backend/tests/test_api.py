@@ -172,7 +172,7 @@ def test_members_endpoint_hides_non_advancing_pagination_cursor(monkeypatch):
 
     response = client.get(
         "/api/v1/pds/products/urn:nasa:pds:example::1.0/members",
-        params={"search_after": cursor},
+        params={"search_after": cursor, "limit": 1},
     )
 
     assert response.status_code == 200
