@@ -16,7 +16,9 @@ Every numerical source-derived value must carry its source product, source URL, 
 - Complete IMG-versus-JPEG2000 comparison: maximum difference 1 DN, zero samples beyond the 1-DN gate.
 - Eight-point PROJ transformation cross-check against the PDS DSMAP_POLAR pixel-center equations.
 - Fixed-source HTTP Range pixel reads and bounded row-profile reads, both using the same PdsClient methods as the live API.
-- Live UI for source-label-derived coordinates, actual raw DN/height/radius lookup, and un-interpolated row-profile plots.
+- Live UI for source-label-derived LOLA coordinates, actual raw DN/height/radius lookup, and un-interpolated row-profile plots.
+- Fixed-source JAXA DARTS Kaguya LALT label and bounded four-byte pixel endpoints, with dummy-value handling and an explicit interpolated-grid caveat.
+- Real-source Kaguya LALT south-polar grid download and 7.37 million-cell cross-product comparison against LOLA; this is a consistency check, not independent geodetic ground truth.
 - A user-authored mission brief builder with browser-local autosave, JSON import/export, and a requirement matrix for statements, target/units, source URLs, and evidence notes. Source links are explicitly marked as not independently validated.
 - API and web tests, dependency audits, typechecks, production builds, and data-provenance documentation.
 
@@ -26,8 +28,8 @@ The source-validation workflow passed in [run #43416474484](https://github.com/d
 
 ### 1. Independent geodetic and cross-sensor validation
 
-- Characterize Kaguya LALT calibrated range products, archived orbit solutions, time systems, and reference frames.
-- Determine whether a LALT comparison can be made without using a LOLA-constrained orbit solution.
+- Characterize the raw Kaguya LALT calibrated range products, archived orbit solutions, time systems, and reference frames beyond the currently inspected interpolated grid.
+- Determine whether a range-level LALT comparison can be made without using a LOLA-constrained orbit solution.
 - Record coverage, datum, frame, spatial resolution, and uncertainty before comparing elevations.
 - Treat LROC NAC and Kaguya Terrain Camera products tied to LOLA as cross-sensor morphology checks, not independent absolute geodetic control.
 - Do not claim independent ground truth until the orbit/frame provenance is demonstrated.
@@ -50,7 +52,7 @@ The source-validation workflow passed in [run #43416474484](https://github.com/d
 
 ### 4. Product hardening and release
 
-- Add end-to-end tests for PDS search, label retrieval, pixel lookup, and row-profile workflows.
+- Add end-to-end tests for PDS search, LOLA and LALT label retrieval, pixel lookup, and row-profile workflows.
 - Test upstream timeouts, rate limits, malformed responses, redirects, range rejection, and source unavailability.
 - Review accessibility, responsive layouts, API limits, observability, deployment configuration, and security controls.
 - Complete human review and release checklist before merging the draft PR.
