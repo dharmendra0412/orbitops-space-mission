@@ -69,7 +69,7 @@ async def list_pds_product_members(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    next_search_after = extract_next_search_after(upstream_payload)
+    next_search_after = extract_next_search_after(upstream_payload, page_limit=limit)
     # Do not offer a "next page" action when the upstream cursor does not
     # advance; doing so could make the UI request the same page indefinitely.
     if search_after is not None and next_search_after == search_after:
