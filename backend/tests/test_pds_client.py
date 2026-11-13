@@ -419,3 +419,57 @@ async def test_lola_pixel_fetch_rejects_out_of_bounds_indices_before_network_req
     with pytest.raises(PdsApiError, match="outside the image bounds"):
         await client.fetch_lola_gdr_sample_dn(line_index=7584, sample_index=0)
     assert requests_seen == []
+
+
+@pytest.mark.asyncio
+async def test_lola_row_segment_fetches_exact_bounded_range_and_decodes_samples():
+    import struct
+    from app.services.pds_client import (
+        PDS_LOLA_GDR_IMAGE_BYTES,
+        PDS_LOLA_GDR_RECORD_BYTES,
+        PDS_LOLA_GDR_SAMPLE_IMG_URL,
+    )
+
+    line_index, start_sample_index, sample_count = 12, 20, 4
+    byte_start = line_index * PDS_LOLA_GDR_RECORD_BYTES + start_sample_index * 2
+    byte_end = byte_start + sample_count * 2 - 1
+    expected_samples = (-3, -2, -1, 0)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == PDS_LOLA_GDR_SAMPLE_IMG_URL
+        assert request.headers["range"] == f"bytes={byte_start}-{byte_end}"
+        return httpx.Response(
+            206,
+            content=struct.pack("<hhhh", *expected_samples),
+            headers={
+                "Content-Range": f"bytes {byte_start}-{byte_end}/{PDS_LOLA_GDR_IMAGE_BYTES}",
+                "Content-Length": str(sample_count * 2),
+            },
+        )
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    source_url, samples, byte_range = await client.fetch_lola_gdr_row_segment(
+        line_index=line_index,
+        start_sample_index=start_sample_index,
+        sample_count=sample_count,
+    )
+    assert source_url == PDS_LOLA_GDR_SAMPLE_IMG_URL
+    assert samples == expected_samples
+    assert byte_range == (byte_start, byte_end)
+
+
+@pytest.mark.asyncio
+async def test_lola_row_segment_rejects_oversized_and_out_of_bounds_requests():
+    client = PdsClient(transport=httpx.MockTransport(lambda request: httpx.Response(500)))
+    with pytest.raises(PdsApiError, match="between 1 and 512"):
+        await client.fetch_lola_gdr_row_segment(
+            line_index=0,
+            start_sample_index=0,
+            sample_count=513,
+        )
+    with pytest.raises(PdsApiError, match="extends beyond"):
+        await client.fetch_lola_gdr_row_segment(
+            line_index=0,
+            start_sample_index=7583,
+            sample_count=2,
+        )
