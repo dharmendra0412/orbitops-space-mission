@@ -31,7 +31,7 @@ async def validate_lalt_source_ranges(
     """Compare live API-client byte ranges with the complete downloaded DARTS IMG."""
     active_client = client or LaltClient()
     image_validation = validate_lalt_gt_sp_image_file(image_path)
-    local_label = label_path.read_text(encoding="ascii")
+    local_label = label_path.read_bytes().decode("ascii")
     source_label_url, source_label = await active_client.fetch_gt_sp_label()
     if source_label_url != LALT_GT_SP_LABEL_URL:
         raise RuntimeError("LALT client returned an unexpected label source URL")
