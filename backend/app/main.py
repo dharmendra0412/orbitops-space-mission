@@ -5,7 +5,7 @@ from typing import Any, Annotated
 
 from fastapi import FastAPI, HTTPException, Path, Query
 
-from app.services.pds_client import PDS_SEARCH_BASE_URL, PdsApiError, PdsClient
+from app.services.pds_client import PdsApiError, PdsClient
 
 app = FastAPI(
     title="ORBITOPS Data API",
@@ -58,8 +58,7 @@ async def resolve_pds_product(
             identifier=identifier,
         )
     except PdsApiError as exc:
-        status_code = 504 if "timed out" in str(exc).lower() else 502
-        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     return {
         "source": "NASA Planetary Data System Search API",
