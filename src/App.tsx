@@ -37,6 +37,47 @@ type PdsLookupResponse = {
   response: unknown
 }
 
+type PdsMembersResponse = {
+  source: string
+  source_url: string
+  api_documentation: string
+  retrieved_at: string
+  identifier: string
+  depth: number
+  response: unknown
+}
+
+type PdsMemberRecord = {
+  id: string
+  title?: string
+  type?: string
+  start_date_time?: string
+  stop_date_time?: string
+}
+
+function extractPdsMembers(response: unknown): PdsMemberRecord[] | null {
+  const rows = Array.isArray(response)
+    ? response
+    : response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)
+      ? response.data
+      : null
+  if (!rows) return null
+
+  return rows.flatMap((item): PdsMemberRecord[] => {
+    if (!item || typeof item !== 'object') return []
+    const row = item as Record<string, unknown>
+    const id = typeof row.id === 'string' ? row.id : typeof row.lidvid === 'string' ? row.lidvid : null
+    if (!id) return []
+    return [{
+      id,
+      title: typeof row.title === 'string' ? row.title : undefined,
+      type: typeof row.type === 'string' ? row.type : undefined,
+      start_date_time: typeof row.start_date_time === 'string' ? row.start_date_time : undefined,
+      stop_date_time: typeof row.stop_date_time === 'string' ? row.stop_date_time : undefined,
+    }]
+  })
+}
+
 type PdsProductSummary = {
   lidvid: string
   title?: string
@@ -79,6 +120,9 @@ function App() {
   const [pdsLookupResponse, setPdsLookupResponse] = useState<PdsLookupResponse | null>(null)
   const [pdsLookupError, setPdsLookupError] = useState('')
   const [pdsLookupLoading, setPdsLookupLoading] = useState(false)
+  const [pdsMembersResponse, setPdsMembersResponse] = useState<PdsMembersResponse | null>(null)
+  const [pdsMembersError, setPdsMembersError] = useState('')
+  const [pdsMembersLoading, setPdsMembersLoading] = useState(false)
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -138,6 +182,36 @@ function App() {
       setPdsLookupError(error instanceof Error ? error.message : 'Unable to resolve the PDS product identifier.')
     } finally {
       setPdsLookupLoading(false)
+    }
+  }
+
+
+  const pdsMembers = pdsMembersResponse ? extractPdsMembers(pdsMembersResponse.response) : null
+
+  const browsePdsMembers = async (identifierValue?: string, depth = 1) => {
+    const identifier = (identifierValue ?? pdsIdentifier).trim()
+    if (identifier.length < 5) {
+      setPdsMembersError('Resolve or enter a PDS collection/bundle identifier first.')
+      setPdsMembersResponse(null)
+      return
+    }
+
+    setPdsMembersLoading(true)
+    setPdsMembersError('')
+    setPdsMembersResponse(null)
+    try {
+      const response = await fetch('/api/v1/pds/products/' + encodeURIComponent(identifier) + '/members?depth=' + depth)
+      const payload = await response.json() as PdsMembersResponse | { detail?: string }
+      if (!response.ok) {
+        const message = 'detail' in payload && payload.detail ? payload.detail : 'PDS hierarchy request failed (HTTP ' + response.status + ')'
+        throw new Error(message)
+      }
+      setPdsIdentifier(identifier)
+      setPdsMembersResponse(payload as PdsMembersResponse)
+    } catch (error) {
+      setPdsMembersError(error instanceof Error ? error.message : 'Unable to retrieve PDS child products.')
+    } finally {
+      setPdsMembersLoading(false)
     }
   }
 
@@ -318,7 +392,38 @@ function App() {
             {pdsLookupResponse && <div className="pds-results">
               <div className="pds-results-meta"><span>{pdsLookupResponse.source}</span><span>Retrieved {new Date(pdsLookupResponse.retrieved_at).toLocaleString()}</span></div>
               <a href={pdsLookupResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream product metadata <ExternalLink size={12}/></a>
+              <div className="pds-hierarchy-actions">
+                <button type="button" onClick={() => void browsePdsMembers(pdsLookupResponse.identifier, 1)} disabled={pdsMembersLoading}>
+                  {pdsMembersLoading ? 'Loading archive…' : 'Browse direct children'} <ArrowUpRight size={12}/>
+                </button>
+                <button type="button" onClick={() => void browsePdsMembers(pdsLookupResponse.identifier, 2)} disabled={pdsMembersLoading}>
+                  Browse two hierarchy levels <ArrowUpRight size={12}/>
+                </button>
+              </div>
               <pre>{JSON.stringify(pdsLookupResponse.response, null, 2)}</pre>
+            </div>}
+          </div>
+
+          <div className="panel pds-search-panel">
+            <div className="pds-search-heading"><div><strong>Archive hierarchy results</strong><span>Child products returned by NASA PDS for the selected identifier</span></div><span className="resource-kind">LIVE ARCHIVE BROWSE</span></div>
+            {pdsMembersError && <p className="pds-search-error" role="alert">{pdsMembersError}</p>}
+            {pdsMembersResponse && <div className="pds-results">
+              <div className="pds-results-meta"><span>Depth {pdsMembersResponse.depth} · {pdsMembersResponse.source}</span><span>Retrieved {new Date(pdsMembersResponse.retrieved_at).toLocaleString()}</span></div>
+              <a href={pdsMembersResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream hierarchy query <ExternalLink size={12}/></a>
+              {pdsMembers === null
+                ? <pre>{JSON.stringify(pdsMembersResponse.response, null, 2)}</pre>
+                : pdsMembers.length === 0
+                  ? <p className="pds-empty">NASA PDS returned no child records for this identifier and hierarchy depth. Check the archive node's direct holdings.</p>
+                  : <div className="pds-product-results">
+                      <div className="pds-results-count">{pdsMembers.length} child records returned in this response</div>
+                      {pdsMembers.map((member) => <article className="pds-product-card" key={member.id}>
+                        <strong>{member.title ?? 'Title not supplied by source'}</strong>
+                        <span>{member.type ?? 'Product type not supplied'}</span>
+                        <code>{member.id}</code>
+                        {(member.start_date_time || member.stop_date_time) && <small>{member.start_date_time ?? 'Start time not supplied'} — {member.stop_date_time ?? 'Stop time not supplied'}</small>}
+                        <button type="button" onClick={() => void resolvePdsProduct(member.id)}>Resolve product metadata <ArrowUpRight size={12}/></button>
+                      </article>)}
+                    </div>}
             </div>}
           </div>
           <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
