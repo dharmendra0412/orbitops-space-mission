@@ -46,6 +46,7 @@ type PdsProductSummary = {
 }
 
 function extractPdsProducts(response: unknown): { hits?: number; products: PdsProductSummary[] } | null {
+  if (Array.isArray(response) && response.length === 0) return { hits: 0, products: [] }
   if (!response || typeof response !== 'object' || !('data' in response) || !Array.isArray(response.data)) return null
   const summary = 'summary' in response && response.summary && typeof response.summary === 'object'
     ? response.summary as Record<string, unknown>
