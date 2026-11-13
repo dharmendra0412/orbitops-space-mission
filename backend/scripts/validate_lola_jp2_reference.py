@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import httpx
@@ -164,16 +165,24 @@ def main() -> None:
         accept="text/plain, */*",
     )
     label_text = args.jp2_label.read_text(encoding="ascii")
-    required_label_values = (
-        'PRODUCT_VERSION_ID        = "V2.1"',
-        'PRODUCT_ID                = "LDEM_85S_40M"',
-        'ENCODING_TYPE              = "JP2"',
-        'UNCOMPRESSED_FILE_NAME  = "LDEM_85S_40M.IMG"',
-        'REQUIRED_STORAGE_BYTES     = "24960972"',
-        "DERIVED_MINIMUM       = -11002",
-        "DERIVED_MAXIMUM       = 14054",
-    )
-    missing = [value for value in required_label_values if value not in label_text]
+    required_label_fields = {
+        "PRODUCT_VERSION_ID": '"V2.1"',
+        "PRODUCT_ID": '"LDEM_85S_40M"',
+        "ENCODING_TYPE": '"JP2"',
+        "UNCOMPRESSED_FILE_NAME": '"LDEM_85S_40M.IMG"',
+        "REQUIRED_STORAGE_BYTES": '"24960972"',
+        "DERIVED_MINIMUM": "-11002",
+        "DERIVED_MAXIMUM": "14054",
+    }
+    missing = [
+        f"{key}={value}"
+        for key, value in required_label_fields.items()
+        if not re.search(
+            rf"^\\s*{re.escape(key)}\\s*=\\s*{re.escape(value)}\\s*$",
+            label_text,
+            re.MULTILINE,
+        )
+    ]
     if missing:
         parser.error(f"JP2 PDS label is missing required source fields: {missing}")
 
