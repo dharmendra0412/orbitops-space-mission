@@ -38,8 +38,12 @@ class PdsClient:
             ) as client:
                 response = await client.get(
                     url,
-                    params={"keywords": keywords, "limit": limit},
-                    headers={"Accept": "application/json"},
+                    params={
+                        "keywords": keywords,
+                        "limit": limit,
+                        "fields": ["lidvid", "title", "product_class", "start_date_time", "stop_date_time"],
+                    },
+                    headers={"Accept": "application/kvp+json"},
                 )
                 response.raise_for_status()
                 payload = response.json()
