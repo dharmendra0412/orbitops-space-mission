@@ -26,9 +26,11 @@ The current feature branch includes:
 - PDS metadata parsing for original label/data-file references, sizes, MIME types, and checksums when supplied by the source.
 - A bounded live metadata endpoint for one verified LOLA PDS3 south-polar GDR label, with a conservative parser and source-derived test fixture.
 - A source-backed pixel lookup that requests exactly two bytes from the fixed PDS Geosciences archive URL using HTTP Range, validates the PDS label, and returns the original signed DN plus documented height/radius conversions and PDS polar coordinates.
+- A bounded LOLA row-profile lookup (up to 512 contiguous samples) and a source-derived elevation plot with the label's metres-per-pixel spacing; no interpolation or smoothing is applied.
+- A user-authored mission brief builder with browser-local autosave, JSON export, and a requirement traceability matrix. Source links remain unverified until separately checked.
 - Automated frontend and backend tests, dependency audits, and production builds.
 
-The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline. The source-validation workflow downloads and validates one fixed LOLA sample product for repeatable engineering checks. The live application does not bulk-download, cache, or synchronize observation files; the pixel endpoint requests only the two bytes for one selected pixel.
+The selectable categories are research prompts only. They are not a verified flight-hardware catalogue or a spacecraft configuration. The source catalogue is not an ingestion pipeline. The source-validation workflow downloads and validates one fixed LOLA sample product for repeatable engineering checks. The live application does not bulk-download, cache, or synchronize observation files; pixel and row-profile endpoints request only bounded byte ranges from the fixed PDS raster.
 
 ## Read-only NASA PDS API
 
