@@ -82,8 +82,20 @@ def _validate_reference(dataset: rasterio.DatasetReader) -> str:
         raise RuntimeError("Haworth DEM does not declare a CRS")
     wkt = dataset.crs.to_wkt()
     normalized = wkt.lower()
-    if "moon" not in normalized or "stereographic" not in normalized:
-        raise RuntimeError("Haworth DEM CRS is not a declared lunar stereographic CRS")
+    crs_parameters = dataset.crs.to_dict()
+    # GDAL may serialize the PGDA lunar CRS using different WKT dialects.
+    # Accept only an explicit lunar datum/name plus a polar-stereographic
+    # projection declaration; include full metadata in failures for auditability.
+    lunar_declared = "moon" in normalized or "moon" in dataset.crs.name.lower()
+    projection_declared = (
+        "stereographic" in normalized
+        or crs_parameters.get("proj") == "stere"
+    )
+    if not lunar_declared or not projection_declared:
+        raise RuntimeError(
+            "Haworth DEM CRS is not recognized as lunar stereographic; "
+            f"name={dataset.crs.name!r}, parameters={crs_parameters!r}, WKT={wkt}"
+        )
     if not math.isclose(abs(dataset.transform.a), 5.0, abs_tol=1e-6):
         raise RuntimeError(
             f"Expected 5 m/pixel Haworth DEM, got X pixel size {dataset.transform.a}"
