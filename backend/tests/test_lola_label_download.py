@@ -113,6 +113,39 @@ async def test_refuses_companion_label_with_wrong_product_dimensions(tmp_path: P
 
 
 @pytest.mark.asyncio
+async def test_uses_label_from_the_same_mit_archive_host_as_fallback_img(tmp_path: Path):
+    _, manifest_path, _, label_bytes = prepare_download(tmp_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    from scripts.fetch_lola_gdr_sample import FALLBACK_SOURCE_URL
+    manifest["source_url"] = FALLBACK_SOURCE_URL
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == LABEL_URLS[FALLBACK_SOURCE_URL]
+        return httpx.Response(200, content=label_bytes)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+        result = await fetch_lola_gdr_label(manifest_path, client=client)
+
+    assert result["label_source_url"] == LABEL_URLS[FALLBACK_SOURCE_URL]
+    assert (tmp_path / "sample.lbl").read_bytes() == label_bytes
+
+
+@pytest.mark.asyncio
+async def test_rejects_label_content_length_over_limit_before_reading(tmp_path: Path):
+    _, manifest_path, _, _ = prepare_download(tmp_path)
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, headers={"content-length": "1000001"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+        with pytest.raises(RuntimeError, match="1 MB limit"):
+            await fetch_lola_gdr_label(manifest_path, client=client)
+
+    assert not (tmp_path / "sample.lbl").exists()
+
+
+@pytest.mark.asyncio
 async def test_refuses_label_redirect(tmp_path: Path):
     _, manifest_path, _, _ = prepare_download(tmp_path)
 
