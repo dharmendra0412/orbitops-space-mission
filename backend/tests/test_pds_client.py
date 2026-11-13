@@ -264,3 +264,32 @@ async def test_fetch_lola_sample_label_rejects_oversized_and_non_ascii_content()
     ))
     with pytest.raises(PdsApiError, match="ASCII"):
         await non_ascii_client.fetch_lola_gdr_sample_label()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "request_method",
+    ["search_products", "resolve_product", "list_members"],
+)
+async def test_pds_api_redirects_are_not_followed(request_method: str):
+    requests_seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests_seen.append(request)
+        return httpx.Response(
+            302,
+            headers={"Location": "http://127.0.0.1:8000/internal"},
+        )
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    with pytest.raises(PdsApiError, match="HTTP 302"):
+        if request_method == "search_products":
+            await client.search_products(keywords="LOLA")
+        elif request_method == "resolve_product":
+            await client.resolve_product(identifier="urn:nasa:pds:example::1.0")
+        else:
+            await client.list_members(identifier="urn:nasa:pds:example::1.0")
+
+    # Only the fixed NASA PDS host is contacted; redirect targets are not fetched.
+    assert len(requests_seen) == 1
+    assert requests_seen[0].url.host == "pds.nasa.gov"
