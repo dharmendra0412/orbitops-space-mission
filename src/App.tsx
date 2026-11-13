@@ -110,11 +110,11 @@ function App() {
     }
   }
 
-  const navItems = ['Mission overview', 'Spacecraft designer', 'Constraint checks', 'NASA data sources', 'Engineering guide']
+  const navItems = ['Mission overview', 'Research categories', 'Constraint checks', 'NASA data sources', 'Engineering guide']
   const goTo = (item: string) => {
     setActiveNav(item)
     setMobileMenu(false)
-    if (item === 'Spacecraft designer') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
+    if (item === 'Research categories') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
     else if (item === 'Mission overview') window.scrollTo({ top: 0, behavior: 'smooth' })
     else if (item === 'Engineering guide') setShowAll(true)
     else if (item === 'NASA data sources') document.getElementById('data-sources')?.scrollIntoView({ behavior: 'smooth' })
@@ -151,7 +151,7 @@ function App() {
       <div className="content">
         <section className="page-heading">
           <div><div className="eyebrow"><span className="eyebrow-line"/> MISSION WORKSPACE <span className="eyebrow-tag">CONCEPT PHASE</span></div><h1>Mission overview<span className="heading-period">.</span></h1><p>Explore mission requirements using traceable scientific references.</p></div>
-          <button className="primary-button" onClick={() => goTo('Spacecraft designer')}><Rocket size={16}/> Configure spacecraft <ArrowUpRight size={15}/></button>
+          <button className="primary-button" onClick={() => goTo('Research categories')}><Rocket size={16}/> Explore research areas <ArrowUpRight size={15}/></button>
         </section>
 
         <section className="mission-hero">
@@ -160,7 +160,7 @@ function App() {
             <h2>Lunar <em>Pathfinder</em></h2>
             <p>Investigate lunar polar terrain, characterize surface conditions, and identify regions of scientific interest for future exploration.</p>
             <div className="hero-tags"><span><Target size={13}/> Lunar science</span><span><Compass size={13}/> South polar region</span><span><Atom size={13}/> Orbiter concept</span></div>
-            <button className="hero-link" onClick={() => goTo('Spacecraft designer')}>Continue mission design <ArrowUpRight size={15}/></button>
+            <button className="hero-link" onClick={() => goTo('Research categories')}>Explore research categories <ArrowUpRight size={15}/></button>
           </div>
           <div className="moon-scene" aria-label="Decorative illustration of the Moon and a spacecraft; not mission data">
             <div className="orbit-ring orbit-one"/><div className="orbit-ring orbit-two"/><div className="moon"><div className="moon-crater crater-one"/><div className="moon-crater crater-two"/><div className="moon-crater crater-three"/><div className="moon-crater crater-four"/></div>
@@ -183,7 +183,7 @@ function App() {
 
         <section className="designer-layout" id="designer">
           <div className="designer-main">
-            <div className="section-heading designer-heading"><div><div className="section-eyebrow">CONFIGURATION STUDIO</div><h3>Choose research categories</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
+            <div className="section-heading designer-heading"><div><div className="section-eyebrow">RESEARCH CATEGORIES</div><h3>Choose research categories</h3><p>Select research categories. No hardware specifications are assumed or invented.</p></div><span className="step-pill">STEP 02 <span>/ 05</span></span></div>
             <div className="panel instrument-panel">
               <div className="panel-header"><div className="panel-title-icon"><Telescope size={17}/></div><div><strong>Science investigation areas</strong><span>Select topics to research in the source archives</span></div><span className="selected-count">{selected.length} SELECTED</span></div>
               <div className="instrument-list">{instruments.map(item => {
