@@ -20,7 +20,7 @@ def test_range_probe_requires_exact_206_and_matches_verified_img_prefix():
     )
     assert result["source_url"] == SOURCE_URL
     assert result["bytes_returned"] == 2
-    assert result["first_sample_dn"] == -32767
+    assert result["sample_dn"] == -32767
     assert result["matches_validated_local_img"] is True
 
 
@@ -33,6 +33,22 @@ def test_range_probe_rejects_status_without_partial_content(status_code):
             body=bytes([0, 0]),
             local_prefix=bytes([0, 0]),
         )
+
+
+def test_range_probe_validates_nonzero_pixel_byte_offset():
+    byte_start = 57_509_470
+    result = validate_range_response(
+        status_code=206,
+        headers=httpx.Headers({
+            "Content-Range": f"bytes {byte_start}-{byte_start + 1}/{EXPECTED_IMAGE_BYTES}",
+            "Content-Length": "2",
+        }),
+        body=bytes([0xFA, 0xD4]),
+        local_prefix=bytes([0xFA, 0xD4]),
+        byte_start=byte_start,
+    )
+    assert result["byte_range_inclusive"] == {"start": byte_start, "end": byte_start + 1}
+    assert result["sample_dn"] == -11010
 
 
 def test_range_probe_rejects_incorrect_content_range():
