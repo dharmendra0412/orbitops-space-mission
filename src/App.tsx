@@ -308,7 +308,7 @@ function App() {
             <div className="pds-search-controls">
               <label className="pds-search-label" htmlFor="pds-identifier">PDS product identifier</label>
               <div className="pds-search-input-row">
-                <input id="pds-identifier" value={pdsIdentifier} onChange={(event) => setPdsIdentifier(event.target.value)} placeholder="urn:nasa:pds:..." maxLength={512}/>
+                <input id="pds-identifier" value={pdsIdentifier} onChange={(event) => setPdsIdentifier(event.target.value)} placeholder="urn:nasa:pds:lro_lola_rdr:data_gridded::1.0" maxLength={512}/>
                 <button className="run-button" type="button" onClick={() => void resolvePdsProduct()} disabled={pdsLookupLoading || pdsIdentifier.trim().length < 5}>
                   <Database size={15}/>{pdsLookupLoading ? 'Resolving…' : 'Resolve product'}
                 </button>
