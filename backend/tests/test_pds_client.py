@@ -314,3 +314,19 @@ async def test_lola_label_redirects_are_not_followed():
 
     assert len(requests_seen) == 1
     assert str(requests_seen[0].url) == PDS_LOLA_GDR_SAMPLE_LABEL_URL
+
+
+@pytest.mark.asyncio
+async def test_pds_json_response_over_size_limit_is_rejected():
+    from app.services.pds_client import PDS_JSON_RESPONSE_MAX_BYTES
+
+    client = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(
+            200,
+            content=b" " * (PDS_JSON_RESPONSE_MAX_BYTES + 1),
+            headers={"content-type": "application/json"},
+        )
+    ))
+
+    with pytest.raises(PdsApiError, match="exceeds the configured size limit"):
+        await client.search_products(keywords="LOLA", limit=1)
