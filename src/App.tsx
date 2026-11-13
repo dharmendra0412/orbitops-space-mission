@@ -81,9 +81,6 @@ function extractPdsMembers(response: unknown): PdsMemberRecord[] | null {
 type PdsProductSummary = {
   lidvid: string
   title?: string
-  product_class?: string
-  start_date_time?: string
-  stop_date_time?: string
 }
 
 function extractPdsProducts(response: unknown): { hits?: number; products: PdsProductSummary[] } | null {
@@ -98,9 +95,6 @@ function extractPdsProducts(response: unknown): { hits?: number; products: PdsPr
     return [{
       lidvid: item.lidvid,
       title: typeof row.title === 'string' ? row.title : undefined,
-      product_class: typeof row.product_class === 'string' ? row.product_class : undefined,
-      start_date_time: typeof row.start_date_time === 'string' ? row.start_date_time : undefined,
-      stop_date_time: typeof row.stop_date_time === 'string' ? row.stop_date_time : undefined,
     }]
   })
   return { hits: typeof summary.hits === 'number' ? summary.hits : undefined, products }
@@ -357,9 +351,8 @@ function App() {
                   ? <p className="pds-empty">The PDS API returned no product records for this query. Check the mission-specific archive index; the Search API may not contain every holding.</p>
                   : pdsProducts.products.map((product) => <article className="pds-product-card" key={product.lidvid}>
                       <strong>{product.title ?? 'Title not supplied by source'}</strong>
-                      <span>{product.product_class ?? 'PDS product class not supplied'}</span>
-                      <code>{product.lidvid}</code>
-                      {(product.start_date_time || product.stop_date_time) && <small>{product.start_date_time ?? 'Start time not supplied'} — {product.stop_date_time ?? 'Stop time not supplied'}</small>}
+                      <span>NASA PDS product identifier</span>
+                      <code>{product.lidvid}</code>}
                       <button type="button" onClick={() => void resolvePdsProduct(product.lidvid)}>Resolve source metadata <ArrowUpRight size={12}/></button>
                     </article>)}
               </div> : <pre>{JSON.stringify(pdsSearchResponse.response, null, 2)}</pre>}
