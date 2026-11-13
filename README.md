@@ -1,8 +1,8 @@
-# ORBITOPS — Space Mission Engineering Simulator
+# ORBITOPS — Space Mission Planning Workspace
 
-**Design. Engineer. Launch. Operate. Discover.**
+**Plan. Trace. Verify. Discover.**
 
-ORBITOPS is a browser-based educational space-mission design game. Players work individually or in teams of up to four to turn a scientific objective into an engineering-constrained mission concept, validate the design, simulate mission operations, and review the results.
+ORBITOPS is an independent educational workspace for exploring space-mission requirements and authoritative science resources. It is being built without fabricated observations or pretend mission simulations. The product will distinguish user-entered assumptions, sourced observations, derived values, and unavailable information.
 
 ## Product principles
 
@@ -68,4 +68,4 @@ Changes are developed on feature branches and reviewed through pull requests. Fe
 
 ## Disclaimer
 
-ORBITOPS is an educational engineering simulator, not NASA software and not flight-qualified mission-design software. It must not be used for operational spacecraft design, navigation, launch decisions, or flight safety.
+ORBITOPS is an independent educational project, not NASA software and not flight-qualified mission-design software. NASA does not endorse this project. It must not be used for operational spacecraft design, navigation, launch decisions, or flight safety. Non-U.S. Government resources are subject to their own data-use terms.
