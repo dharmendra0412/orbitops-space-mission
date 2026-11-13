@@ -114,6 +114,10 @@ pip-audit -r requirements.txt
 pytest -q
 ```
 
+## Self-hosted website deployment
+
+A Docker Compose deployment is provided in [deploy/README.md](deploy/README.md). It serves the website and private FastAPI service on one origin, with Nginx routing `/api/` requests internally. Review the TLS and network exposure notes before public hosting.
+
 ## Separate-host deployment configuration
 
 The web client can call a separately hosted FastAPI service without changing source code:
