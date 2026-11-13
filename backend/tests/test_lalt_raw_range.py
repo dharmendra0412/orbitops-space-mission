@@ -67,7 +67,7 @@ def test_validate_lalt_rd_day_checks_pds_layout_rows_and_time_tags():
 @pytest.mark.parametrize(
     ("label", "table", "message"),
     [
-        (make_label(records=4), make_table(
+        (make_label(rows=3, records=4), make_table(
             "0883526397 109414.2 21.0 67.3 206.4 -16.8 -8.7 -10.2 NON NML LO",
             "0883526399 109568.0 21.0 68.5 208.9 -16.8 -8.7 -10.2 NON NML LO",
         ), "physical records"),
