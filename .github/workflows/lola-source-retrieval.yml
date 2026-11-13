@@ -10,6 +10,7 @@ on:
       - "backend/scripts/fetch_lola_gdr_label.py"
       - "backend/scripts/validate_lola_gdr_sample.py"
       - "backend/scripts/validate_lola_jp2_reference.py"
+      - "backend/scripts/validate_lola_pgda_reference.py"
       - "backend/app/services/lola_gdr.py"
       - "backend/app/services/pds3_label.py"
 
@@ -44,6 +45,8 @@ jobs:
         run: pip install rasterio
       - name: Retrieve and cross-check JPEG2000 counterpart
         run: python -m scripts.validate_lola_jp2_reference
+      - name: Compare against NASA PGDA adjusted LOLA reference DEM
+        run: python -m scripts.validate_lola_pgda_reference
       - name: Preserve retrieved source and provenance as workflow artifact
         uses: actions/upload-artifact@v6
         with:
@@ -55,5 +58,6 @@ jobs:
             backend/data/raw/lola/ldem_85s_40m.jp2
             backend/data/raw/lola/ldem_85s_40m_jp2.lbl
             backend/data/raw/lola/ldem_85s_40m.jp2.manifest.json
+            backend/data/raw/lola/ldem_85s_40m.pgda-comparison.json
           if-no-files-found: error
           retention-days: 30
