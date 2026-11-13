@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Download, FileText, Save, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Download, FileText, Save, Trash2, Upload } from 'lucide-react'
 import {
   countCompletedMissionBriefFields,
   createEmptyMissionBrief,
@@ -18,6 +18,7 @@ export function MissionBrief() {
   const [draft, setDraft] = useState<MissionBriefDraft>(createEmptyMissionBrief)
   const [loaded, setLoaded] = useState(false)
   const [saveStatus, setSaveStatus] = useState('Loading this browser’s draft…')
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     try {
@@ -90,6 +91,29 @@ export function MissionBrief() {
     URL.revokeObjectURL(objectUrl)
   }
 
+  const importDraft = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    try {
+      if (file.size > 1_000_000) throw new Error('Mission brief JSON must be smaller than 1 MB.')
+      const raw = await file.text()
+      const parsed: unknown = JSON.parse(raw)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('The selected file is not a mission brief export.')
+      }
+      const record = parsed as Record<string, unknown>
+      if (record.schema_version !== 1 || !record.brief || typeof record.brief !== 'object') {
+        throw new Error('Unsupported mission brief export format.')
+      }
+      setDraft(parseMissionBriefDraft(raw))
+      setSaveStatus('Mission brief imported and saved in this browser.')
+    } catch (error) {
+      setSaveStatus(error instanceof Error ? error.message : 'Unable to import this mission brief.')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
   const clearDraft = () => {
     try {
       window.localStorage.removeItem(STORAGE_KEY)
@@ -121,6 +145,8 @@ export function MissionBrief() {
             <div><strong>{completed} / {missionBriefFields.length} sections filled</strong><small>{saveStatus}</small></div>
           </div>
           <div className="mission-brief-actions">
+            <input ref={importInputRef} type="file" accept="application/json,.json" hidden onChange={(event) => void importDraft(event)} />
+            <button type="button" onClick={() => importInputRef.current?.click()}><Upload size={14}/> Import JSON</button>
             <button type="button" onClick={exportDraft}><Download size={14}/> Export JSON</button>
             <button type="button" className="mission-brief-clear" onClick={clearDraft}><Trash2 size={14}/> Clear draft</button>
           </div>
