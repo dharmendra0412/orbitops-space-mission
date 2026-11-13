@@ -9,6 +9,7 @@ import {
 import { instruments, orbitOptions } from './domain/catalog'
 import { missionResources } from './data/sources'
 import { extractPdsFileManifest, extractPdsMembers, extractPdsProducts, mergePdsMembers } from './data/pds'
+import { lolaPixelToLatLon } from './data/lolaProjection'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -115,6 +116,8 @@ function App() {
   const [pdsLabelResponse, setPdsLabelResponse] = useState<Pds3LabelResponse | null>(null)
   const [pdsLabelError, setPdsLabelError] = useState('')
   const [pdsLabelLoading, setPdsLabelLoading] = useState(false)
+  const [lolaLineIndex, setLolaLineIndex] = useState('3791')
+  const [lolaSampleIndex, setLolaSampleIndex] = useState('3791')
   const toggleInstrument = (id: string) => {
     setSelected(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   }
@@ -122,6 +125,19 @@ function App() {
 
   const pdsProducts = pdsSearchResponse ? extractPdsProducts(pdsSearchResponse.response) : null
   const pdsFiles = pdsLookupResponse ? extractPdsFileManifest(pdsLookupResponse.response) : []
+  let lolaPixelLocation: ReturnType<typeof lolaPixelToLatLon> | null = null
+  let lolaPixelLocationError = ''
+  if (pdsLabelResponse) {
+    try {
+      lolaPixelLocation = lolaPixelToLatLon(
+        pdsLabelResponse.metadata,
+        lolaLineIndex.trim() ? Number(lolaLineIndex) : Number.NaN,
+        lolaSampleIndex.trim() ? Number(lolaSampleIndex) : Number.NaN,
+      )
+    } catch (error) {
+      lolaPixelLocationError = error instanceof Error ? error.message : 'Unable to calculate the source-grid coordinate.'
+    }
+  }
 
   const searchPds = async () => {
     const keywords = pdsKeywords.trim()
@@ -482,6 +498,23 @@ function App() {
                 ] as const).map(([label, key]) => pdsLabelResponse.metadata[key] ? <article className="pds-file-row" key={key}>
                   <div><strong>{label}</strong><span>{pdsLabelResponse.metadata[key]}</span></div>
                 </article> : null)}
+              </div>
+              <div className="lola-coordinate-tool">
+                <div className="pds-results-count">PDS polar-grid coordinate lookup · zero-based pixel indices</div>
+                <div className="lola-coordinate-fields">
+                  <label>Line index
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINES) - 1} step="1" value={lolaLineIndex} onChange={(event) => setLolaLineIndex(event.target.value)} />
+                  </label>
+                  <label>Sample index
+                    <input type="number" min="0" max={Number(pdsLabelResponse.metadata.LINE_SAMPLES) - 1} step="1" value={lolaSampleIndex} onChange={(event) => setLolaSampleIndex(event.target.value)} />
+                  </label>
+                </div>
+                {lolaPixelLocation ? <div className="lola-coordinate-result" aria-live="polite">
+                  <div><span>Planetocentric latitude</span><strong>{lolaPixelLocation.latitudeDegrees.toFixed(8)}°</strong></div>
+                  <div><span>East longitude</span><strong>{lolaPixelLocation.eastLongitudeDegrees.toFixed(8)}°</strong></div>
+                  <div><span>Projected X / Y</span><strong>{lolaPixelLocation.xMapMeters.toFixed(2)} m / {lolaPixelLocation.yMapMeters.toFixed(2)} m</strong></div>
+                </div> : <p className="pds-search-error" role="alert">{lolaPixelLocationError}</p>}
+                <p className="pds-search-note">Coordinates are calculated from the retrieved PDS label and DSMAP_POLAR equations. This tool locates a grid cell only; it does not read the IMG raster or return an elevation value.</p>
               </div>
               <p className="pds-search-note">{pdsLabelResponse.note} Values and units are source metadata; no unit conversion has been applied.</p>
             </div>}
