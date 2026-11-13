@@ -92,6 +92,10 @@ def validate_against_pgda(
             CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".TIF",
             GDAL_HTTP_MULTIRANGE="YES",
             GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES",
+            GDAL_HTTP_TIMEOUT="30",
+            GDAL_HTTP_MAX_RETRY="2",
+            GDAL_HTTP_RETRY_DELAY="1",
+            CPL_VSIL_CURL_CACHE_SIZE="25000000",
         ):
             with rasterio.open(remote_path) as pgda:
                 if pgda.count != 1:
