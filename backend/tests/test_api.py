@@ -152,3 +152,44 @@ def test_members_endpoint_hides_non_advancing_pagination_cursor(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["next_search_after"] is None
+
+
+def test_lola_pds3_label_endpoint_returns_parsed_source_metadata(monkeypatch):
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "lola_ldem_85s_40m.lbl"
+    label_text = fixture.read_text(encoding="ascii")
+
+    class LabelClient:
+        async def fetch_lola_gdr_sample_label(self):
+            return (
+                "https://pds-geosciences.wustl.edu/lro/sample/ldem_85s_40m.lbl",
+                label_text,
+            )
+
+    monkeypatch.setattr(api, "pds_client", LabelClient())
+    client = TestClient(api.app)
+
+    response = client.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/label")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["label_format"] == "PDS3"
+    assert payload["product_file"] == "LDEM_85S_40M.IMG"
+    assert payload["metadata"]["SCALING_FACTOR"] == "0.5"
+    assert payload["metadata"]["OFFSET"] == "1737400."
+    assert payload["metadata"]["MAP_SCALE"] == "40 <m/pix>"
+    assert "not been downloaded or decoded" in payload["note"]
+
+
+def test_lola_pds3_label_endpoint_reports_malformed_upstream_label(monkeypatch):
+    class InvalidLabelClient:
+        async def fetch_lola_gdr_sample_label(self):
+            return ("https://pds-geosciences.wustl.edu/sample.lbl", "not a PDS label")
+
+    monkeypatch.setattr(api, "pds_client", InvalidLabelClient())
+    client = TestClient(api.app)
+
+    response = client.get("/api/v1/pds3/lola/gdr/ldem-85s-40m/label")
+
+    assert response.status_code == 502
