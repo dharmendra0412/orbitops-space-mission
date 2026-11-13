@@ -145,6 +145,15 @@ function App() {
   const [orbit, setOrbit] = useState('low')
   const [showAll, setShowAll] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
+
+  useEffect(() => {
+    if (!mobileMenu) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenu(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [mobileMenu])
   const [pdsKeywords, setPdsKeywords] = useState('LOLA')
   const [pdsSearchResponse, setPdsSearchResponse] = useState<PdsSearchResponse | null>(null)
   const [pdsSearchError, setPdsSearchError] = useState('')
@@ -413,11 +422,11 @@ function App() {
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Skip to main content</a>
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
-      <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>SPACE SCIENCE WORKSPACE</span></div><button className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close menu"><X size={18}/></button></div>
+      <div className="brand"><div className="brand-mark"><OrbitMark /></div><div><strong>ORBITOPS</strong><span>SPACE SCIENCE WORKSPACE</span></div><button type="button" className="icon-button mobile-close" onClick={() => setMobileMenu(false)} aria-label="Close navigation menu"><X size={18}/></button></div>
       <div className="workspace-label">WORKSPACE</div>
       <div className="workspace-switch"><div className="workspace-avatar">RS</div><div><strong>Research workspace</strong><span>No mission configured</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">RESEARCH</div>
-      <nav className="side-nav" aria-label="Research sections">{navItems.map((item, index) => {
+      <nav id="research-navigation" className="side-nav" aria-label="Research sections">{navItems.map((item, index) => {
         const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
         const Icon = icons[index]
         return <button key={item} type="button" className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)} aria-current={activeNav === item ? 'page' : undefined}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
@@ -431,10 +440,10 @@ function App() {
       </div>
     </aside>
 
-    {mobileMenu && <button className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
+    {mobileMenu && <button type="button" className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
     <main className="main-area" id="main-content" tabIndex={-1}>
       <header className="topbar">
-        <div className="breadcrumbs"><button className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open menu"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
+        <div className="breadcrumbs"><button type="button" className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open navigation menu" aria-expanded={mobileMenu} aria-controls="research-navigation"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
         <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local session · not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
       </header>
 
