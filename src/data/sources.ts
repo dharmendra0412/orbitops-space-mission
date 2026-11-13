@@ -76,7 +76,7 @@ export const missionResources: MissionResource[] = [
     id: 'kaguya-lalt-range-darts',
     title: 'SELENE LALT range dataset on DARTS',
     owner: 'JAXA / DARTS ISAS',
-    kind: 'DATASET RECORD',
+    kind: 'DATA ARCHIVE',
     description: 'Primary dataset landing page for darts:sln-l-lalt-3-range-v1.0. Reports temporal coverage from 2007-12-30 to 2009-06-10 and range precision within ±5 m. The derived surface position still depends on orbit and frame provenance.',
     url: 'https://darts.isas.jaxa.jp/en/datasets/darts:sln-l-lalt-3-range-v1.0/',
   },
