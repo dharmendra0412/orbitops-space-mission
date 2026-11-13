@@ -1,3 +1,11 @@
+export type MissionRequirement = {
+  id: string
+  statement: string
+  targetValue: string
+  sourceUrl: string
+  evidenceNote: string
+}
+
 export type MissionBriefDraft = {
   missionName: string
   objective: string
@@ -8,6 +16,7 @@ export type MissionBriefDraft = {
   spacecraftConstraints: string
   operationsConcept: string
   evidenceAndAssumptions: string
+  requirements: MissionRequirement[]
 }
 
 export type MissionBriefField = {
@@ -96,11 +105,12 @@ export function createEmptyMissionBrief(): MissionBriefDraft {
     spacecraftConstraints: '',
     operationsConcept: '',
     evidenceAndAssumptions: '',
+    requirements: [],
   }
 }
 
 export function countCompletedMissionBriefFields(draft: MissionBriefDraft): number {
-  return Object.values(draft).filter((value) => value.trim().length > 0).length
+  return missionBriefFields.filter((field) => draft[field.key].trim().length > 0).length
 }
 
 export function getMissingRequiredMissionBriefFields(draft: MissionBriefDraft): string[] {
@@ -121,12 +131,26 @@ export function parseMissionBriefDraft(raw: string | null): MissionBriefDraft {
       ? record.brief as Record<string, unknown>
       : record
     const empty = createEmptyMissionBrief()
-    return Object.fromEntries(
-      Object.keys(empty).map((key) => [
-        key,
-        typeof source[key] === 'string' ? source[key] : '',
+    const parsedFields = Object.fromEntries(
+      missionBriefFields.map((field) => [
+        field.key,
+        typeof source[field.key] === 'string' ? source[field.key] : '',
       ]),
-    ) as MissionBriefDraft
+    ) as Omit<MissionBriefDraft, 'requirements'>
+    const requirements = Array.isArray(source.requirements)
+      ? source.requirements.flatMap((item, index) => {
+          if (!item || typeof item !== 'object' || Array.isArray(item)) return []
+          const row = item as Record<string, unknown>
+          return [{
+            id: typeof row.id === 'string' && row.id.trim() ? row.id : 'REQ-' + String(index + 1).padStart(3, '0'),
+            statement: typeof row.statement === 'string' ? row.statement : '',
+            targetValue: typeof row.targetValue === 'string' ? row.targetValue : '',
+            sourceUrl: typeof row.sourceUrl === 'string' ? row.sourceUrl : '',
+            evidenceNote: typeof row.evidenceNote === 'string' ? row.evidenceNote : '',
+          }]
+        })
+      : []
+    return { ...parsedFields, requirements }
   } catch {
     return createEmptyMissionBrief()
   }
