@@ -73,6 +73,14 @@ export const missionResources: MissionResource[] = [
     url: 'https://ode.rsl.wustl.edu/moon2/pagehelp/Content/Missions_Instruments/KAGUYA%20%28SELENE%29/LALT/Calibrated_Data.htm',
   },
   {
+    id: 'kaguya-lalt-lgt-timeseries',
+    title: 'SELENE LALT Lunar Global Topographic Data as Time Series',
+    owner: 'JAXA / DARTS ISAS',
+    kind: 'DATA ARCHIVE',
+    description: 'Calibrated daily LALT_LGT_TS tables calculated from LALT ranges, main-orbiter position/attitude, and DE421. The format example identifies the 20091028 SGM100g gravity model and NAOJ_RISE_MAIN_ORBIT_SGM100g_20071020_0000-20081029_1338.bsp orbit file. This is a candidate for comparison independent of LOLA only after the orbit kernel and frame provenance are verified; the orbit solution itself uses LALT observations.',
+    url: 'https://darts.isas.jaxa.jp/en/datasets/sln-l-lalt-4-topo-lgt-ts-v2.0',
+  },
+  {
     id: 'kaguya-lalt-range-darts',
     title: 'SELENE LALT range dataset on DARTS',
     owner: 'JAXA / DARTS ISAS',
