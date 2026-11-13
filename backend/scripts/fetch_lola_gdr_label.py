@@ -40,10 +40,14 @@ async def fetch_lola_gdr_label(
     image_path = manifest_path.with_name(image_name)
     label_path = manifest_path.with_name(Path(image_name).stem + ".lbl")
     temporary_path = label_path.with_name(label_path.name + ".part")
+    if manifest.get("file_name") != image_name:
+        raise RuntimeError("LOLA IMG manifest filename does not match its manifest path")
     if not image_path.is_file():
         raise FileNotFoundError(f"LOLA IMG referenced by manifest does not exist: {image_path}")
     if image_path.stat().st_size != manifest.get("actual_bytes_downloaded"):
         raise RuntimeError("LOLA IMG on-disk size no longer matches its download manifest")
+    if manifest.get("actual_bytes_downloaded") != manifest.get("expected_bytes_from_archive_listing"):
+        raise RuntimeError("LOLA IMG manifest does not record a verified archive byte count")
     image_digest = hashlib.sha256()
     with image_path.open("rb") as image_file:
         for chunk in iter(lambda: image_file.read(1024 * 1024), b""):
@@ -60,17 +64,30 @@ async def fetch_lola_gdr_label(
 
     label_created = False
     try:
-        response = await client.get(
+        label_buffer = bytearray()
+        async with client.stream(
+            "GET",
             label_url,
             headers={"Accept": "text/plain", "Accept-Encoding": "identity"},
-        )
-        if response.is_redirect:
-            raise RuntimeError("LOLA label source redirected; refusing an unverified destination")
-        response.raise_for_status()
-        if len(response.content) > MAX_LABEL_BYTES:
-            raise RuntimeError("LOLA PDS3 label exceeds the configured 1 MB limit")
+        ) as response:
+            if response.is_redirect:
+                raise RuntimeError("LOLA label source redirected; refusing an unverified destination")
+            response.raise_for_status()
+            content_length = response.headers.get("content-length")
+            if content_length is not None:
+                try:
+                    declared_length = int(content_length)
+                except ValueError as exc:
+                    raise RuntimeError("LOLA label response supplied an invalid Content-Length") from exc
+                if declared_length < 0 or declared_length > MAX_LABEL_BYTES:
+                    raise RuntimeError("LOLA PDS3 label exceeds the configured 1 MB limit")
+            async for chunk in response.aiter_bytes():
+                if len(label_buffer) + len(chunk) > MAX_LABEL_BYTES:
+                    raise RuntimeError("LOLA PDS3 label exceeds the configured 1 MB limit")
+                label_buffer.extend(chunk)
+        label_bytes = bytes(label_buffer)
         try:
-            label_text = response.content.decode("ascii")
+            label_text = label_bytes.decode("ascii")
         except UnicodeDecodeError as exc:
             raise RuntimeError("LOLA PDS3 label is not ASCII text") from exc
 
@@ -88,14 +105,14 @@ async def fetch_lola_gdr_label(
         if manifest.get("actual_bytes_downloaded") != label_expected_bytes:
             raise RuntimeError("Downloaded LOLA raster byte count disagrees with its companion label")
 
-        digest = hashlib.sha256(response.content).hexdigest()
-        temporary_path.write_bytes(response.content)
+        digest = hashlib.sha256(label_bytes).hexdigest()
+        temporary_path.write_bytes(label_bytes)
         updated_manifest = {
             **manifest,
             "image_sha256_rechecked": image_digest.hexdigest(),
             "label_source_url": label_url,
             "label_file_name": label_path.name,
-            "label_bytes": len(response.content),
+            "label_bytes": len(label_bytes),
             "label_sha256_local": digest,
             "label_verification_status": "ascii_pds3_parsed_product_and_raster_layout_match",
             "label_data_set_id": metadata.get("DATA_SET_ID"),
