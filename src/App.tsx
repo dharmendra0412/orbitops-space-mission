@@ -58,18 +58,18 @@ function App() {
     const data = platform.data + chosen.reduce((sum, item) => sum + item.data, 0)
     const capacity = launch === 'small' ? 75 : launch === 'medium' ? 100 : 140
     const generation = 180
-    const storage = 24
+    const dailyDataAllowance = 24
     const link = orbitOptions.find(item => item.id === orbit)!
     const massPass = mass <= capacity
     const powerPass = power <= generation
-    const dataPass = data <= storage * link.comm
+    const dataPass = data <= dailyDataAllowance * link.comm
     const budgetPass = budget >= 120 + chosen.length * 12 + (launch === 'large' ? 35 : launch === 'medium' ? 20 : 0)
     const score = Math.max(0, Math.min(100, Math.round(
       chosen.reduce((sum, item) => sum + item.science, 0) * 0.9 +
       (massPass ? 12 : 0) + (powerPass ? 10 : 0) + (dataPass ? 8 : 0) +
       (budgetPass ? 8 : 0) + (chosen.length ? 5 : 0)
     )))
-    return { chosen, mass, power, data, capacity, generation, storage, massPass, powerPass, dataPass, budgetPass, score, link }
+    return { chosen, mass, power, data, capacity, generation, dailyDataAllowance, massPass, powerPass, dataPass, budgetPass, score, link }
   }, [selected, orbit, launch, budget])
 
   const toggleInstrument = (id: string) => {
@@ -89,7 +89,7 @@ function App() {
   const checks = [
     { label: 'Launch mass capacity', ok: design.massPass, value: `${design.mass.toFixed(1)} / ${design.capacity} kg` },
     { label: 'Peak power budget', ok: design.powerPass, value: `${design.power} / ${design.generation} W` },
-    { label: 'Data storage estimate', ok: design.dataPass, value: `${design.data.toFixed(1)} / ${(design.storage * design.link.comm).toFixed(1)} GB/day` },
+    { label: 'Daily data allowance', ok: design.dataPass, value: `${design.data.toFixed(1)} / ${(design.dailyDataAllowance * design.link.comm).toFixed(1)} GB/day` },
     { label: 'Development budget', ok: design.budgetPass, value: `$ ${budget}M allocated` },
   ]
 
@@ -148,7 +148,7 @@ function App() {
           <div className="metrics-grid">
             <Metric label="Spacecraft mass" value={design.mass.toFixed(1)} unit="kg" icon={Layers3} detail={`${Math.max(0, design.capacity - design.mass).toFixed(1)} kg capacity margin`} tone="blue"/>
             <Metric label="Peak power demand" value={String(design.power)} unit="W" icon={Zap} detail={`${design.generation - design.power} W generation margin`} tone="amber"/>
-            <Metric label="Data generated" value={design.data.toFixed(1)} unit="GB/day" icon={Database} detail={`${Math.max(0, design.storage * design.link.comm - design.data).toFixed(1)} GB/day headroom`} tone="violet"/>
+            <Metric label="Daily data load" value={design.data.toFixed(1)} unit="GB/day" icon={Database} detail={`${Math.max(0, design.dailyDataAllowance * design.link.comm - design.data).toFixed(1)} GB/day allowance remaining`} tone="violet"/>
             <Metric label="Science potential" value={String(design.chosen.reduce((sum, item) => sum + item.science, 0))} unit="pts" icon={Sparkles} detail="Relative concept-level index" tone="green"/>
           </div>
         </section>
