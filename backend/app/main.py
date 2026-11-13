@@ -131,5 +131,5 @@ async def get_lola_gdr_sample_label() -> dict[str, Any]:
         "label_format": metadata.get("PDS_VERSION_ID"),
         "product_file": metadata.get("FILE_NAME"),
         "metadata": metadata,
-        "note": "Source label metadata only; the IMG data file has not been downloaded or decoded.",
+        "note": "Source label metadata only; the IMG data file has not been downloaded or decoded. Height conversion is on hold because official LOLA references disagree on whether OFFSET is included in HEIGHT; no elevation or radius is calculated.",
     }
