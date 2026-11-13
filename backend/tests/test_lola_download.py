@@ -121,3 +121,23 @@ async def test_lola_img_downloader_refuses_overwrite(tmp_path: Path):
         await download_lola_gdr_img(destination, expected_bytes=8)
 
     assert destination.read_bytes() == b"existing"
+
+
+@pytest.mark.asyncio
+async def test_lola_img_downloader_reports_each_archive_transport_failure(tmp_path: Path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        host = request.url.host
+        raise httpx.ConnectError(f"DNS lookup failed for {host}", request=request)
+
+    destination = tmp_path / "lola.img"
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+        with pytest.raises(RuntimeError) as error:
+            await download_lola_gdr_img(destination, client=client, expected_bytes=4)
+
+    message = str(error.value)
+    assert SOURCE_URL in message
+    assert FALLBACK_SOURCE_URL in message
+    assert "DNS lookup failed" in message
+    assert not destination.exists()
+    assert not (tmp_path / "lola.img.part").exists()
+    assert not (tmp_path / "lola.img.manifest.json").exists()
