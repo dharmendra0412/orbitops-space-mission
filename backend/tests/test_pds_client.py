@@ -139,3 +139,27 @@ def test_extract_next_search_after_does_not_invent_cursor_when_missing():
     from app.services.pds_client import extract_next_search_after
 
     assert extract_next_search_after([{"id": "urn:nasa:pds:example:item::1.0"}]) is None
+
+
+
+def test_extract_next_search_after_supports_nested_harvest_info_shape():
+    from app.services.pds_client import extract_next_search_after
+
+    payload = {
+        "data": [
+            {"id": "urn:nasa:pds:example:item::1.0"},
+            {
+                "id": "urn:nasa:pds:example:item-2::1.0",
+                "ops:Harvest_Info": {"ops:harvest_date_time": [" 2026-10-16T10:00:00Z "]},
+            },
+        ],
+    }
+    assert extract_next_search_after(payload) == "2026-10-16T10:00:00Z"
+
+
+def test_extract_next_search_after_rejects_empty_or_non_string_cursor():
+    from app.services.pds_client import extract_next_search_after
+
+    assert extract_next_search_after([{"ops:Harvest_Info.ops:harvest_date_time": []}]) is None
+    assert extract_next_search_after([{"ops:Harvest_Info.ops:harvest_date_time": 123}]) is None
+    assert extract_next_search_after({"data": []}) is None
