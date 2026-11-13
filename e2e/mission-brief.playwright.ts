@@ -215,3 +215,67 @@ test('LOLA browser workflow uses source label, bounded pixel, and row-profile AP
   await expect(page.getByText('LOLA source elevation profile')).toBeVisible()
   await expect(page.getByText('3 original samples · line 3791 · 40 m/pixel')).toBeVisible()
 })
+
+
+test('NASA PDS browser search resolves original file inventory without synthesizing records', async ({ page }) => {
+  await page.route('**/api/v1/pds/search*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA Planetary Data System Search API',
+        source_url: 'https://pds.nasa.gov/api/search?keyword=LOLA',
+        api_documentation: 'https://nasa-pds.github.io/pds-api/',
+        retrieved_at: '2026-11-13T12:00:00Z',
+        query: { keywords: 'LOLA', limit: 10 },
+        response: {
+          summary: { hits: 1 },
+          data: [{
+            lidvid: 'urn:nasa:pds:lro_lola_rdr:data_gridded::1.0',
+            title: 'LOLA Gridded Data',
+          }],
+        },
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/pds/products/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA Planetary Data System Search API',
+        source_url: 'https://pds.nasa.gov/api/products/urn:nasa:pds:lro_lola_rdr:data_gridded::1.0',
+        api_documentation: 'https://nasa-pds.github.io/pds-api/',
+        retrieved_at: '2026-11-13T12:00:01Z',
+        identifier: 'urn:nasa:pds:lro_lola_rdr:data_gridded::1.0',
+        response: {
+          meta: {
+            'ops:Label_File_Info': {
+              'ops:file_name': 'LDEM_85S_40M.LBL',
+              'ops:file_ref': 'urn:nasa:pds:lro_lola_rdr:data_gridded::1.0/LDEM_85S_40M.LBL',
+              'ops:file_size': 4096,
+              'ops:mime_type': 'text/plain',
+            },
+            'ops:Data_Files': [{
+              'ops:file_name': 'LDEM_85S_40M.IMG',
+              'ops:file_ref': 'urn:nasa:pds:lro_lola_rdr:data_gridded::1.0/LDEM_85S_40M.IMG',
+              'ops:file_size': 115034112,
+              'ops:mime_type': 'application/octet-stream',
+            }],
+          },
+        },
+      }),
+    })
+  })
+
+  await page.goto('/')
+  await page.locator('.side-nav').getByRole('button', { name: 'NASA data sources' }).click()
+  await page.getByLabel('Product keywords').fill('LOLA')
+  await page.getByRole('button', { name: 'Search PDS' }).click()
+  await expect(page.getByText('LOLA Gridded Data')).toBeVisible()
+  await expect(page.getByText('urn:nasa:pds:lro_lola_rdr:data_gridded::1.0')).toBeVisible()
+  await page.getByRole('button', { name: 'Resolve source metadata' }).click()
+  await expect(page.getByText('LDEM_85S_40M.LBL')).toBeVisible()
+  await expect(page.getByText('115034112 bytes')).toBeVisible()
+})
