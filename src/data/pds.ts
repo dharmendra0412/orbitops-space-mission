@@ -27,7 +27,7 @@ export function extractPdsProducts(response: unknown): { hits?: number; products
     ? response.summary as Record<string, unknown>
     : {}
   const products = response.data.flatMap((item): PdsProductSummary[] => {
-    if (!item || typeof item !== 'object' || !('lidvid' in item) || typeof item.lidvid !== 'string') return []
+    if (!item || typeof item !== 'object' || !('lidvid' in item) || typeof item.lidvid !== 'string' || !item.lidvid.trim()) return []
     const row = item as Record<string, unknown>
     return [{
       lidvid: item.lidvid,
@@ -49,7 +49,7 @@ export function extractPdsMembers(response: unknown): PdsMemberRecord[] | null {
     if (!item || typeof item !== 'object') return []
     const row = item as Record<string, unknown>
     const id = typeof row.id === 'string' ? row.id : typeof row.lidvid === 'string' ? row.lidvid : null
-    if (!id) return []
+    if (!id || !id.trim()) return []
     return [{
       id,
       title: typeof row.title === 'string' ? row.title : undefined,
