@@ -6,13 +6,14 @@ from app.services.pds_client import PDS_SEARCH_BASE_URL, PdsApiError, PdsClient
 
 @pytest.mark.asyncio
 async def test_search_preserves_upstream_json_and_query_parameters():
-    expected_payload = {"data": [{"lid": "urn:nasa:pds:example"}]}
+    expected_payload = {"summary": {"hits": 1}, "data": [{"lidvid": "urn:nasa:pds:example::1.0", "title": "Example PDS product"}]}
 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/api/search/1/products"
         assert request.url.params["keywords"] == "LOLA"
         assert request.url.params["limit"] == "5"
-        assert request.headers["accept"] == "application/json"
+        assert request.headers["accept"] == "application/kvp+json"
+        assert request.url.params.get_list("fields") == ["lidvid", "title", "product_class", "start_date_time", "stop_date_time"]
         return httpx.Response(200, json=expected_payload)
 
     client = PdsClient(transport=httpx.MockTransport(handler))
