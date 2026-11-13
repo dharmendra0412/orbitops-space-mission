@@ -32,3 +32,14 @@ describe('mission resource catalogue', () => {
     expect(gmat?.description).toMatch(/does not run/i)
   })
 })
+
+
+  it('includes separate Kaguya altimetry and documents LOLA control limitations', () => {
+    const lalt = missionResources.find((resource) => resource.id === 'kaguya-lalt-calibrated')
+    const southPole = missionResources.find((resource) => resource.id === 'kaguya-lalt-south-pole')
+    const usgs = missionResources.find((resource) => resource.id === 'usgs-lroc-south-pole-vv')
+    expect(lalt?.url).toContain('/LALT/Calibrated_Data.htm')
+    expect(lalt?.description).toMatch(/orbit solution/i)
+    expect(southPole?.description).toMatch(/void cells encoded as -99/)
+    expect(usgs?.description).toMatch(/not independent absolute geodetic truth/i)
+  })
