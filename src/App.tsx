@@ -29,6 +29,16 @@ type PdsSearchResponse = {
   response: unknown
 }
 
+type PdsMembersResponse = {
+  source: string
+  source_url: string
+  api_documentation: string
+  retrieved_at: string
+  identifier: string
+  depth: number
+  response: unknown
+}
+
 type PdsLookupResponse = {
   source: string
   source_url: string
