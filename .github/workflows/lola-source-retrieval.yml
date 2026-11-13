@@ -1,4 +1,4 @@
-name: LOLA Source Retrieval Gate
+name: Lunar Source Validation Gate
 
 on:
   workflow_dispatch:
@@ -19,7 +19,7 @@ on:
       - "backend/app/services/pds3_label.py"
 
 concurrency:
-  group: lola-source-retrieval-${{ github.ref }}
+  group: lunar-source-validation-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
