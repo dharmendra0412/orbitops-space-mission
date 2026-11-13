@@ -342,7 +342,7 @@ function App() {
               <div className="pds-results-meta"><span>{pdsSearchResponse.source}</span><span>Retrieved {new Date(pdsSearchResponse.retrieved_at).toLocaleString()}</span></div>
               <a href={pdsSearchResponse.source_url} target="_blank" rel="noopener noreferrer">Open exact upstream query <ExternalLink size={12}/></a>
               {pdsProducts ? <div className="pds-product-results">
-                <div className="pds-results-count">{pdsProducts.hits === undefined ? 'Returned products' : pdsProducts.hits + ' matching products reported by PDS'}</div>
+                <div className="pds-results-count">{'Returned ' + pdsProducts.products.length + ' product records'}{pdsProducts.hits === undefined ? '' : ' · PDS reports ' + pdsProducts.hits + ' total matches'}{pdsSearchResponse.query.limit ? ' · page limit ' + pdsSearchResponse.query.limit : ''}</div>
                 {pdsProducts.products.length === 0
                   ? <p className="pds-empty">The PDS API returned no product records for this query. Check the mission-specific archive index; the Search API may not contain every holding.</p>
                   : pdsProducts.products.map((product) => <article className="pds-product-card" key={product.lidvid}>
