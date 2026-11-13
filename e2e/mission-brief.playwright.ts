@@ -239,6 +239,36 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
     })
   })
 
+  let hierarchyPage = 0
+  await page.route('**/api/v1/pds/products/**/members*', async (route) => {
+    hierarchyPage += 1
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA Planetary Data System Search API',
+        source_url: 'https://pds.nasa.gov/api/search/collections/example/members',
+        api_documentation: 'https://nasa-pds.github.io/pds-api/',
+        retrieved_at: '2026-11-13T12:00:02Z',
+        identifier: 'urn:nasa:pds:lro_lola_rdr:data_gridded::1.0',
+        depth: 1,
+        page: { limit: 100, sort: 'ops:Harvest_Info.ops:harvest_date_time', search_after: hierarchyPage > 1 ? 'cursor-1' : null },
+        next_search_after: hierarchyPage === 1 ? 'cursor-1' : null,
+        response: {
+          data: hierarchyPage === 1
+            ? [
+                { id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:ldem_85s_40m::1.0', title: 'LOLA 85S 40M image', type: 'Product_Observational' },
+                { id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:ldem_80s_40m::1.0', title: 'LOLA 80S 40M image', type: 'Product_Observational' },
+              ]
+            : [
+                { id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:ldem_80s_40m::1.0', title: 'LOLA 80S 40M image', type: 'Product_Observational' },
+                { id: 'urn:nasa:pds:lro_lola_rdr:data_gridded:ldem_75s_40m::1.0', title: 'LOLA 75S 40M image', type: 'Product_Observational' },
+              ],
+        },
+      }),
+    })
+  })
+
   await page.route('**/api/v1/pds/products/**', async (route) => {
     await route.fulfill({
       status: 200,
@@ -278,4 +308,12 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
   await page.getByRole('button', { name: 'Resolve source metadata' }).click()
   await expect(page.locator('.pds-file-manifest').getByText('LDEM_85S_40M.LBL')).toBeVisible()
   await expect(page.locator('.pds-file-manifest').getByText('115034112 bytes')).toBeVisible()
+  await page.getByRole('button', { name: /Browse direct children/ }).click()
+  await expect(page.getByText('LOLA 85S 40M image')).toBeVisible()
+  await expect(page.getByText('LOLA 80S 40M image')).toBeVisible()
+  await expect(page.getByText('1 unique child records loaded across archive pages')).toHaveCount(0)
+  await page.getByRole('button', { name: /Load next 100 source records/ }).click()
+  await expect(page.getByText('3 unique child records loaded across archive pages')).toBeVisible()
+  await expect(page.getByText('LOLA 75S 40M image')).toBeVisible()
+  await expect(page.getByText('LOLA 80S 40M image')).toHaveCount(1)
 })
