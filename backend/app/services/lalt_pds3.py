@@ -159,8 +159,8 @@ def parse_and_validate_lalt_gt_sp_label(label_text: str) -> dict[str, Any]:
     return validate_lalt_gt_sp_label(metadata)
 
 
-def lalt_grid_pixel_to_lat_lon(line_index: int, sample_index: int) -> tuple[float, float]:
-    """Return the source-defined center coordinate for a zero-based LALT grid pixel."""
+def lalt_grid_node_to_lat_lon(line_index: int, sample_index: int) -> tuple[float, float]:
+    """Return the source-defined coordinate for a zero-based LALT grid node."""
     if not isinstance(line_index, int) or isinstance(line_index, bool):
         raise LaltPdsError("LALT line index must be an integer")
     if not isinstance(sample_index, int) or isinstance(sample_index, bool):
