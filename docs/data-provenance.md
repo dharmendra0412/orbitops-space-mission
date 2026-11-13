@@ -4,7 +4,7 @@
 
 ORBITOPS must not fabricate measurements, mission telemetry, orbital states, spacecraft performance, or NASA observations. A value is displayed as a sourced observation only after the underlying product has been retrieved and its metadata parsed. If a value is unavailable, the interface must say **Not available from an integrated source**.
 
-The source catalogue in `src/data/sources.ts` is a list of external references only. It does not mean the project has downloaded, cached, processed, or synchronized the linked datasets. The NASA PDS Search API is a candidate programmatic discovery interface for PDS4 products once an ingestion backend is implemented. Its documentation warns that the API servers are not fully populated with all PDS datasets, so API search results must be cross-checked against the mission-specific archive index and direct archive holdings.
+The source catalogue in `src/data/sources.ts` is a list of external references only. The FastAPI backend now provides read-only PDS metadata search, product resolution, and hierarchy browsing. This does not mean the project has downloaded, cached, processed, or synchronized any observation data files. The PDS API documentation warns that its servers are not fully populated with all PDS datasets, so API search results must be cross-checked against the mission-specific archive index and direct archive holdings.
 
 ## Verified source entry points
 
