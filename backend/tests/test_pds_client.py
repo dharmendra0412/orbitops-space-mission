@@ -197,3 +197,36 @@ def test_pds3_label_parser_rejects_wrong_format_and_oversized_input():
         parse_pds3_label('PDS_VERSION_ID = "PDS4"\\nFILE_NAME = "data.img"')
     with pytest.raises(PdsLabelError, match="size limit"):
         parse_pds3_label('PDS_VERSION_ID = "PDS3"\\nFILE_NAME = "data.img"', max_characters=10)
+
+
+@pytest.mark.asyncio
+async def test_fetch_lola_sample_label_uses_fixed_source_and_preserves_text():
+    from app.services.pds_client import PDS_LOLA_GDR_SAMPLE_LABEL_URL
+
+    label = 'PDS_VERSION_ID = "PDS3"\\nFILE_NAME = "LDEM_85S_40M.IMG"\\nEND\\n'
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == PDS_LOLA_GDR_SAMPLE_LABEL_URL
+        assert request.headers["accept"] == "text/plain"
+        return httpx.Response(200, content=label.encode("ascii"), headers={"content-type": "text/plain"})
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    source_url, returned_label = await client.fetch_lola_gdr_sample_label()
+
+    assert source_url == PDS_LOLA_GDR_SAMPLE_LABEL_URL
+    assert returned_label == label
+
+
+@pytest.mark.asyncio
+async def test_fetch_lola_sample_label_rejects_oversized_and_non_ascii_content():
+    client = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"x" * 1_000_001)
+    ))
+    with pytest.raises(PdsApiError, match="size limit"):
+        await client.fetch_lola_gdr_sample_label()
+
+    non_ascii_client = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"\\xff")
+    ))
+    with pytest.raises(PdsApiError, match="ASCII"):
+        await non_ascii_client.fetch_lola_gdr_sample_label()
