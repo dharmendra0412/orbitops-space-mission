@@ -13,7 +13,9 @@ on:
       - "backend/scripts/validate_lola_jp2_reference.py"
       - "backend/scripts/validate_lola_pgda_reference.py"
       - "backend/scripts/validate_lola_haworth_reference.py"
+      - "backend/scripts/validate_lalt_cross_sensor.py"
       - "backend/app/services/lola_gdr.py"
+      - "backend/app/services/lalt_pds3.py"
       - "backend/app/services/pds3_label.py"
 
 concurrency:
@@ -26,7 +28,7 @@ permissions:
 jobs:
   retrieve-and-validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: backend
@@ -53,6 +55,15 @@ jobs:
         run: pip install rasterio pyproj
       - name: Retrieve and cross-check JPEG2000 counterpart
         run: python -m scripts.validate_lola_jp2_reference
+      - name: Retrieve Kaguya LALT south-polar grid and compare with LOLA
+        timeout-minutes: 12
+        run: |
+          python -m scripts.validate_lalt_cross_sensor \
+            --lola-image data/raw/lola/ldem_85s_40m.img \
+            --lola-jp2 data/raw/lola/ldem_85s_40m.jp2 \
+            --lola-label data/raw/lola/ldem_85s_40m.lbl \
+            --lalt-dir data/raw/kaguya_lalt \
+            --output data/raw/kaguya_lalt/lalt_lola_cross_sensor_comparison.json
       - name: Compare against NASA PGDA high-resolution Haworth 5 m DEM
         timeout-minutes: 5
         run: python -m scripts.validate_lola_haworth_reference
@@ -70,5 +81,8 @@ jobs:
             backend/data/raw/lola/ldem_85s_40m.jp2.manifest.json
             backend/data/raw/lola/haworth_5mpp_surf.tif
             backend/data/raw/lola/ldem_85s_40m.haworth-comparison.json
+            backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.lbl
+            backend/data/raw/kaguya_lalt/LALT_GT_SP_IMG.IMG
+            backend/data/raw/kaguya_lalt/lalt_lola_cross_sensor_comparison.json
           if-no-files-found: warn
           retention-days: 30
