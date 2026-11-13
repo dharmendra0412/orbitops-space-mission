@@ -113,3 +113,105 @@ test('Kaguya LALT UI labels the interpolated source and does not claim live pixe
   await expect(page.getByText(/not raw laser-shot data or independent geodetic ground truth/i)).toBeVisible()
   await expect(page.getByText(/did not return HTTP 206/)).toBeVisible()
 })
+
+
+test('LOLA browser workflow uses source label, bounded pixel, and row-profile API responses', async ({ page }) => {
+  await page.route('**/api/v1/pds3/lola/gdr/ldem-85s-40m/label', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA PDS Geosciences Node',
+        source_url: 'https://pds-geosciences.wustl.edu/source.lbl',
+        retrieved_at: '2026-11-13T12:00:00Z',
+        label_format: 'PDS3',
+        product_file: 'LDEM_85S_40M.IMG',
+        metadata: {
+          PDS_VERSION_ID: 'PDS3',
+          FILE_NAME: 'LDEM_85S_40M.IMG',
+          DATA_SET_ID: 'LRO-L-LOLA-4-GDR-V1.0',
+          PRODUCT_VERSION_ID: 'V2.0',
+          TARGET_NAME: 'MOON',
+          MAP_PROJECTION_TYPE: 'POLAR STEREOGRAPHIC',
+          KEYWORD_LATITUDE_TYPE: 'PLANETOCENTRIC',
+          POSITIVE_LONGITUDE_DIRECTION: 'EAST',
+          COORDINATE_SYSTEM_NAME: 'MEAN EARTH/POLAR AXIS OF DE421',
+          CENTER_LATITUDE: '-90 <deg>',
+          CENTER_LONGITUDE: '0 <deg>',
+          MAP_PROJECTION_ROTATION: '0.0',
+          A_AXIS_RADIUS: '1737.4 <km>',
+          B_AXIS_RADIUS: '1737.4 <km>',
+          C_AXIS_RADIUS: '1737.4 <km>',
+          MAP_SCALE: '40 <m/pix>',
+          LINE_PROJECTION_OFFSET: '3791.5 <pix>',
+          SAMPLE_PROJECTION_OFFSET: '3791.5 <pix>',
+          LINES: '7584',
+          LINE_SAMPLES: '7584',
+        },
+        note: 'Source PDS3 label metadata only.',
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/pds3/lola/gdr/ldem-85s-40m/pixel*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA PDS Geosciences Node',
+        source_url: 'https://pds-geosciences.wustl.edu/LDEM_85S_40M.IMG',
+        label_source_url: 'https://pds-geosciences.wustl.edu/LDEM_85S_40M.LBL',
+        retrieved_at: '2026-11-13T12:00:01Z',
+        product_file: 'LDEM_85S_40M.IMG',
+        line_index: 3791,
+        sample_index: 3791,
+        byte_range_inclusive: { start: 57509470, end: 57509471 },
+        raw_dn: -1295,
+        height_m: -647.5,
+        planetary_radius_m: 1736752.5,
+        planetocentric_latitude_degrees: -90,
+        east_longitude_degrees: 0,
+        units: { raw_dn: 'signed 16-bit integer', height: 'm', planetary_radius: 'm' },
+        coordinate_reference: 'MEAN EARTH/POLAR AXIS OF DE421',
+        validation_scope: 'One exact two-byte source sample.',
+      }),
+    })
+  })
+
+  await page.route('**/api/v1/pds3/lola/gdr/ldem-85s-40m/profile*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        source: 'NASA PDS Geosciences Node',
+        source_url: 'https://pds-geosciences.wustl.edu/LDEM_85S_40M.IMG',
+        label_source_url: 'https://pds-geosciences.wustl.edu/LDEM_85S_40M.LBL',
+        retrieved_at: '2026-11-13T12:00:02Z',
+        product_file: 'LDEM_85S_40M.IMG',
+        line_index: 3791,
+        start_sample_index: 3791,
+        sample_count: 3,
+        sample_spacing_m: 40,
+        profile_span_m: 80,
+        byte_range_inclusive: { start: 57509470, end: 57509475 },
+        coordinate_reference: 'MEAN EARTH/POLAR AXIS OF DE421',
+        points: [
+          { sample_index: 3791, raw_dn: -1295, height_m: -647.5, planetary_radius_m: 1736752.5, planetocentric_latitude_degrees: -90, east_longitude_degrees: 0 },
+          { sample_index: 3792, raw_dn: -1294, height_m: -647, planetary_radius_m: 1736753, planetocentric_latitude_degrees: -89.999, east_longitude_degrees: 45 },
+          { sample_index: 3793, raw_dn: -1293, height_m: -646.5, planetary_radius_m: 1736753.5, planetocentric_latitude_degrees: -89.999, east_longitude_degrees: 90 },
+        ],
+        validation_scope: 'Three bounded original samples.',
+      }),
+    })
+  })
+
+  await page.goto('/')
+  await page.getByRole('button', { name: /NASA data sources/ }).click()
+  await page.getByRole('button', { name: /Fetch original LOLA label metadata/ }).click()
+  await expect(page.getByText('LDEM_85S_40M.IMG')).toBeVisible()
+  await page.getByRole('button', { name: /Fetch actual NASA LOLA pixel/ }).click()
+  await expect(page.getByText('-1295', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: /Fetch real elevation profile/ }).click()
+  await expect(page.getByText('LOLA source elevation profile')).toBeVisible()
+  await expect(page.getByText('3 original samples · line 3791 · 40 m/pixel')).toBeVisible()
+})
