@@ -251,5 +251,5 @@ async def get_lola_gdr_sample_label() -> dict[str, Any]:
         "label_format": metadata.get("PDS_VERSION_ID"),
         "product_file": metadata.get("FILE_NAME"),
         "metadata": metadata,
-        "note": "This endpoint returns source-label metadata only. The original IMG has been downloaded and validated in the separate GitHub Actions source-validation workflow, but this API route does not serve raster pixels or terrain values. The LOLA GDR SIS defines HEIGHT = DN * SCALING_FACTOR and PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET.",
+        "note": "This label endpoint returns source metadata only. Related pixel and bounded row-profile endpoints retrieve original raster bytes through fixed-source HTTP Range requests; they do not download the full IMG. The LOLA GDR SIS defines HEIGHT = DN * SCALING_FACTOR and PLANETARY_RADIUS = DN * SCALING_FACTOR + OFFSET.",
     }
