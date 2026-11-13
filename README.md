@@ -85,6 +85,11 @@ Checks:
 npm test
 npm run build
 npm audit --audit-level=high
+
+cd backend
+pip install -r requirements.txt
+pip-audit -r requirements.txt
+pytest -q
 ```
 
 ## Disclaimer
