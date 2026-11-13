@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import math
+import mmap
 import re
 import struct
+from pathlib import Path
 from collections.abc import Iterator
 
 
@@ -64,6 +66,58 @@ def validate_lola_gdr_label(metadata: dict[str, str]) -> tuple[int, int, int]:
     if record_bytes != samples * 2:
         raise LolaRasterError("Record byte count does not match 16-bit image samples")
     return lines, samples, record_bytes
+
+
+def validate_lola_gdr_file(path: str | Path, metadata: dict[str, str]) -> dict[str, int | bool]:
+    """Validate a complete on-disk IMG against its PDS layout and label extrema.
+
+    The file is memory-mapped and decoded one row at a time, avoiding a second
+    115 MB in-memory copy. This validates byte layout and observed DN extrema;
+    it does not establish an upstream checksum or geodetic accuracy.
+    """
+    lines, samples, record_bytes = validate_lola_gdr_label(metadata)
+    expected_bytes = lines * record_bytes
+    image_path = Path(path)
+    try:
+        actual_bytes = image_path.stat().st_size
+        if actual_bytes != expected_bytes:
+            raise LolaRasterError(
+                f"Raster byte count mismatch: expected {expected_bytes}, received {actual_bytes}"
+            )
+        minimum_dn: int | None = None
+        maximum_dn: int | None = None
+        sample_count = 0
+        with image_path.open("rb") as source:
+            with mmap.mmap(source.fileno(), 0, access=mmap.ACCESS_READ) as mapped:
+                for row in iter_lola_gdr_rows(mapped, metadata):
+                    if row:
+                        row_min = min(row)
+                        row_max = max(row)
+                        minimum_dn = row_min if minimum_dn is None else min(minimum_dn, row_min)
+                        maximum_dn = row_max if maximum_dn is None else max(maximum_dn, row_max)
+                        sample_count += len(row)
+    except OSError as exc:
+        raise LolaRasterError(f"Unable to read LOLA raster file: {exc}") from exc
+
+    if sample_count != lines * samples or minimum_dn is None or maximum_dn is None:
+        raise LolaRasterError("Decoded LOLA sample count does not match the PDS image dimensions")
+    try:
+        label_minimum = int(metadata["DERIVED_MINIMUM"])
+        label_maximum = int(metadata["DERIVED_MAXIMUM"])
+    except (KeyError, ValueError) as exc:
+        raise LolaRasterError("PDS label must provide integer DERIVED_MINIMUM and DERIVED_MAXIMUM") from exc
+    if minimum_dn != label_minimum or maximum_dn != label_maximum:
+        raise LolaRasterError(
+            "Decoded raster extrema do not match the source label's DERIVED_MINIMUM/DERIVED_MAXIMUM"
+        )
+
+    return {
+        "bytes": actual_bytes,
+        "samples": sample_count,
+        "minimum_dn": minimum_dn,
+        "maximum_dn": maximum_dn,
+        "label_extrema_match": True,
+    }
 
 
 def lola_dn_to_height_m(dn: int, metadata: dict[str, str]) -> float:
