@@ -114,6 +114,17 @@ pip-audit -r requirements.txt
 pytest -q
 ```
 
+## Separate-host deployment configuration
+
+The web client can call a separately hosted FastAPI service without changing source code:
+
+1. Set `VITE_API_BASE_URL` to the API's HTTPS origin when building the frontend (for example, `https://api.example.com`). Leave it empty for local development; Vite proxies `/api` to `127.0.0.1:8000`.
+2. Set backend `ORBITOPS_CORS_ORIGINS` to a comma-separated list of exact frontend origins (for example, `https://orbitops.example.com`). Do not use a wildcard for a public deployment.
+3. Configure these values in the hosting provider's environment settings. Do not commit deployment secrets or real credentials.
+4. Verify the frontend build, API `/health` endpoint, and live read-only PDS requests on the deployed domains before announcing a public release.
+
+CORS is disabled unless explicit origins are configured. The API currently exposes read-only GET endpoints; this configuration does not add authentication, persistent user accounts, or server-side mission storage.
+
 ## Disclaimer
 
 ORBITOPS is an independent educational project, not NASA software and not flight-qualified mission-design software. NASA does not endorse this project. It must not be used for operational spacecraft design, navigation, launch decisions, or flight safety. Non-U.S. Government resources are subject to their own data-use and reuse terms.
