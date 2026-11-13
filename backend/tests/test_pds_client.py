@@ -54,3 +54,14 @@ async def test_invalid_json_is_reported_as_an_upstream_error():
     client = PdsClient(transport=httpx.MockTransport(handler))
     with pytest.raises(PdsApiError, match="invalid JSON"):
         await client.search_products(keywords="LOLA", limit=5)
+
+@pytest.mark.asyncio
+async def test_product_not_found_keeps_upstream_404_status():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, json={"errors": ["not found"]})
+
+    client = PdsClient(transport=httpx.MockTransport(handler))
+    with pytest.raises(PdsApiError) as error:
+        await client.resolve_product(identifier="urn:nasa:pds:missing")
+
+    assert error.value.status_code == 404
