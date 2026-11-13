@@ -43,3 +43,5 @@ jobs:
           pip-audit -r requirements.txt
       - name: Run API tests
         run: pytest -q
+      - name: Build production API container
+        run: docker build --tag orbitops-api:ci .
