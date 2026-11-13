@@ -10,6 +10,7 @@ from app.services.lola_gdr import (
     lola_dn_to_height_m,
     lola_dn_to_planetary_radius_m,
     lola_polar_pixel_to_latlon,
+    validate_lola_gdr_file,
 )
 from app.services.pds3_label import parse_pds3_label
 
@@ -55,6 +56,62 @@ def test_lola_raster_reader_rejects_wrong_sample_encoding(lola_metadata):
 
     with pytest.raises(LolaRasterError, match="little-endian"):
         list(iter_lola_gdr_rows(b"", metadata))
+
+
+def test_lola_file_validator_checks_full_sample_count_and_source_label_extrema(lola_metadata, tmp_path):
+    metadata = dict(lola_metadata)
+    metadata.update({
+        "LINES": "2",
+        "LINE_SAMPLES": "2",
+        "FILE_RECORDS": "2",
+        "RECORD_BYTES": "4",
+        "DERIVED_MINIMUM": "-2",
+        "DERIVED_MAXIMUM": "32767",
+    })
+    raster_path = tmp_path / "sample.img"
+    raster_path.write_bytes(struct.pack("<hhhh", -2, 0, 2, 32767))
+
+    result = validate_lola_gdr_file(raster_path, metadata)
+
+    assert result == {
+        "bytes": 8,
+        "samples": 4,
+        "minimum_dn": -2,
+        "maximum_dn": 32767,
+        "label_extrema_match": True,
+    }
+
+
+def test_lola_file_validator_rejects_extrema_that_disagree_with_source_label(lola_metadata, tmp_path):
+    metadata = dict(lola_metadata)
+    metadata.update({
+        "LINES": "2",
+        "LINE_SAMPLES": "2",
+        "FILE_RECORDS": "2",
+        "RECORD_BYTES": "4",
+        "DERIVED_MINIMUM": "-2",
+        "DERIVED_MAXIMUM": "10",
+    })
+    raster_path = tmp_path / "sample.img"
+    raster_path.write_bytes(struct.pack("<hhhh", -2, 0, 2, 32767))
+
+    with pytest.raises(LolaRasterError, match="extrema do not match"):
+        validate_lola_gdr_file(raster_path, metadata)
+
+
+def test_lola_file_validator_rejects_wrong_on_disk_size(lola_metadata, tmp_path):
+    metadata = dict(lola_metadata)
+    metadata.update({
+        "LINES": "2",
+        "LINE_SAMPLES": "2",
+        "FILE_RECORDS": "2",
+        "RECORD_BYTES": "4",
+    })
+    raster_path = tmp_path / "sample.img"
+    raster_path.write_bytes(b"short")
+
+    with pytest.raises(LolaRasterError, match="byte count mismatch"):
+        validate_lola_gdr_file(raster_path, metadata)
 
 
 def test_lola_polar_projection_matches_catalog_center_pixel_geometry(lola_metadata):
