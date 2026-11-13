@@ -124,7 +124,21 @@ def validate_jp2_against_img(image_path: Path, jp2_path: Path) -> dict[str, obje
 
         driver = reference.driver
         transform = tuple(reference.transform)
-        crs = reference.crs.to_string() if reference.crs else None
+        expected_transform = (
+            40.0, 0.0, -151_680.0,
+            0.0, -40.0, 151_680.0,
+            0.0, 0.0, 1.0,
+        )
+        if len(transform) != len(expected_transform) or any(
+            not math.isclose(actual, expected, rel_tol=0.0, abs_tol=1e-9)
+            for actual, expected in zip(transform, expected_transform, strict=True)
+        ):
+            raise RuntimeError(
+                f"JP2 geotransform does not match the PDS 40 m pixel-registered grid: {transform}"
+            )
+        crs = reference.crs.to_wkt() if reference.crs else None
+        if crs is None or "Polar_Stereographic" not in crs or "1737400" not in crs:
+            raise RuntimeError("JP2 CRS does not declare the expected 1737.4 km lunar polar stereographic frame")
 
     total_samples = EXPECTED_SHAPE[0] * EXPECTED_SHAPE[1]
     if samples_over_tolerance:
