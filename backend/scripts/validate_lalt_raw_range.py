@@ -56,6 +56,13 @@ class LaltRangeValidationError(RuntimeError):
     """Raised when a fixed JAXA LALT calibrated range product fails validation."""
 
 
+def _validate_response_origin(response: httpx.Response) -> None:
+    if response.is_redirect:
+        raise LaltRangeValidationError("JAXA LALT range source redirected; refusing an unverified destination")
+    if response.url.scheme != "https" or response.url.host != "data.darts.isas.jaxa.jp":
+        raise LaltRangeValidationError("JAXA LALT range response came from an unexpected source host")
+
+
 def _download_fixed(url: str, *, maximum_bytes: int, transport: httpx.BaseTransport | None = None) -> bytes:
     try:
         with httpx.Client(
@@ -68,10 +75,7 @@ def _download_fixed(url: str, *, maximum_bytes: int, transport: httpx.BaseTransp
                 url,
                 headers={"Accept": "text/plain", "Accept-Encoding": "identity"},
             ) as response:
-                if response.is_redirect:
-                    raise LaltRangeValidationError("JAXA LALT range source redirected; refusing an unverified destination")
-                if response.url.scheme != "https" or response.url.host != "data.darts.isas.jaxa.jp":
-                    raise LaltRangeValidationError("JAXA LALT range response came from an unexpected source host")
+                _validate_response_origin(response)
                 response.raise_for_status()
                 body = bytearray()
                 for chunk in response.iter_bytes():
@@ -87,7 +91,12 @@ def _download_fixed(url: str, *, maximum_bytes: int, transport: httpx.BaseTransp
         raise LaltRangeValidationError("Could not retrieve the fixed JAXA LALT range source") from exc
 
 
-def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, Any]:
+def validate_lalt_rd_day(
+    label_bytes: bytes,
+    table_bytes: bytes,
+    *,
+    require_full_archive_day: bool = True,
+) -> dict[str, Any]:
     if not label_bytes or len(label_bytes) > LALT_RANGE_MAX_LABEL_BYTES:
         raise LaltRangeValidationError("LALT range label is empty or exceeds its size limit")
     if not table_bytes or len(table_bytes) > LALT_RANGE_MAX_TABLE_BYTES:
@@ -111,7 +120,6 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
         "TARGET_NAME": "MOON",
         "RECORD_TYPE": "FIXED_LENGTH",
         "RECORD_BYTES": "162",
-        "FILE_RECORDS": "12003",
         "PRODUCT_NAME": "LALT_RD",
         "ROWS": "12002",
         "COLUMNS": "11",
@@ -123,18 +131,29 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
             raise LaltRangeValidationError(
                 f"LALT range label field {key} expected {expected!r}, got {label.get(key)!r}"
             )
+    try:
+        expected_records = int(label["FILE_RECORDS"])
+        expected_rows = int(label["ROWS"])
+    except (KeyError, ValueError) as exc:
+        raise LaltRangeValidationError("LALT range label is missing valid FILE_RECORDS or ROWS counts") from exc
+    if expected_records != expected_rows + 1:
+        raise LaltRangeValidationError("LALT range FILE_RECORDS must include exactly one header record plus ROWS data records")
+    if require_full_archive_day and (expected_records != 12_003 or expected_rows != 12_002):
+        raise LaltRangeValidationError("LALT range daily archive product does not match the expected 12002-row source layout")
 
     physical_records = table_bytes.splitlines(keepends=True)
-    if len(physical_records) != 12_003 or any(len(record) != 162 for record in physical_records):
-        raise LaltRangeValidationError("LALT range table does not contain 12003 exact 162-byte physical records")
-    lines = table_text.splitlines()
-    if len(lines) != 12_003:
+    if len(physical_records) != expected_records or any(len(record) != 162 for record in physical_records):
         raise LaltRangeValidationError(
-            f"LALT range table expected 12003 physical records, received {len(lines)}"
+            f"LALT range table does not contain {expected_records} exact 162-byte physical records"
         )
-    if len(table_bytes) != 12_003 * 162:
+    lines = table_text.splitlines()
+    if len(lines) != expected_records:
         raise LaltRangeValidationError(
-            f"LALT range table expected {12_003 * 162} bytes from its PDS record layout, received {len(table_bytes)}"
+            f"LALT range table expected {expected_records} physical records, received {len(lines)}"
+        )
+    if len(table_bytes) != expected_records * 162:
+        raise LaltRangeValidationError(
+            f"LALT range table expected {expected_records * 162} bytes from its PDS record layout, received {len(table_bytes)}"
         )
     header = [part.strip() for part in lines[0].lstrip("#").split(",")]
     if tuple(header) != LALT_RANGE_COLUMNS:
@@ -176,7 +195,7 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
         altitude_max = max(altitude_max, numeric[0])
         row_count += 1
 
-    if row_count != 12_002 or first_ti is None or last_ti is None:
+    if row_count != expected_rows or first_ti is None or last_ti is None:
         raise LaltRangeValidationError("LALT range table row count or TI coverage is incomplete")
 
     return {
@@ -187,7 +206,7 @@ def validate_lalt_rd_day(label_bytes: bytes, table_bytes: bytes) -> dict[str, An
         "label_bytes": len(label_bytes),
         "table_bytes": len(table_bytes),
         "record_bytes": 162,
-        "file_records_including_header": 12_003,
+        "file_records_including_header": expected_records,
         "data_rows": row_count,
         "column_names": list(LALT_RANGE_COLUMNS),
         "range_label_column_name": "LALT_ALTITUDE",
