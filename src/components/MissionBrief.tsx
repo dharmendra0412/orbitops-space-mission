@@ -6,6 +6,7 @@ import {
   getMissingRequiredMissionBriefFields,
   missionBriefFields,
   parseMissionBriefDraft,
+  parseMissionBriefExport,
   serializeMissionBriefDraft,
   type MissionBriefDraft,
   type MissionBriefTextKey,
@@ -98,15 +99,7 @@ export function MissionBrief() {
     try {
       if (file.size > 1_000_000) throw new Error('Mission brief JSON must be smaller than 1 MB.')
       const raw = await file.text()
-      const parsed: unknown = JSON.parse(raw)
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error('The selected file is not a mission brief export.')
-      }
-      const record = parsed as Record<string, unknown>
-      if (record.schema_version !== 1 || !record.brief || typeof record.brief !== 'object' || Array.isArray(record.brief)) {
-        throw new Error('Unsupported mission brief export format.')
-      }
-      setDraft(parseMissionBriefDraft(raw))
+      setDraft(parseMissionBriefExport(raw))
       setSaveStatus('Mission brief imported and saved in this browser.')
     } catch (error) {
       setSaveStatus(error instanceof Error ? error.message : 'Unable to import this mission brief.')
