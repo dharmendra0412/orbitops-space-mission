@@ -288,3 +288,55 @@ def test_lola_pixel_endpoint_rejects_wrong_source_label(monkeypatch):
     )
     assert response.status_code == 502
     assert "source metadata failed validation" in response.json()["detail"]
+
+
+def test_lola_profile_endpoint_returns_bounded_real_source_samples_and_derived_coordinates(monkeypatch):
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "lola_ldem_85s_40m.lbl"
+    label_text = fixture.read_text(encoding="ascii")
+
+    class ProfileClient:
+        async def fetch_lola_gdr_sample_label(self):
+            return ("https://pds-geosciences.wustl.edu/sample.lbl", label_text)
+
+        async def fetch_lola_gdr_row_segment(
+            self,
+            *,
+            line_index: int,
+            start_sample_index: int,
+            sample_count: int,
+        ):
+            assert (line_index, start_sample_index, sample_count) == (3791, 3791, 3)
+            return (
+                "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_40m.img",
+                (-11002, -11001, -11000),
+                (57_509_470, 57_509_475),
+            )
+
+    monkeypatch.setattr(api, "pds_client", ProfileClient())
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds3/lola/gdr/ldem-85s-40m/profile",
+        params={"line_index": 3791, "start_sample_index": 3791, "sample_count": 3},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["sample_count"] == 3
+    assert payload["byte_range_inclusive"] == {"start": 57_509_470, "end": 57_509_475}
+    assert [point["raw_dn"] for point in payload["points"]] == [-11002, -11001, -11000]
+    assert [point["height_m"] for point in payload["points"]] == [-5501.0, -5500.5, -5500.0]
+    assert payload["points"][0]["planetary_radius_m"] == 1_731_899.0
+    assert payload["points"][0]["east_longitude_degrees"] == 315.0
+    assert payload["coordinate_reference"] == "MEAN EARTH/POLAR AXIS OF DE421"
+    assert "not a complete raster" in payload["validation_scope"]
+
+
+def test_lola_profile_endpoint_caps_sample_count_and_image_bounds():
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds3/lola/gdr/ldem-85s-40m/profile",
+        params={"line_index": 0, "start_sample_index": 0, "sample_count": 513},
+    )
+    assert response.status_code == 422
