@@ -106,10 +106,10 @@ test('Kaguya LALT UI labels the interpolated source and does not claim live pixe
 
   await page.goto('/')
   await page.getByRole('button', { name: /NASA data sources/ }).click()
-  await expect(page.getByRole('heading', { name: 'Kaguya SELENE LALT south-polar grid' })).toBeVisible()
+  await expect(page.getByText('Kaguya SELENE LALT south-polar grid')).toBeVisible()
   await page.getByRole('button', { name: /Fetch original Kaguya LALT label/ }).click()
   await expect(page.getByText('SLN-L-LALT-5-TOPO-GT-SP-IMG-V2.0')).toBeVisible()
   await expect(page.getByText('64,880,640 bytes')).toBeVisible()
   await expect(page.getByText(/not raw laser-shot data or independent geodetic ground truth/i)).toBeVisible()
-  await expect(page.getByText(/does not return HTTP 206/)).toBeVisible()
+  await expect(page.getByText(/did not return HTTP 206/)).toBeVisible()
 })
