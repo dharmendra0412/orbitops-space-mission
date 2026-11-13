@@ -4,11 +4,12 @@ import {
   Activity, ArrowDownRight, ArrowUpRight, Atom, BatteryCharging, Check,
   ChevronDown, CircleHelp, Compass, Database, Gauge, Globe2, Layers3,
   Menu, Radio, Rocket, Satellite, Settings2, ShieldCheck,
-  SlidersHorizontal, Sparkles, Target, Telescope, Users, X, Zap
+  SlidersHorizontal, Sparkles, Target, Telescope, Users, X, Zap, ExternalLink
 } from 'lucide-react'
 
 import { calculateMissionDesign, instruments, orbitOptions } from './domain/mission'
 import type { LaunchClass } from './domain/mission'
+import { missionResources } from './data/sources'
 
 function Metric({ label, value, unit, icon: Icon, tone = 'blue', detail }: {
   label: string; value: string; unit?: string; icon: typeof Activity; tone?: string; detail: string
@@ -40,13 +41,14 @@ function App() {
     setRunState('idle')
   }
 
-  const navItems = ['Mission overview', 'Spacecraft designer', 'Constraint checks', 'Engineering guide']
+  const navItems = ['Mission overview', 'Spacecraft designer', 'Constraint checks', 'NASA data sources', 'Engineering guide']
   const goTo = (item: string) => {
     setActiveNav(item)
     setMobileMenu(false)
     if (item === 'Spacecraft designer') document.getElementById('designer')?.scrollIntoView({ behavior: 'smooth' })
     else if (item === 'Mission overview') window.scrollTo({ top: 0, behavior: 'smooth' })
     else if (item === 'Engineering guide') setShowAll(true)
+    else if (item === 'NASA data sources') document.getElementById('data-sources')?.scrollIntoView({ behavior: 'smooth' })
     else document.getElementById('mission-output')?.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -64,7 +66,7 @@ function App() {
       <div className="workspace-switch"><div className="workspace-avatar">LP</div><div><strong>Lunar Pathfinder</strong><span>Mission workspace</span></div><ChevronDown size={15}/></div>
       <div className="nav-label">MISSION</div>
       <nav className="side-nav">{navItems.map((item, index) => {
-        const icons = [Globe2, SlidersHorizontal, Activity, Database]
+        const icons = [Globe2, SlidersHorizontal, Activity, Database, Layers3]
         const Icon = icons[index]
         return <button key={item} className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => goTo(item)}><Icon size={17}/><span>{item}</span>{index === 2 && <span className="nav-live">CHECKS</span>}</button>
       })}</nav>
@@ -168,6 +170,27 @@ function App() {
               {runState === 'complete' && <div className="run-result"><Check size={14}/> Assessment completed using the visible concept rules. This is not a flight-readiness review.</div>}
             </div>
           </aside>
+        </section>
+
+        <section className="section-block resources-section" id="data-sources">
+          <div className="section-heading">
+            <div><div className="section-eyebrow">TRACEABLE REFERENCES</div><h3>NASA & science data resources</h3></div>
+            <span className="section-note">SOURCE CATALOGUE · NOT INGESTED DATA</span>
+          </div>
+          <p className="resources-intro">Open the original archives and technical references. ORBITOPS does not fabricate measurements or imply that these external datasets have already been downloaded, processed, or synchronized.</p>
+          <div className="resource-grid">
+            {missionResources.map((resource) => (
+              <article className="resource-card" key={resource.id}>
+                <div className="resource-card-top"><span className="resource-kind">{resource.kind}</span><span className="resource-owner">{resource.owner}</span></div>
+                <h4>{resource.title}</h4>
+                <p>{resource.description}</p>
+                <a href={resource.url} target="_blank" rel="noreferrer">
+                  Open original source <ExternalLink size={13}/>
+                </a>
+              </article>
+            ))}
+          </div>
+          <p className="resource-disclaimer">NASA does not endorse this independent project. Non-U.S. Government resources remain subject to their own data-use terms; review those terms before reuse.</p>
         </section>
 
         <section className="bottom-grid">
