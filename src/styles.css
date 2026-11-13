@@ -38,3 +38,12 @@
 @media(max-width:600px){.pds-search-input-row{flex-direction:column}.pds-search-input-row .run-button{width:100%}.pds-search-heading{flex-direction:column}}
 
 .pds-search-panel+.pds-search-panel{margin-top:-3px}
+
+.pds-product-results{display:grid;gap:8px;margin-top:10px}
+.pds-results-count{font-size:8px;color:#9aadc1}
+.pds-product-card{display:grid;gap:5px;padding:10px;background:#0a1524;border:1px solid #293c52;border-radius:5px}
+.pds-product-card strong{font-size:10px;line-height:1.5;color:#e0e9f4}
+.pds-product-card span,.pds-product-card small{font-size:8px;color:#90a2b8}
+.pds-product-card code{font-size:8px;color:#8bd5ef;overflow-wrap:anywhere}
+.pds-product-card button{display:inline-flex;align-items:center;gap:5px;width:max-content;border:0;background:transparent;padding:3px 0;color:#8bd5ef;font-size:8px;cursor:pointer}
+.pds-empty{font-size:9px;line-height:1.6;color:#a8b8ca}
