@@ -473,3 +473,63 @@ async def test_lola_row_segment_rejects_oversized_and_out_of_bounds_requests():
             start_sample_index=7583,
             sample_count=2,
         )
+
+
+@pytest.mark.asyncio
+async def test_lola_row_segment_rejects_ignored_range_and_wrong_content_range():
+    client = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"full raster response must not be read")
+    ))
+    with pytest.raises(PdsApiError, match="did not honor the bounded row-segment Range"):
+        await client.fetch_lola_gdr_row_segment(
+            line_index=0,
+            start_sample_index=0,
+            sample_count=4,
+        )
+
+    wrong_range = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(
+            206,
+            content=bytes(8),
+            headers={"Content-Range": "bytes 8-15/115034112", "Content-Length": "8"},
+        )
+    ))
+    with pytest.raises(PdsApiError, match="unexpected Content-Range"):
+        await wrong_range.fetch_lola_gdr_row_segment(
+            line_index=0,
+            start_sample_index=0,
+            sample_count=4,
+        )
+
+
+@pytest.mark.asyncio
+async def test_lola_row_segment_rejects_truncated_and_oversized_bodies():
+    from app.services.pds_client import PDS_LOLA_GDR_IMAGE_BYTES
+
+    truncated = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(
+            206,
+            content=bytes(7),
+            headers={"Content-Range": f"bytes 0-7/{PDS_LOLA_GDR_IMAGE_BYTES}", "Content-Length": "8"},
+        )
+    ))
+    with pytest.raises(PdsApiError, match="incomplete row segment"):
+        await truncated.fetch_lola_gdr_row_segment(
+            line_index=0,
+            start_sample_index=0,
+            sample_count=4,
+        )
+
+    oversized = PdsClient(transport=httpx.MockTransport(
+        lambda request: httpx.Response(
+            206,
+            content=bytes(9),
+            headers={"Content-Range": f"bytes 0-7/{PDS_LOLA_GDR_IMAGE_BYTES}"},
+        )
+    ))
+    with pytest.raises(PdsApiError, match="more bytes than the requested"):
+        await oversized.fetch_lola_gdr_row_segment(
+            line_index=0,
+            start_sample_index=0,
+            sample_count=4,
+        )
