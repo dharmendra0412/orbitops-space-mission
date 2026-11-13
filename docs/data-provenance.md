@@ -29,6 +29,15 @@ The source catalogue in `src/data/sources.ts` is a list of external references o
 
 The PDS Geosciences Node describes LOLA as a lunar topography instrument and directs users to the Lunar Orbital Data Explorer for the most recent holdings. It also lists LRO archives by instrument, including Diviner, LOLA, LROC, and SPICE. LOLA documentation distinguishes gridded GDR maps from individual RDR altimetry tracks. For scaled GDR image products, the scaling factor and offset are specified in each PDS label and must be read from that label rather than copied as global constants. LROC PDS archive descriptions identify calibrated NAC/WAC data and associated pointing and housekeeping information.
 
+## Selected LOLA collection scope
+
+The NASA PDS catalogue currently exposes two useful but different LOLA RDR collections:
+
+- **Gridded collection** — LIDVID `urn:nasa:pds:lro_lola_rdr:data_gridded::1.0`. The PDS collection page describes it as a derived gridded-data collection. A PDS catalogue search snapshot indexed 16 October 2026 reported 561 collection members.
+- **Calibrated collection** — LIDVID `urn:nasa:pds:lro_lola_rdr:data_calibrated::17.0`. The PDS catalogue snapshot indexed 16 October 2026 reported version 17.0, updated for LRO Release 67, and 75,626 collection members.
+
+These counts and versions are catalogue snapshots, not live counters embedded in ORBITOPS. The gridded collection is the bounded starting point for understanding map-oriented products; the much larger calibrated collection should be sampled by a documented query rather than bulk-downloaded. Always resolve the current product label and collection membership from PDS before ingesting.
+
 ## Live discovery endpoint
 
 The FastAPI service exposes:
@@ -58,7 +67,7 @@ Raw source files must remain distinguishable from derived products. Derived valu
 ## Planned data integration sequence
 
 1. Implement an archive metadata catalogue and ingestion manifest; do not download bulk data before selecting specific product collections and coverage.
-2. Start with the published LOLA RDR bundle (LIDVID `urn:nasa:pds:lro_lola_rdr::1.0`) and its gridded collection (LIDVID `urn:nasa:pds:lro_lola_rdr:data_gridded::1.0`). Use the PDS Search API to resolve/search metadata, then cross-check against the direct LRO/LOLA archive because the Search API may not contain every holding. The PDS documentation recommends GDR products for gridded latitude/longitude maps and RDR products for individual altimetry tracks. Parse the selected product's PDS label before rendering any elevation value.
+2. Start with the published LOLA RDR bundle (LIDVID `urn:nasa:pds:lro_lola_rdr::1.0`) and its gridded collection (LIDVID `urn:nasa:pds:lro_lola_rdr:data_gridded::1.0`). The PDS catalogue snapshot reports 561 gridded collection members; use that collection for a small, bounded sample. Keep the Release 67 calibrated collection (LIDVID `urn:nasa:pds:lro_lola_rdr:data_calibrated::17.0`, snapshot count 75,626) as a separate, larger source. Use the PDS Search API to resolve/search metadata, then cross-check against the direct LRO/LOLA archive because the Search API may not contain every holding. Parse the selected product's PDS label before rendering any elevation value.
 3. Add selected LROC products with their original pointing/geometry metadata and source citations.
 4. Evaluate Diviner products for thermal-context views, keeping the instrument's observation time and processing level visible.
 5. Add SPICE kernels only if a later, explicitly approved engineering requirement needs geometry or ephemeris calculations. No orbit propagation or mission simulation is part of the current product scope.
