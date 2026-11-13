@@ -11,6 +11,10 @@ PDS_SEARCH_BASE_URL = "https://pds.nasa.gov/api/search/1"
 class PdsApiError(RuntimeError):
     """Raised when the upstream NASA PDS Search API cannot be used."""
 
+    def __init__(self, message: str, *, status_code: int = 502) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
 
 class PdsClient:
     """Small read-only client for the official NASA PDS Search API."""
@@ -43,7 +47,8 @@ class PdsClient:
             raise PdsApiError("NASA PDS Search API request timed out") from exc
         except httpx.HTTPStatusError as exc:
             raise PdsApiError(
-                f"NASA PDS Search API returned HTTP {exc.response.status_code}"
+                f"NASA PDS Search API returned HTTP {exc.response.status_code}",
+                status_code=404 if exc.response.status_code == 404 else 502,
             ) from exc
         except httpx.HTTPError as exc:
             raise PdsApiError("Could not connect to NASA PDS Search API") from exc
