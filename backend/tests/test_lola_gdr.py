@@ -134,25 +134,25 @@ def test_lola_polar_projection_uses_south_pole_y_sign(lola_metadata):
 
 
 def test_lola_polar_projection_uses_catalog_axis_orientation(lola_metadata):
-    # The half-pixel projection offset means no integer pixel lies exactly
-    # on an axis. These adjacent pixels exercise opposite sides of the axes
-    # and distinguish the catalog's atan2(Y, X) convention from swapped axes.
-    _, east_side = lola_polar_pixel_to_latlon(
-        lola_metadata, line_index=3792, sample_index=3791
-    )
-    _, west_side = lola_polar_pixel_to_latlon(
+    # PDS catalog: I=sample, J=line, and Y is reversed in the south.
+    # A sample east of center with a line north of center is 45 degrees;
+    # a sample west with a line south is 225 degrees.
+    _, north_east = lola_polar_pixel_to_latlon(
         lola_metadata, line_index=3791, sample_index=3792
     )
+    _, south_west = lola_polar_pixel_to_latlon(
+        lola_metadata, line_index=3792, sample_index=3791
+    )
 
-    assert east_side == pytest.approx(45.0)
-    assert west_side == pytest.approx(225.0)
+    assert north_east == pytest.approx(45.0)
+    assert south_west == pytest.approx(225.0)
 
 
 def test_lola_polar_projection_distinguishes_all_four_quadrants(lola_metadata):
     cases = [
-        ((3792, 3791), 45.0),
+        ((3792, 3791), 225.0),
         ((3792, 3792), 135.0),
-        ((3791, 3792), 225.0),
+        ((3791, 3792), 45.0),
         ((3791, 3791), 315.0),
     ]
     for (line_index, sample_index), expected_longitude in cases:
