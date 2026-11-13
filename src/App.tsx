@@ -237,7 +237,7 @@ function App() {
       <button className="nav-item" onClick={() => setShowAll(!showAll)}><Layers3 size={17}/><span>Engineering guide</span></button>
       <button className="nav-item" onClick={() => setShowAll(true)}><ShieldCheck size={17}/><span>Model limitations</span></button>
       <div className="sidebar-bottom">
-        <div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><strong>Need a hand?</strong><p>Explore the engineering guide to understand mission trade-offs.</p><button onClick={() => setShowAll(!showAll)}>Open learning guide <ArrowUpRight size={13}/></button></div>
+        <div className="help-card"><div className="help-icon"><CircleHelp size={17}/></div><strong>Need a hand?</strong><p>Explore the engineering guide to understand source and engineering trade-offs.</p><button onClick={() => setShowAll(!showAll)}>Open learning guide <ArrowUpRight size={13}/></button></div>
         <div className="profile"><div className="profile-avatar">R</div><div><strong>Research session</strong><span>Local browser only</span></div><Settings2 size={16}/></div>
       </div>
     </aside>
@@ -475,7 +475,7 @@ function App() {
           <button className="primary-button" onClick={() => goTo('NASA data sources')}><Database size={16}/> Browse authoritative sources <ArrowUpRight size={15}/></button>
         </section>
 
-        <footer className="footer"><div><span className="footer-mark"><OrbitMark/></span><strong>ORBITOPS</strong><span>EDUCATIONAL MISSION PLANNING WORKSPACE</span></div><p>Independent educational project · Not affiliated with or endorsed by NASA.</p><p>Unverified engineering values are intentionally not displayed.</p></footer>
+        <footer className="footer"><div><span className="footer-mark"><OrbitMark/></span><strong>ORBITOPS</strong><span>EDUCATIONAL SPACE SCIENCE RESEARCH WORKSPACE</span></div><p>Independent educational project · Not affiliated with or endorsed by NASA.</p><p>Unverified engineering values are intentionally not displayed.</p></footer>
       </div>
     </main>
     {showAll && <div className="guide-popover"><button className="guide-close" onClick={() => setShowAll(false)} aria-label="Close guide"><X size={16}/></button><div className="section-eyebrow">ENGINEERING NOTES</div><h3>How to read this workspace</h3><p><strong>Source catalogue</strong> links to original NASA/PDS/JPL and partner reference pages. A link does not mean the dataset has been downloaded or processed.</p><p><strong>Engineering values</strong> remain unavailable until a specific source product and its metadata are ingested and validated.</p><p><strong>Architecture choices</strong> are labels only. ORBITOPS does not calculate or simulate trajectories, spacecraft performance, illumination, or communications.</p><p className="guide-source">The project will show missing data as unavailable instead of filling gaps with invented assumptions. See the data provenance plan for the ingestion requirements.</p></div>}
