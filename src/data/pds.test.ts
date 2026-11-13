@@ -26,6 +26,17 @@ describe('NASA PDS response adapters', () => {
   })
 
 
+
+  it('rejects blank product and member identifiers from malformed source rows', () => {
+    expect(extractPdsProducts({
+      data: [{ lidvid: '   ', title: 'Malformed product' }],
+    })).toEqual({ hits: undefined, products: [] })
+    expect(extractPdsMembers([
+      { id: '   ', title: 'Malformed member' },
+      { lidvid: '', title: 'Missing identifier' },
+    ])).toEqual([])
+  })
+
   it('deduplicates repeated PDS member identifiers while preserving first-seen order', () => {
     const first = { id: 'urn:nasa:pds:example:item-1::1.0', title: 'First page title' }
     const second = { id: 'urn:nasa:pds:example:item-2::1.0', title: 'Second page title' }
