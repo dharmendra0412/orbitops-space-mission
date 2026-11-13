@@ -5,6 +5,7 @@ import {
   getMissingRequiredMissionBriefFields,
   missionBriefFields,
   parseMissionBriefDraft,
+  parseMissionBriefExport,
   serializeMissionBriefDraft,
 } from './missionBrief'
 
@@ -80,4 +81,22 @@ describe('user-authored mission brief', () => {
       sourceUrl: 'https://example.org/product-label',
       evidenceNote: 'Source link only; not validated',
     }])
+  })
+
+
+  it('imports only supported versioned mission brief exports', () => {
+    const draft = createEmptyMissionBrief()
+    draft.missionName = 'Imported mission'
+    draft.requirements.push({
+      id: 'REQ-001',
+      statement: 'Record source-backed target data',
+      targetValue: 'TBD',
+      sourceUrl: '',
+      evidenceNote: '',
+    })
+    const imported = parseMissionBriefExport(serializeMissionBriefDraft(draft, '2026-11-13T00:00:00Z'))
+    expect(imported).toEqual(draft)
+    expect(() => parseMissionBriefExport(JSON.stringify({ schema_version: 2, brief: draft })))
+      .toThrow(/Unsupported/)
+    expect(() => parseMissionBriefExport('[]')).toThrow(/not a mission brief export/)
   })
