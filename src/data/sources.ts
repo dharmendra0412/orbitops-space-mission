@@ -93,7 +93,7 @@ export const missionResources: MissionResource[] = [
     title: 'Kaguya LALT PDS3 product format specification',
     owner: 'JAXA / DARTS ISAS',
     kind: 'TECHNICAL DOCUMENT',
-    description: 'Format specification for LALT_RD, LALT_LGT_TS, and south-polar grid products. LALT_GT_SP_IMG.IMG is a 11,520 × 1,280 PDS3 image (58,992,343 bytes including a 9,944-byte label), 4-byte float samples, 1/128° latitude and 1/32° longitude spacing over 80°S–90°S, elevation in km on a 1737.4 km sphere, body-fixed rotating coordinates, and 99.999 dummy values. The specification does not establish byte order in the listed SAMPLE_TYPE; verify it before decoding. Do not confuse it with the separate JAXA LALT_SP.txt 1/64° grid.',
+    description: 'Format specification for LALT_RD, LALT_LGT_TS, and south-polar grid products. LALT_GT_SP_IMG.IMG is a 11,520 × 1,280 PDS3 image (58,992,343 bytes total with the IMAGE object starting at byte 9,944), 4-byte float samples, 1/128° latitude and 1/32° longitude spacing over 80°S–90°S, elevation in km on a 1737.4 km sphere, body-fixed rotating coordinates, and 99.999 dummy values. The specification does not establish byte order in the listed SAMPLE_TYPE; verify it before decoding. Do not confuse it with the separate JAXA LALT_SP.txt 1/64° grid.',
     url: 'https://data.darts.isas.jaxa.jp/pub/pds3/sln-l-lalt-5-topo-gt-sp-img-v2.0/document/LALT_Format_en_V01.pdf',
   },
   {
