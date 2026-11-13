@@ -21,6 +21,7 @@ Endpoints:
 - `GET /health`
 - `GET /api/v1/pds/search?keywords=LOLA&limit=10`
 - `GET /api/v1/pds/products/{identifier}/members?depth=1|2` — browse child collections/products or two hierarchy levels.
+- `GET /api/v1/pds/products/{identifier}/members?depth=1|2`
 - `GET /api/v1/pds/products/{identifier}`
 
 The API returns the original upstream JSON under `response`, together with the actual request URL, query, and retrieval timestamp. It does not generate fallback records or transform observations.
