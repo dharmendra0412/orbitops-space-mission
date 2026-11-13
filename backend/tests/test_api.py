@@ -11,6 +11,12 @@ class StubPdsClient:
             {"products": [{"lid": "urn:nasa:pds:example"}]},
         )
 
+    async def list_members(self, *, identifier: str, depth: int = 1):
+        return (
+            f"https://pds.nasa.gov/api/search/1/products/{identifier}/members",
+            [{"id": "urn:nasa:pds:example:collection:item::1.0", "title": "Source child product"}],
+        )
+
     async def resolve_product(self, *, identifier: str):
         return (
             f"https://pds.nasa.gov/api/search/1/products/{identifier}",
@@ -69,3 +75,26 @@ def test_product_lookup_endpoint_returns_upstream_metadata_and_provenance(monkey
     assert payload["identifier"] == identifier
     assert payload["response"] == {"lidvid": identifier}
     assert payload["retrieved_at"]
+
+
+def test_members_endpoint_returns_original_hierarchy_records_and_provenance(monkeypatch):
+    monkeypatch.setattr(api, "pds_client", StubPdsClient())
+    client = TestClient(api.app)
+
+    identifier = "urn:nasa:pds:example::1.0"
+    response = client.get("/api/v1/pds/products/" + identifier + "/members?depth=1")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["identifier"] == identifier
+    assert payload["depth"] == 1
+    assert payload["response"][0]["id"] == "urn:nasa:pds:example:collection:item::1.0"
+    assert payload["retrieved_at"]
+
+
+def test_members_endpoint_rejects_depth_above_two():
+    client = TestClient(api.app)
+    response = client.get(
+        "/api/v1/pds/products/urn:nasa:pds:example::1.0/members?depth=3"
+    )
+    assert response.status_code == 422
