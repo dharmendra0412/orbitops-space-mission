@@ -273,7 +273,7 @@ test('NASA PDS browser search resolves original file inventory without synthesiz
     })
   })
 
-  await page.route('**/api/v1/pds/products/**', async (route) => {
+  await page.route(/\/api\/v1\/pds\/products\/[^/]+$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
