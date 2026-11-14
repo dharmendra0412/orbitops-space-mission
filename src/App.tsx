@@ -461,26 +461,74 @@ function App() {
     {mobileMenu && <button type="button" className="scrim" onClick={() => setMobileMenu(false)} aria-label="Close navigation"/>}
     <main className="main-area" id="main-content" tabIndex={-1}>
       <header className="topbar">
-        <div className="breadcrumbs"><button ref={mobileMenuTriggerRef} type="button" className="mobile-menu-button icon-button" onClick={() => setMobileMenu(true)} aria-label="Open navigation menu" aria-expanded={mobileMenu} aria-controls="research-navigation"><Menu size={19}/></button><span>ORBITOPS</span><span className="crumb-slash">/</span><strong>{activeNav.toUpperCase()}</strong></div>
-        <div className="top-actions"><span className="autosave"><span className="status-dot"/> Local session · not saved</span><button className="team-button" disabled title="Team collaboration will be implemented in a later milestone"><Users size={16}/> Team mode planned</button><div className="top-avatar">G</div></div>
+        <a className="top-brand" href="#research-overview" aria-label="ORBITOPS lunar research control home">
+          <span className="top-brand-mark"><OrbitMark /></span>
+          <span className="top-brand-copy"><strong>ORBITOPS</strong><small>LUNAR RESEARCH CONTROL</small></span>
+        </a>
+        <nav className="top-nav" aria-label="Workspace navigation">
+          {navItems.map((item) => <button key={item} type="button" className={activeNav === item ? 'top-nav-button active' : 'top-nav-button'} onClick={() => goTo(item)}>{item}</button>)}
+          <button type="button" className={showAll ? 'top-nav-button active' : 'top-nav-button'} onClick={() => setShowAll(!showAll)} aria-expanded={showAll}>Engineering guide</button>
+        </nav>
+        <div className="top-actions">
+          <span className="autosave"><span className="status-dot"/>SOURCE ACCESS · ON DEMAND</span>
+          <span className="top-session-label">EDUCATIONAL WORKSPACE</span>
+        </div>
       </header>
 
       <div className="content">
         <section className="page-heading" id="research-overview">
-          <div><div className="eyebrow"><span className="eyebrow-line"/> SCIENCE RESEARCH WORKSPACE</div><h1>Research overview<span className="heading-period">.</span></h1><p>Explore authoritative lunar science data and technical documentation.</p></div>
+          <div><div className="eyebrow"><span className="eyebrow-line"/> ORBITOPS · SPACE SCIENCE RESEARCH</div><h1>Mission control<span className="heading-period">.</span></h1><p>Explore real lunar data, inspect source measurements, and prepare traceable mission concepts.</p></div>
           <button className="primary-button" onClick={() => goTo('Research categories')}><Rocket size={16}/> Explore research areas <ArrowUpRight size={15}/></button>
         </section>
 
-        <section className="mission-hero">
-          <div className="hero-copy">
-            <div className="hero-kicker"><span className="hero-kicker-dot"/> RESEARCH AREA <span className="hero-id">NO MISSION CONFIGURED</span></div>
-            <h2>Lunar <em>science</em></h2>
-            <p>Review original lunar polar science products and their documentation. No spacecraft, trajectory, mission scenario, or scientific result is assumed in this workspace.</p>
-            <div className="hero-tags"><span><Target size={13}/> Lunar science</span><span><Compass size={13}/> South-polar data</span><span><Database size={13}/> Source-first research</span></div>
-            <button className="hero-link" onClick={() => goTo('NASA data sources')}>Browse NASA data sources <ArrowUpRight size={15}/></button>
-          </div>
-          <div className="hero-footer"><span>WORKSPACE <strong>RESEARCH ONLY</strong></span><span>DATA STATUS <strong>NO PRODUCTS INGESTED</strong></span><span>MISSION CONFIG <strong>NOT CONFIGURED</strong></span></div>
-        </section>
+        <div className="mission-overview-grid">
+          <section className="mission-hero">
+            <img
+              className="hero-lunar-image"
+              src="https://assets.science.nasa.gov/dynamicimage/assets/science/psd/photojournal/pia/pia13/pia13523/PIA13523.jpg?crop=1&h=1400&w=1600"
+              alt="Lunar Reconnaissance Orbiter Wide Angle Camera mosaic of the Moon's south polar region"
+              loading="eager"
+              decoding="async"
+            />
+            <div className="hero-image-shade" aria-hidden="true"/>
+            <div className="hero-copy">
+              <div className="hero-kicker"><span className="hero-kicker-dot"/> FEATURED SCIENCE DATASET <span className="hero-id">PIA13523 · LROC WAC</span></div>
+              <h2>Lunar <em>south pole</em></h2>
+              <p>A 600 km-wide view of the lunar south-polar region captured by the Lunar Reconnaissance Orbiter Camera. Use this source-backed context to begin an investigation—then inspect the underlying archive records and product metadata.</p>
+              <div className="hero-tags"><span><Target size={13}/> South-polar region</span><span><Compass size={13}/> LROC wide-angle mosaic</span><span><Database size={13}/> NASA Photojournal</span></div>
+              <button className="hero-link" onClick={() => goTo('NASA data sources')}>Explore source records <ArrowUpRight size={15}/></button>
+            </div>
+            <a className="hero-image-credit" href="https://science.nasa.gov/photojournal/the-lunar-south-pole/" target="_blank" rel="noopener noreferrer">
+              IMAGE PIA13523 · NASA / GSFC / ARIZONA STATE UNIVERSITY <ExternalLink size={11}/>
+            </a>
+            <div className="hero-footer"><span>MISSION <strong>LUNAR RECONNAISSANCE ORBITER</strong></span><span>INSTRUMENT <strong>WIDE ANGLE CAMERA</strong></span><span>WORKSPACE <strong>RESEARCH ONLY</strong></span></div>
+          </section>
+
+          <aside className="mission-architect" aria-label="Mission research configuration">
+            <div className="architect-kicker"><span className="architect-kicker-dot"/> RESEARCH CONFIGURATION</div>
+            <h2>Mission research architect</h2>
+            <p>Shape an investigation using documented science topics. Selections here organize your research; they do not configure flight hardware or run a mission simulation.</p>
+            <div className="architect-stats">
+              <div><span>RESEARCH AREAS</span><strong>{String(selected.length).padStart(2, '0')} <small>/ {String(instruments.length).padStart(2, '0')}</small></strong></div>
+              <div><span>ORBIT TOPIC</span><strong className="architect-orbit-value">{orbitOptions.find((item) => item.id === orbit)?.name ?? 'Not selected'}</strong></div>
+            </div>
+            <div className="architect-selected">
+              <span className="architect-field-label">SELECTED INVESTIGATION AREAS</span>
+              {selected.length > 0
+                ? <div className="architect-chips">{selected.map((id) => <span key={id}>{instruments.find((item) => item.id === id)?.name ?? id}</span>)}</div>
+                : <p className="architect-empty">No research areas selected. Start by choosing the topics relevant to your question.</p>}
+            </div>
+            <div className="architect-readiness">
+              <span className="readiness-mark"><ShieldCheck size={15}/></span>
+              <div><strong>Engineering inputs not yet supplied</strong><small>Mass, power, cost, and performance remain unavailable until source-backed values are added.</small></div>
+            </div>
+            <div className="architect-actions">
+              <button type="button" className="architect-primary" onClick={() => goTo('Research categories')}>Configure research areas <ArrowUpRight size={14}/></button>
+              <button type="button" className="architect-secondary" onClick={() => goTo('Mission brief')}>Open mission brief <ClipboardList size={14}/></button>
+            </div>
+            <div className="architect-footnote">NO FLIGHT SIMULATION · NO SYNTHETIC TELEMETRY · SOURCE-FIRST WORKFLOW</div>
+          </aside>
+        </div>
 
         <section className="quick-access" aria-labelledby="quick-access-title">
           <div className="quick-access-heading">
@@ -509,10 +557,10 @@ function App() {
         <section className="section-block">
           <div className="section-heading"><div><div className="section-eyebrow">SOURCE-VERIFIED INPUTS</div><h3>Engineering data availability</h3></div><span className="section-note">NO DATA PRODUCTS INGESTED</span></div>
           <div className="metrics-grid">
-            <Metric label="Spacecraft mass" value="N/A" icon={Layers3} detail="No verified spacecraft configuration source" tone="blue"/>
-            <Metric label="Power budget" value="N/A" icon={Activity} detail="No verified power-system source" tone="amber"/>
-            <Metric label="Data volume" value="N/A" icon={Database} detail="No instrument product or telemetry source" tone="violet"/>
-            <Metric label="Mission cost" value="N/A" icon={Target} detail="No cost model or approved estimate source" tone="green"/>
+            <Metric label="Research categories" value="04" icon={Telescope} detail="Imaging, spectroscopy, radar, and thermal science" tone="blue"/>
+            <Metric label="Orbit research topics" value="03" icon={Compass} detail="Architecture labels only; no orbit calculations" tone="amber"/>
+            <Metric label="LOLA profile limit" value="512" unit="samples" icon={Activity} detail="Maximum contiguous samples per row request" tone="violet"/>
+            <Metric label="NASA PDS search" value="On demand" icon={Database} detail="Official archive API · read-only requests" tone="green"/>
           </div>
         </section>
 
